@@ -31,7 +31,7 @@
 #include "net/dcsctp/public/dcsctp_socket.h"
 #include "net/dcsctp/public/types.h"
 #include "net/dcsctp/timer/task_queue_timeout.h"
-#include "ice/packet_transport_internal.h"
+#include "libice/packet_transport_internal.h"
 #include "rtc_base/copy_on_write_buffer.h"
 #include "rtc_base/random.h"
 #include "rtc_base/third_party/sigslot/sigslot.h"
@@ -40,17 +40,17 @@
 
 namespace libmedia_transfer_protocol {
 
-class DcSctpTransport : public cricket::SctpTransportInternal,
+class DcSctpTransport : public libmedia_transfer_protocol::SctpTransportInternal,
                         public dcsctp::DcSctpSocketCallbacks,
                         public sigslot::has_slots<> {
  public:
   DcSctpTransport(rtc::Thread* network_thread,
-                  rtc::PacketTransportInternal* transport,
+                  libice::PacketTransportInternal* transport,
                   webrtc::Clock* clock);
   ~DcSctpTransport() override;
 
   // cricket::SctpTransportInternal
-  void SetDtlsTransport(rtc::PacketTransportInternal* transport) override;
+  void SetDtlsTransport(libice::PacketTransportInternal* transport) override;
   bool Start(int local_sctp_port,
              int remote_sctp_port,
              int max_message_size) override;
@@ -59,7 +59,7 @@ class DcSctpTransport : public cricket::SctpTransportInternal,
   bool SendData(int sid,
                 const SendDataParams& params,
                 const rtc::CopyOnWriteBuffer& payload,
-                cricket::SendDataResult* result = nullptr) override;
+	  libmedia_transfer_protocol::SendDataResult* result = nullptr) override;
   bool ReadyToSendData() override;
   int max_message_size() const override;
   absl::optional<int> max_outbound_streams() const override;
@@ -91,20 +91,20 @@ class DcSctpTransport : public cricket::SctpTransportInternal,
   // Transport callbacks
   void ConnectTransportSignals();
   void DisconnectTransportSignals();
-  void OnTransportWritableState(rtc::PacketTransportInternal* transport);
-  void OnTransportReadPacket(rtc::PacketTransportInternal* transport,
+  void OnTransportWritableState(libice::PacketTransportInternal* transport);
+  void OnTransportReadPacket(libice::PacketTransportInternal* transport,
                              const char* data,
                              size_t length,
                              const int64_t& /* packet_time_us */,
                              int flags);
-  void OnTransportClosed(rtc::PacketTransportInternal* transport);
+  void OnTransportClosed(libice::PacketTransportInternal* transport);
 
   void MaybeConnectSocket();
 
   rtc::Thread* network_thread_;
-  rtc::PacketTransportInternal* transport_;
-  Clock* clock_;
-  Random random_;
+  libice::PacketTransportInternal* transport_;
+  webrtc::Clock* clock_;
+  webrtc::Random random_;
 
   dcsctp::TaskQueueTimeoutFactory task_queue_timeout_factory_;
   std::unique_ptr<dcsctp::DcSctpSocketInterface> socket_;

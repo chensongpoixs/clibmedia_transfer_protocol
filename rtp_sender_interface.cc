@@ -31,17 +31,17 @@ RtpSenderInterface::GetFrameEncryptor() const {
   return nullptr;
 }
 
-std::vector<webrtc::RtpEncodingParameters> RtpSenderInterface::init_send_encodings()
+std::vector<libmedia_transfer_protocol::RtpEncodingParameters> RtpSenderInterface::init_send_encodings()
     const {
   return {};
 }
 
-rtc::scoped_refptr<webrtc::DtlsTransportInterface> RtpSenderInterface::dtls_transport()
+rtc::scoped_refptr<libice::DtlsTransportInterface> RtpSenderInterface::dtls_transport()
     const {
   return nullptr;
 }
 
 void RtpSenderInterface::SetEncoderToPacketizerFrameTransformer(
-    rtc::scoped_refptr<webrtc::FrameTransformerInterface> frame_transformer) {}
+    rtc::scoped_refptr<libmedia_transfer_protocol::FrameTransformerInterface> frame_transformer) {}
 
 }  // namespace webrtc

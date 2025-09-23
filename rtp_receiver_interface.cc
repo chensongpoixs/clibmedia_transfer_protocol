@@ -27,12 +27,12 @@ std::vector<std::string> RtpReceiverInterface::stream_ids() const {
   return {};
 }
 
-std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>>
+std::vector<rtc::scoped_refptr<libmedia_transfer_protocol::MediaStreamInterface>>
 RtpReceiverInterface::streams() const {
   return {};
 }
 
-std::vector<webrtc::RtpSource> RtpReceiverInterface::GetSources() const {
+std::vector<libmedia_transfer_protocol::RtpSource> RtpReceiverInterface::GetSources() const {
   return {};
 }
 
@@ -50,6 +50,6 @@ RtpReceiverInterface::dtls_transport() const {
 }
 
 void RtpReceiverInterface::SetDepacketizerToDecoderFrameTransformer(
-    rtc::scoped_refptr<webrtc::FrameTransformerInterface> frame_transformer) {}
+    rtc::scoped_refptr<libmedia_transfer_protocol::FrameTransformerInterface> frame_transformer) {}
 
 }  // namespace webrtc

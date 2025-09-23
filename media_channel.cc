@@ -26,11 +26,11 @@
 namespace libmedia_transfer_protocol {
 using webrtc::FrameDecryptorInterface;
 using webrtc::FrameEncryptorInterface;
-using webrtc::FrameTransformerInterface;
+//using libmedia_transfer_protocol::FrameTransformerInterface;
 using webrtc::PendingTaskSafetyFlag;
 using webrtc::TaskQueueBase;
 using webrtc::ToQueuedTask;
-using webrtc::VideoTrackInterface;
+//using libmedia_transfer_protocol::VideoTrackInterface;
 
 VideoOptions::VideoOptions()
     : content_hint(VideoTrackInterface::ContentHint::kNone) {}
@@ -107,11 +107,11 @@ bool MediaChannel::ExtmapAllowMixed() const {
 
 void MediaChannel::SetEncoderToPacketizerFrameTransformer(
     uint32_t ssrc,
-    rtc::scoped_refptr<FrameTransformerInterface> frame_transformer) {}
+    rtc::scoped_refptr<libmedia_transfer_protocol::FrameTransformerInterface> frame_transformer) {}
 
 void MediaChannel::SetDepacketizerToDecoderFrameTransformer(
     uint32_t ssrc,
-    rtc::scoped_refptr<FrameTransformerInterface> frame_transformer) {}
+    rtc::scoped_refptr<libmedia_transfer_protocol::FrameTransformerInterface> frame_transformer) {}
 
 int MediaChannel::SetOptionLocked(NetworkInterface::SocketType type,
                                   rtc::Socket::Option opt,
@@ -255,8 +255,8 @@ std::map<std::string, std::string> AudioSendParameters::ToStringMap() const {
   return params;
 }
 
-cricket::MediaType VoiceMediaChannel::media_type() const {
-  return cricket::MediaType::MEDIA_TYPE_AUDIO;
+libmedia_transfer_protocol::MediaType VoiceMediaChannel::media_type() const {
+  return libmedia_transfer_protocol::MediaType::MEDIA_TYPE_AUDIO;
 }
 
 VideoSendParameters::VideoSendParameters() = default;
@@ -268,8 +268,8 @@ std::map<std::string, std::string> VideoSendParameters::ToStringMap() const {
   return params;
 }
 
-cricket::MediaType VideoMediaChannel::media_type() const {
-  return cricket::MediaType::MEDIA_TYPE_VIDEO;
+libmedia_transfer_protocol::MediaType VideoMediaChannel::media_type() const {
+  return libmedia_transfer_protocol::MediaType::MEDIA_TYPE_VIDEO;
 }
 
 }  // namespace cricket

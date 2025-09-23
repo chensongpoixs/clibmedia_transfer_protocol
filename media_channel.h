@@ -33,7 +33,7 @@
 #include "api/audio_options.h"
 #include "api/crypto/frame_decryptor_interface.h"
 #include "api/crypto/frame_encryptor_interface.h"
-#include "api/frame_transformer_interface.h"
+#include "libmedia_transfer_protocol/frame_transformer_interface.h"
 #include "libmedia_transfer_protocol/media_stream_interface.h"
 #include "api/rtc_error.h"
 #include "libmedia_transfer_protocol/rtp_parameters.h"
@@ -155,7 +155,7 @@ struct VideoOptions {
   // things, e.g., screencast of a text document and screencast of a
   // youtube video have different needs.
   absl::optional<bool> is_screencast;
-  webrtc::VideoTrackInterface::ContentHint content_hint;
+  libmedia_transfer_protocol::VideoTrackInterface::ContentHint content_hint;
 
  private:
   template <typename T>
@@ -186,7 +186,7 @@ class MediaChannel {
   explicit MediaChannel(webrtc::TaskQueueBase* network_thread);
   virtual ~MediaChannel();
 
-  virtual cricket::MediaType media_type() const = 0;
+  virtual libmedia_transfer_protocol::MediaType media_type() const = 0;
 
   // Sets the abstract interface class for sending RTP/RTCP data.
   virtual void SetInterface(NetworkInterface* iface);
@@ -270,17 +270,17 @@ class MediaChannel {
   void SetExtmapAllowMixed(bool extmap_allow_mixed);
   bool ExtmapAllowMixed() const;
 
-  virtual webrtc::RtpParameters GetRtpSendParameters(uint32_t ssrc) const = 0;
+  virtual libmedia_transfer_protocol::RtpParameters GetRtpSendParameters(uint32_t ssrc) const = 0;
   virtual webrtc::RTCError SetRtpSendParameters(
       uint32_t ssrc,
-      const webrtc::RtpParameters& parameters) = 0;
+      const libmedia_transfer_protocol::RtpParameters& parameters) = 0;
 
   virtual void SetEncoderToPacketizerFrameTransformer(
       uint32_t ssrc,
-      rtc::scoped_refptr<webrtc::FrameTransformerInterface> frame_transformer);
+      rtc::scoped_refptr<libmedia_transfer_protocol::FrameTransformerInterface> frame_transformer);
   virtual void SetDepacketizerToDecoderFrameTransformer(
       uint32_t ssrc,
-      rtc::scoped_refptr<webrtc::FrameTransformerInterface> frame_transformer);
+      rtc::scoped_refptr<libmedia_transfer_protocol::FrameTransformerInterface> frame_transformer);
 
  protected:
   int SetOptionLocked(NetworkInterface::SocketType type,
@@ -713,14 +713,14 @@ struct VideoMediaInfo {
   RtpCodecParametersMap receive_codecs;
 };
 
-struct RtcpParameters {
-  bool reduced_size = false;
-  bool remote_estimate = false;
-};
+//struct RtcpParameters {
+//  bool reduced_size = false;
+//  bool remote_estimate = false;
+//};
 
 template <class Codec>
-struct RtpParameters {
-  virtual ~RtpParameters() = default;
+struct RtpParametersTemplate {
+  virtual ~RtpParametersTemplate() = default;
 
   std::vector<Codec> codecs;
   std::vector<webrtc::RtpExtension> extensions;
@@ -753,7 +753,7 @@ struct RtpParameters {
 // TODO(deadbeef): Rename to RtpSenderParameters, since they're intended to
 // encapsulate all the parameters needed for an RtpSender.
 template <class Codec>
-struct RtpSendParameters : RtpParameters<Codec> {
+struct RtpSendParameters : RtpParametersTemplate<Codec> {
   int max_bandwidth_bps = -1;
   // This is the value to be sent in the MID RTP header extension (if the header
   // extension in included in the list of extensions).
@@ -762,7 +762,7 @@ struct RtpSendParameters : RtpParameters<Codec> {
 
  protected:
   std::map<std::string, std::string> ToStringMap() const override {
-    auto params = RtpParameters<Codec>::ToStringMap();
+    auto params = RtpParametersTemplate<Codec>::ToStringMap();
     params["max_bandwidth_bps"] = rtc::ToString(max_bandwidth_bps);
     params["mid"] = (mid.empty() ? "<not set>" : mid);
     params["extmap-allow-mixed"] = extmap_allow_mixed ? "true" : "false";
@@ -779,7 +779,7 @@ struct AudioSendParameters : RtpSendParameters<AudioCodec> {
   std::map<std::string, std::string> ToStringMap() const override;
 };
 
-struct AudioRecvParameters : RtpParameters<AudioCodec> {};
+struct AudioRecvParameters : RtpParametersTemplate<AudioCodec> {};
 
 class VoiceMediaChannel : public MediaChannel, public Delayable {
  public:
@@ -790,15 +790,15 @@ class VoiceMediaChannel : public MediaChannel, public Delayable {
       : MediaChannel(config, network_thread) {}
   ~VoiceMediaChannel() override {}
 
-  cricket::MediaType media_type() const override;
+  libmedia_transfer_protocol::MediaType media_type() const override;
   virtual bool SetSendParameters(const AudioSendParameters& params) = 0;
   virtual bool SetRecvParameters(const AudioRecvParameters& params) = 0;
   // Get the receive parameters for the incoming stream identified by `ssrc`.
-  virtual webrtc::RtpParameters GetRtpReceiveParameters(
+  virtual libmedia_transfer_protocol::RtpParameters GetRtpReceiveParameters(
       uint32_t ssrc) const = 0;
   // Retrieve the receive parameters for the default receive
   // stream, which is used when SSRCs are not signaled.
-  virtual webrtc::RtpParameters GetDefaultRtpReceiveParameters() const = 0;
+  virtual libmedia_transfer_protocol::RtpParameters GetDefaultRtpReceiveParameters() const = 0;
   // Starts or stops playout of received audio.
   virtual void SetPlayout(bool playout) = 0;
   // Starts or stops sending (and potentially capture) of local audio.
@@ -851,7 +851,7 @@ struct VideoSendParameters : RtpSendParameters<VideoCodec> {
 
 // TODO(deadbeef): Rename to VideoReceiverParameters, since they're intended to
 // encapsulate all the parameters needed for a video RtpReceiver.
-struct VideoRecvParameters : RtpParameters<VideoCodec> {};
+struct VideoRecvParameters : RtpParametersTemplate<VideoCodec> {};
 
 class VideoMediaChannel : public MediaChannel, public Delayable {
  public:
@@ -862,15 +862,15 @@ class VideoMediaChannel : public MediaChannel, public Delayable {
       : MediaChannel(config, network_thread) {}
   ~VideoMediaChannel() override {}
 
-  cricket::MediaType media_type() const override;
+  libmedia_transfer_protocol::MediaType media_type() const override;
   virtual bool SetSendParameters(const VideoSendParameters& params) = 0;
   virtual bool SetRecvParameters(const VideoRecvParameters& params) = 0;
   // Get the receive parameters for the incoming stream identified by `ssrc`.
-  virtual webrtc::RtpParameters GetRtpReceiveParameters(
+  virtual libmedia_transfer_protocol::RtpParameters GetRtpReceiveParameters(
       uint32_t ssrc) const = 0;
   // Retrieve the receive parameters for the default receive
   // stream, which is used when SSRCs are not signaled.
-  virtual webrtc::RtpParameters GetDefaultRtpReceiveParameters() const = 0;
+  virtual libmedia_transfer_protocol::RtpParameters GetDefaultRtpReceiveParameters() const = 0;
   // Gets the currently set codecs/payload types to be used for outgoing media.
   virtual bool GetSendCodec(VideoCodec* send_codec) = 0;
   // Starts or stops transmission (and potentially capture) of local video.

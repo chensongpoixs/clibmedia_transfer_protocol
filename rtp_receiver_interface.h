@@ -28,13 +28,13 @@
 #include <vector>
 
 #include "api/crypto/frame_decryptor_interface.h"
-#include "ice/dtls_transport_interface.h"
-#include "api/frame_transformer_interface.h"
-#include "api/media_stream_interface.h"
+#include "libice/dtls_transport_interface.h"
+#include "libmedia_transfer_protocol/frame_transformer_interface.h"
+#include "libmedia_transfer_protocol/media_stream_interface.h"
 #include "libmedia_transfer_protocol/media_types.h"
-//#include "libmedia_transfer_protocol/rtp_parameters.h"
+#include "libmedia_transfer_protocol/rtp_parameters.h"
 #include "api/scoped_refptr.h"
-#include "api/transport/rtp/rtp_source.h"
+#include "libmedia_transfer_protocol/rtp/rtp_source.h"
 #include "rtc_base/ref_count.h"
 #include "rtc_base/system/rtc_export.h"
 
@@ -56,7 +56,7 @@ class RtpReceiverObserverInterface {
 
 class RTC_EXPORT RtpReceiverInterface : public rtc::RefCountInterface {
  public:
-  virtual rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track() const = 0;
+  virtual rtc::scoped_refptr<libmedia_transfer_protocol::MediaStreamTrackInterface> track() const = 0;
 
   // The dtlsTransport attribute exposes the DTLS transport on which the
   // media is received. It may be null.
@@ -72,7 +72,7 @@ class RTC_EXPORT RtpReceiverInterface : public rtc::RefCountInterface {
   // stream_ids() as soon as downstream projects are no longer dependent on
   // stream objects.
   virtual std::vector<std::string> stream_ids() const;
-  virtual std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>> streams() const;
+  virtual std::vector<rtc::scoped_refptr<libmedia_transfer_protocol::MediaStreamInterface>> streams() const;
 
   // Audio or video receiver?
   virtual libmedia_transfer_protocol::MediaType media_type() const = 0;
@@ -84,7 +84,7 @@ class RTC_EXPORT RtpReceiverInterface : public rtc::RefCountInterface {
   // The WebRTC specification only defines RTCRtpParameters in terms of senders,
   // but this API also applies them to receivers, similar to ORTC:
   // http://ortc.org/wp-content/uploads/2016/03/ortc.html#rtcrtpparameters*.
- // virtual RtpParameters GetParameters() const = 0;
+   virtual libmedia_transfer_protocol::RtpParameters GetParameters() const = 0;
   // TODO(dinosaurav): Delete SetParameters entirely after rolling to Chromium.
   // Currently, doesn't support changing any parameters.
  // virtual bool SetParameters(const RtpParameters& parameters) { return false; }
@@ -103,7 +103,7 @@ class RTC_EXPORT RtpReceiverInterface : public rtc::RefCountInterface {
   // TODO(zhihuang): Remove the default implementation once the subclasses
   // implement this. Currently, the only relevant subclass is the
   // content::FakeRtpReceiver in Chromium.
-  virtual std::vector<webrtc::RtpSource> GetSources() const;
+  virtual std::vector<libmedia_transfer_protocol::RtpSource> GetSources() const;
 
   // Sets a user defined frame decryptor that will decrypt the entire frame
   // before it is sent across the network. This will decrypt the entire frame
@@ -122,7 +122,7 @@ class RTC_EXPORT RtpReceiverInterface : public rtc::RefCountInterface {
   // client code to transform received frames according to their own processing
   // logic.
   virtual void SetDepacketizerToDecoderFrameTransformer(
-      rtc::scoped_refptr<webrtc::FrameTransformerInterface> frame_transformer);
+      rtc::scoped_refptr<libmedia_transfer_protocol::FrameTransformerInterface> frame_transformer);
 
  protected:
   ~RtpReceiverInterface() override = default;

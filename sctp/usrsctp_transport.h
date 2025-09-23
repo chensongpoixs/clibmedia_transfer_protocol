@@ -92,7 +92,7 @@ class UsrsctpTransport : public SctpTransportInternal,
   bool OpenStream(int sid) override;
   bool ResetStream(int sid) override;
   bool SendData(int sid,
-                const webrtc::SendDataParams& params,
+                const libmedia_transfer_protocol::SendDataParams& params,
                 const rtc::CopyOnWriteBuffer& payload,
                 SendDataResult* result = nullptr) override;
   bool ReadyToSendData() override;
@@ -125,7 +125,7 @@ class UsrsctpTransport : public SctpTransportInternal,
    public:
     OutgoingMessage(const rtc::CopyOnWriteBuffer& buffer,
                     int sid,
-                    const webrtc::SendDataParams& send_params)
+                    const libmedia_transfer_protocol::SendDataParams& send_params)
         : buffer_(buffer), sid_(sid), send_params_(send_params) {}
 
     // Advances the buffer by the incremented amount. Must not advance further
@@ -140,12 +140,12 @@ class UsrsctpTransport : public SctpTransportInternal,
     const void* data() const { return buffer_.data() + offset_; }
 
     int sid() const { return sid_; }
-    webrtc::SendDataParams send_params() const { return send_params_; }
+	libmedia_transfer_protocol::SendDataParams send_params() const { return send_params_; }
 
    private:
     const rtc::CopyOnWriteBuffer buffer_;
     int sid_;
-    const webrtc::SendDataParams send_params_;
+    const libmedia_transfer_protocol::SendDataParams send_params_;
     size_t offset_ = 0;
   };
 
@@ -178,13 +178,13 @@ class UsrsctpTransport : public SctpTransportInternal,
   SendDataResult SendMessageInternal(OutgoingMessage* message);
 
   // Callbacks from DTLS transport.
-  void OnWritableState(rtc::PacketTransportInternal* transport);
-  virtual void OnPacketRead(rtc::PacketTransportInternal* transport,
+  void OnWritableState(libice::PacketTransportInternal* transport);
+  virtual void OnPacketRead(libice::PacketTransportInternal* transport,
                             const char* data,
                             size_t len,
                             const int64_t& packet_time_us,
                             int flags);
-  void OnClosed(rtc::PacketTransportInternal* transport);
+  void OnClosed(libice::PacketTransportInternal* transport);
 
   // Methods related to usrsctp callbacks.
   void OnSendThresholdCallback();
@@ -214,7 +214,7 @@ class UsrsctpTransport : public SctpTransportInternal,
   // Helps pass inbound/outbound packets asynchronously to the network thread.
   webrtc::ScopedTaskSafety task_safety_;
   // Underlying DTLS transport.
-  rtc::PacketTransportInternal* transport_ = nullptr;
+  libice::PacketTransportInternal* transport_ = nullptr;
 
   // Track the data received from usrsctp between callbacks until the EOR bit
   // arrives.

@@ -47,14 +47,14 @@ SctpTransportFactory::CreateSctpTransport( libice::PacketTransportInternal* tran
   std::unique_ptr<SctpTransportInternal> result;
 #ifdef WEBRTC_HAVE_DCSCTP
   if (use_dcsctp_.Get()) {
-    result = std::unique_ptr<SctpTransportInternal>(new webrtc::DcSctpTransport(
+    result = std::unique_ptr<SctpTransportInternal>(new libmedia_transfer_protocol::DcSctpTransport(
         network_thread_, transport, webrtc::Clock::GetRealTimeClock()));
   }
 #endif
 #ifdef WEBRTC_HAVE_USRSCTP
   if (!result) {
     result = std::unique_ptr<SctpTransportInternal>(
-        new UsrsctpTransport(network_thread_, transport));
+        new libmedia_transfer_protocol::UsrsctpTransport(network_thread_, transport));
   }
 #endif
   return result;

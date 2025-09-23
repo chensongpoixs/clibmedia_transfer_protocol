@@ -33,7 +33,7 @@
 #include "net/dcsctp/public/packet_observer.h"
 #include "net/dcsctp/public/text_pcap_packet_observer.h"
 #include "net/dcsctp/public/types.h"
-#include "ice/packet_transport_internal.h"
+#include "libice/packet_transport_internal.h"
 #include "rtc_base/checks.h"
 #include "rtc_base/logging.h"
 #include "rtc_base/socket.h"
@@ -68,11 +68,11 @@ enum class WebrtcPPID : dcsctp::PPID::UnderlyingType {
 
 WebrtcPPID ToPPID(DataMessageType message_type, size_t size) {
   switch (message_type) {
-    case webrtc::DataMessageType::kControl:
+    case libmedia_transfer_protocol::DataMessageType::kControl:
       return WebrtcPPID::kDCEP;
-    case webrtc::DataMessageType::kText:
+    case libmedia_transfer_protocol::DataMessageType::kText:
       return size > 0 ? WebrtcPPID::kString : WebrtcPPID::kStringEmpty;
-    case webrtc::DataMessageType::kBinary:
+    case libmedia_transfer_protocol::DataMessageType::kBinary:
       return size > 0 ? WebrtcPPID::kBinary : WebrtcPPID::kBinaryEmpty;
   }
 }
@@ -80,31 +80,31 @@ WebrtcPPID ToPPID(DataMessageType message_type, size_t size) {
 absl::optional<DataMessageType> ToDataMessageType(dcsctp::PPID ppid) {
   switch (static_cast<WebrtcPPID>(ppid.value())) {
     case WebrtcPPID::kDCEP:
-      return webrtc::DataMessageType::kControl;
+      return libmedia_transfer_protocol::DataMessageType::kControl;
     case WebrtcPPID::kString:
     case WebrtcPPID::kStringPartial:
     case WebrtcPPID::kStringEmpty:
-      return webrtc::DataMessageType::kText;
+      return libmedia_transfer_protocol::DataMessageType::kText;
     case WebrtcPPID::kBinary:
     case WebrtcPPID::kBinaryPartial:
     case WebrtcPPID::kBinaryEmpty:
-      return webrtc::DataMessageType::kBinary;
+      return libmedia_transfer_protocol::DataMessageType::kBinary;
   }
   return absl::nullopt;
 }
 
-absl::optional<cricket::SctpErrorCauseCode> ToErrorCauseCode(
+absl::optional<libmedia_transfer_protocol::SctpErrorCauseCode> ToErrorCauseCode(
     dcsctp::ErrorKind error) {
   switch (error) {
     case dcsctp::ErrorKind::kParseFailed:
-      return cricket::SctpErrorCauseCode::kUnrecognizedParameters;
+      return libmedia_transfer_protocol::SctpErrorCauseCode::kUnrecognizedParameters;
     case dcsctp::ErrorKind::kPeerReported:
-      return cricket::SctpErrorCauseCode::kUserInitiatedAbort;
+      return libmedia_transfer_protocol::SctpErrorCauseCode::kUserInitiatedAbort;
     case dcsctp::ErrorKind::kWrongSequence:
     case dcsctp::ErrorKind::kProtocolViolation:
-      return cricket::SctpErrorCauseCode::kProtocolViolation;
+      return libmedia_transfer_protocol::SctpErrorCauseCode::kProtocolViolation;
     case dcsctp::ErrorKind::kResourceExhaustion:
-      return cricket::SctpErrorCauseCode::kOutOfResource;
+      return libmedia_transfer_protocol::SctpErrorCauseCode::kOutOfResource;
     case dcsctp::ErrorKind::kTooManyRetries:
     case dcsctp::ErrorKind::kUnsupportedOperation:
     case dcsctp::ErrorKind::kNoError:
@@ -123,8 +123,8 @@ bool IsEmptyPPID(dcsctp::PPID ppid) {
 }  // namespace
 
 DcSctpTransport::DcSctpTransport(rtc::Thread* network_thread,
-                                 rtc::PacketTransportInternal* transport,
-                                 Clock* clock)
+                                 libice::PacketTransportInternal* transport,
+                                 webrtc::Clock* clock)
     : network_thread_(network_thread),
       transport_(transport),
       clock_(clock),
@@ -150,7 +150,7 @@ DcSctpTransport::~DcSctpTransport() {
 }
 
 void DcSctpTransport::SetDtlsTransport(
-    rtc::PacketTransportInternal* transport) {
+    libice::PacketTransportInternal* transport) {
   RTC_DCHECK_RUN_ON(network_thread_);
   DisconnectTransportSignals();
   transport_ = transport;
@@ -229,7 +229,7 @@ bool DcSctpTransport::ResetStream(int sid) {
 bool DcSctpTransport::SendData(int sid,
                                const SendDataParams& params,
                                const rtc::CopyOnWriteBuffer& payload,
-                               cricket::SendDataResult* result) {
+	libmedia_transfer_protocol::SendDataResult* result) {
   RTC_DCHECK_RUN_ON(network_thread_);
 
   RTC_LOG(LS_VERBOSE) << debug_name_ << "->SendData(sid=" << sid
@@ -239,7 +239,7 @@ bool DcSctpTransport::SendData(int sid,
   if (!socket_) {
     RTC_LOG(LS_ERROR) << debug_name_
                       << "->SendData(...): Transport is not started.";
-    *result = cricket::SDR_ERROR;
+    *result = libmedia_transfer_protocol::SDR_ERROR;
     return false;
   }
 
@@ -250,7 +250,7 @@ bool DcSctpTransport::SendData(int sid,
                            "Trying to send packet bigger "
                            "than the max message size: "
                         << payload.size() << " vs max of " << max_message_size;
-    *result = cricket::SDR_ERROR;
+    *result = libmedia_transfer_protocol::SDR_ERROR;
     return false;
   }
 
@@ -286,20 +286,20 @@ bool DcSctpTransport::SendData(int sid,
   auto error = socket_->Send(std::move(message), send_options);
   switch (error) {
     case dcsctp::SendStatus::kSuccess:
-      *result = cricket::SDR_SUCCESS;
+      *result = libmedia_transfer_protocol::SDR_SUCCESS;
       break;
     case dcsctp::SendStatus::kErrorResourceExhaustion:
-      *result = cricket::SDR_BLOCK;
+      *result = libmedia_transfer_protocol::SDR_BLOCK;
       ready_to_send_data_ = false;
       break;
     default:
       RTC_LOG(LS_ERROR) << debug_name_
                         << "->SendData(...): send() failed with error "
                         << dcsctp::ToString(error) << ".";
-      *result = cricket::SDR_ERROR;
+      *result = libmedia_transfer_protocol::SDR_ERROR;
   }
 
-  return *result == cricket::SDR_SUCCESS;
+  return *result == libmedia_transfer_protocol::SDR_SUCCESS;
 }
 
 bool DcSctpTransport::ReadyToSendData() {
@@ -394,7 +394,7 @@ void DcSctpTransport::OnMessageReceived(dcsctp::DcSctpMessage message) {
                       << message.stream_id().value()
                       << ", ppid=" << message.ppid().value()
                       << ", length=" << message.payload().size() << ").";
-  cricket::ReceiveDataParams receive_data_params;
+  libmedia_transfer_protocol::ReceiveDataParams receive_data_params;
   receive_data_params.sid = message.stream_id().value();
   auto type = ToDataMessageType(message.ppid());
   if (!type.has_value()) {
@@ -427,9 +427,9 @@ void DcSctpTransport::OnAborted(dcsctp::ErrorKind error,
                     << "->OnAborted(error=" << dcsctp::ToString(error)
                     << ", message=" << message << ").";
   ready_to_send_data_ = false;
-  RTCError rtc_error(RTCErrorType::OPERATION_ERROR_WITH_DATA,
+  webrtc::RTCError rtc_error(webrtc::RTCErrorType::OPERATION_ERROR_WITH_DATA,
                      std::string(message));
-  rtc_error.set_error_detail(RTCErrorDetailType::SCTP_FAILURE);
+  rtc_error.set_error_detail(webrtc::RTCErrorDetailType::SCTP_FAILURE);
   auto code = ToErrorCauseCode(error);
   if (code.has_value()) {
     rtc_error.set_sctp_cause_code(static_cast<uint16_t>(*code));
@@ -509,7 +509,7 @@ void DcSctpTransport::DisconnectTransportSignals() {
 }
 
 void DcSctpTransport::OnTransportWritableState(
-    rtc::PacketTransportInternal* transport) {
+    libice::PacketTransportInternal* transport) {
   RTC_DCHECK_RUN_ON(network_thread_);
   RTC_DCHECK_EQ(transport_, transport);
 
@@ -521,7 +521,7 @@ void DcSctpTransport::OnTransportWritableState(
 }
 
 void DcSctpTransport::OnTransportReadPacket(
-    rtc::PacketTransportInternal* transport,
+    libice::PacketTransportInternal* transport,
     const char* data,
     size_t length,
     const int64_t& /* packet_time_us */,
@@ -540,7 +540,7 @@ void DcSctpTransport::OnTransportReadPacket(
 }
 
 void DcSctpTransport::OnTransportClosed(
-    rtc::PacketTransportInternal* transport) {
+    libice::PacketTransportInternal* transport) {
   RTC_LOG(LS_VERBOSE) << debug_name_ << "->OnTransportClosed().";
   SignalClosedAbruptly({});
 }

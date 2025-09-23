@@ -51,7 +51,7 @@ constexpr int kSctpErrorReturn = 0;
 #include "libmedia_transfer_protocol/media_constants.h"
 #include "libmedia_transfer_protocol/stream_params.h"
 #include "libmedia_transfer_protocol/sctp/usrsctp_transport.h"
-#include "ice/dtls_transport_internal.h"  // For PF_NORMAL
+#include "libice/dtls_transport_internal.h"  // For PF_NORMAL
 #include "rtc_base/arraysize.h"
 #include "rtc_base/copy_on_write_buffer.h"
 #include "rtc_base/helpers.h"
@@ -140,34 +140,34 @@ void DebugSctpPrintf(const char* format, ...) {
 }
 
 // Get the PPID to use for the terminating fragment of this type.
-uint32_t GetPpid(webrtc::DataMessageType type, size_t size) {
+uint32_t GetPpid(libmedia_transfer_protocol::DataMessageType type, size_t size) {
   switch (type) {
-    case webrtc::DataMessageType::kControl:
+    case libmedia_transfer_protocol::DataMessageType::kControl:
       return PPID_CONTROL;
-    case webrtc::DataMessageType::kBinary:
+    case libmedia_transfer_protocol::DataMessageType::kBinary:
       return size > 0 ? PPID_BINARY_LAST : PPID_BINARY_EMPTY;
-    case webrtc::DataMessageType::kText:
+    case libmedia_transfer_protocol::DataMessageType::kText:
       return size > 0 ? PPID_TEXT_LAST : PPID_TEXT_EMPTY;
   }
 }
 
-bool GetDataMediaType(uint32_t ppid, webrtc::DataMessageType* dest) {
+bool GetDataMediaType(uint32_t ppid, libmedia_transfer_protocol::DataMessageType* dest) {
   RTC_DCHECK(dest != NULL);
   switch (ppid) {
     case PPID_BINARY_PARTIAL:
     case PPID_BINARY_LAST:
     case PPID_BINARY_EMPTY:
-      *dest = webrtc::DataMessageType::kBinary;
+      *dest = libmedia_transfer_protocol::DataMessageType::kBinary;
       return true;
 
     case PPID_TEXT_PARTIAL:
     case PPID_TEXT_LAST:
     case PPID_TEXT_EMPTY:
-      *dest = webrtc::DataMessageType::kText;
+      *dest = libmedia_transfer_protocol::DataMessageType::kText;
       return true;
 
     case PPID_CONTROL:
-      *dest = webrtc::DataMessageType::kControl;
+      *dest = libmedia_transfer_protocol::DataMessageType::kControl;
       return true;
   }
   return false;
@@ -215,7 +215,7 @@ void VerboseLogPacket(const void* data, size_t length, int direction) {
 // Creates the sctp_sendv_spa struct used for setting flags in the
 // sctp_sendv() call.
 sctp_sendv_spa CreateSctpSendParams(int sid,
-                                    const webrtc::SendDataParams& params,
+                                    const libmedia_transfer_protocol::SendDataParams& params,
                                     size_t size) {
   struct sctp_sendv_spa spa = {0};
   spa.sendv_flags |= SCTP_SEND_SNDINFO_VALID;
@@ -554,7 +554,7 @@ class UsrsctpTransport::UsrSctpWrapper {
 };
 
 UsrsctpTransport::UsrsctpTransport(rtc::Thread* network_thread,
-                                   rtc::PacketTransportInternal* transport)
+                                   libice::PacketTransportInternal* transport)
     : network_thread_(network_thread),
       transport_(transport),
       was_ever_writable_(transport ? transport->writable() : false) {
@@ -583,7 +583,7 @@ UsrsctpTransport::~UsrsctpTransport() {
 }
 
 void UsrsctpTransport::SetDtlsTransport(
-    rtc::PacketTransportInternal* transport) {
+    libice::PacketTransportInternal* transport) {
   RTC_DCHECK_RUN_ON(network_thread_);
   DisconnectTransportSignals();
   transport_ = transport;
@@ -698,7 +698,7 @@ bool UsrsctpTransport::ResetStream(int sid) {
 }
 
 bool UsrsctpTransport::SendData(int sid,
-                                const webrtc::SendDataParams& params,
+                                const libmedia_transfer_protocol::SendDataParams& params,
                                 const rtc::CopyOnWriteBuffer& payload,
                                 SendDataResult* result) {
   RTC_DCHECK_RUN_ON(network_thread_);
@@ -760,7 +760,7 @@ SendDataResult UsrsctpTransport::SendMessageInternal(OutgoingMessage* message) {
                         << " before Start().";
     return SDR_ERROR;
   }
-  if (message->send_params().type != webrtc::DataMessageType::kControl) {
+  if (message->send_params().type != libmedia_transfer_protocol::DataMessageType::kControl) {
     auto it = stream_status_by_sid_.find(message->sid());
     if (it == stream_status_by_sid_.end()) {
       RTC_LOG(LS_WARNING) << debug_name_
@@ -1146,7 +1146,7 @@ bool UsrsctpTransport::SendBufferedMessage() {
 }
 
 void UsrsctpTransport::OnWritableState(
-    rtc::PacketTransportInternal* transport) {
+    libice::PacketTransportInternal* transport) {
   RTC_DCHECK_RUN_ON(network_thread_);
   RTC_DCHECK_EQ(transport_, transport);
   if (!was_ever_writable_ && transport->writable()) {
@@ -1158,7 +1158,7 @@ void UsrsctpTransport::OnWritableState(
 }
 
 // Called by network interface when a packet has been received.
-void UsrsctpTransport::OnPacketRead(rtc::PacketTransportInternal* transport,
+void UsrsctpTransport::OnPacketRead(libice::PacketTransportInternal* transport,
                                     const char* data,
                                     size_t len,
                                     const int64_t& /* packet_time_us */,
@@ -1167,7 +1167,7 @@ void UsrsctpTransport::OnPacketRead(rtc::PacketTransportInternal* transport,
   RTC_DCHECK_EQ(transport_, transport);
   TRACE_EVENT0("webrtc", "UsrsctpTransport::OnPacketRead");
 
-  if (flags & PF_SRTP_BYPASS) {
+  if (flags & libice::PF_SRTP_BYPASS) {
     // We are only interested in SCTP packets.
     return;
   }
@@ -1192,7 +1192,7 @@ void UsrsctpTransport::OnPacketRead(rtc::PacketTransportInternal* transport,
   }
 }
 
-void UsrsctpTransport::OnClosed(rtc::PacketTransportInternal* transport) {
+void UsrsctpTransport::OnClosed(libice::PacketTransportInternal* transport) {
   webrtc::RTCError error =
       webrtc::RTCError(webrtc::RTCErrorType::OPERATION_ERROR_WITH_DATA,
                        "Transport channel closed");
@@ -1243,7 +1243,7 @@ void UsrsctpTransport::OnPacketFromSctpToNetwork(
 
   // Bon voyage.
   transport_->SendPacket(buffer.data<char>(), buffer.size(),
-                         rtc::PacketOptions(), PF_NORMAL);
+                         rtc::PacketOptions(), libice::PF_NORMAL);
 }
 
 void UsrsctpTransport::InjectDataOrNotificationFromSctpForTesting(
@@ -1293,7 +1293,7 @@ void UsrsctpTransport::OnDataOrNotificationFromSctp(const void* data,
                       << ", eor=" << ((flags & MSG_EOR) ? "y" : "n");
 
   // Validate payload protocol identifier
-  webrtc::DataMessageType type;
+  libmedia_transfer_protocol::DataMessageType type;
   if (!GetDataMediaType(ppid, &type)) {
     // Unexpected PPID, dropping
     RTC_LOG(LS_ERROR) << "Received an unknown PPID " << ppid

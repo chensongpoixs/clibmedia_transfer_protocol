@@ -1,19 +1,29 @@
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
+/******************************************************************************
+ *  Copyright (c) 2025 The CRTC project authors . All Rights Reserved.
+ *
+ *  Please visit https://chensongpoixs.github.io for detail
  *
  *  Use of this source code is governed by a BSD-style license
  *  that can be found in the LICENSE file in the root of the source
  *  tree. An additional intellectual property rights grant can be found
  *  in the file PATENTS.  All contributing project authors may
  *  be found in the AUTHORS file in the root of the source tree.
- */
+ ******************************************************************************/
+ /*****************************************************************************
+				   Author: chensong
+				   date:  2025-09-21
 
-#include "media/base/turn_utils.h"
 
-#include "api/transport/stun.h"
+
+ ******************************************************************************/
+
+
+#include "libmedia_transfer_protocol/turn_utils.h"
+
+#include "libice/stun.h"
 #include "rtc_base/byte_order.h"
 
-namespace cricket {
+namespace libmedia_transfer_protocol {
 
 namespace {
 
@@ -24,12 +34,12 @@ bool IsTurnChannelData(const uint8_t* data, size_t length) {
 }
 
 bool IsTurnSendIndicationPacket(const uint8_t* data, size_t length) {
-  if (length < kStunHeaderSize) {
+  if (length < libice::kStunHeaderSize) {
     return false;
   }
 
   uint16_t type = rtc::GetBE16(data);
-  return (type == TURN_SEND_INDICATION);
+  return (type == libice::TURN_SEND_INDICATION);
 }
 
 }  // namespace
@@ -62,12 +72,12 @@ bool UnwrapTurnPacket(const uint8_t* packet,
   if (IsTurnSendIndicationPacket(packet, packet_size)) {
     // Validate STUN message length.
     const size_t stun_message_length = rtc::GetBE16(&packet[2]);
-    if (stun_message_length + kStunHeaderSize != packet_size) {
+    if (stun_message_length + libice::kStunHeaderSize != packet_size) {
       return false;
     }
 
     // First skip mandatory stun header which is of 20 bytes.
-    size_t pos = kStunHeaderSize;
+    size_t pos = libice::kStunHeaderSize;
     // Loop through STUN attributes until we find STUN DATA attribute.
     while (pos < packet_size) {
       // Keep reading STUN attributes until we hit DATA attribute.
@@ -101,7 +111,7 @@ bool UnwrapTurnPacket(const uint8_t* packet,
         return false;
       }
 
-      if (attr_type == STUN_ATTR_DATA) {
+      if (attr_type == libice::STUN_ATTR_DATA) {
         *content_position = pos;
         *content_size = attr_length;
         return true;

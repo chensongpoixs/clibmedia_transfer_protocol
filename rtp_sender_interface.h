@@ -22,20 +22,20 @@
 // This file contains interfaces for RtpSenders
 // http://w3c.github.io/webrtc-pc/#rtcrtpsender-interface
 
-#ifndef API_RTP_SENDER_INTERFACE_H_
-#define API_RTP_SENDER_INTERFACE_H_
+#ifndef _C_API_RTP_SENDER_INTERFACE_H_
+#define _C_API_RTP_SENDER_INTERFACE_H_
 
 #include <string>
 #include <vector>
 
 #include "api/crypto/frame_encryptor_interface.h"
-#include "api/dtls_transport_interface.h"
-#include "api/dtmf_sender_interface.h"
-#include "api/frame_transformer_interface.h"
-#include "api/media_stream_interface.h"
+#include "libice/dtls_transport_interface.h"
+#include "libmedia_transfer_protocol/dtmf_sender_interface.h"
+#include "libmedia_transfer_protocol/frame_transformer_interface.h"
+#include "libmedia_transfer_protocol/media_stream_interface.h"
 #include "libmedia_transfer_protocol/media_types.h"
 #include "api/rtc_error.h"
-#include "api/rtp_parameters.h"
+#include "libmedia_transfer_protocol/rtp_parameters.h"
 #include "api/scoped_refptr.h"
 #include "rtc_base/ref_count.h"
 #include "rtc_base/system/rtc_export.h"
@@ -46,14 +46,14 @@ class RTC_EXPORT RtpSenderInterface : public rtc::RefCountInterface {
  public:
   // Returns true if successful in setting the track.
   // Fails if an audio track is set on a video RtpSender, or vice-versa.
-  virtual bool SetTrack(webrtc::MediaStreamTrackInterface* track) = 0;
-  virtual rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track() const = 0;
+  virtual bool SetTrack(libmedia_transfer_protocol::MediaStreamTrackInterface* track) = 0;
+  virtual rtc::scoped_refptr<libmedia_transfer_protocol::MediaStreamTrackInterface> track() const = 0;
 
   // The dtlsTransport attribute exposes the DTLS transport on which the
   // media is sent. It may be null.
   // https://w3c.github.io/webrtc-pc/#dom-rtcrtpsender-transport
   // TODO(https://bugs.webrtc.org/907849) remove default implementation
-  virtual rtc::scoped_refptr<webrtc::DtlsTransportInterface> dtls_transport() const;
+  virtual rtc::scoped_refptr<libice::DtlsTransportInterface> dtls_transport() const;
 
   // Returns primary SSRC used by this sender for sending media.
   // Returns 0 if not yet determined.
@@ -82,16 +82,16 @@ class RTC_EXPORT RtpSenderInterface : public rtc::RefCountInterface {
   // local description is set. These initial encoding parameters can be set by
   // PeerConnection::AddTransceiver, and later updated with Get/SetParameters.
   // TODO(orphis): Make it pure virtual once Chrome has updated
-  virtual std::vector<webrtc::RtpEncodingParameters> init_send_encodings() const;
+  virtual std::vector<libmedia_transfer_protocol::RtpEncodingParameters> init_send_encodings() const;
 
-  virtual webrtc::RtpParameters GetParameters() const = 0;
+  virtual libmedia_transfer_protocol::RtpParameters GetParameters() const = 0;
   // Note that only a subset of the parameters can currently be changed. See
   // rtpparameters.h
   // The encodings are in increasing quality order for simulcast.
-  virtual webrtc::RTCError SetParameters(const webrtc::RtpParameters& parameters) = 0;
+  virtual webrtc::RTCError SetParameters(const libmedia_transfer_protocol::RtpParameters& parameters) = 0;
 
   // Returns null for a video sender.
-  virtual rtc::scoped_refptr<webrtc::DtmfSenderInterface> GetDtmfSender() const = 0;
+  virtual rtc::scoped_refptr<libmedia_transfer_protocol::DtmfSenderInterface> GetDtmfSender() const = 0;
 
   // Sets a user defined frame encryptor that will encrypt the entire frame
   // before it is sent across the network. This will encrypt the entire frame
@@ -105,7 +105,7 @@ class RTC_EXPORT RtpSenderInterface : public rtc::RefCountInterface {
   virtual rtc::scoped_refptr<webrtc::FrameEncryptorInterface> GetFrameEncryptor() const;
 
   virtual void SetEncoderToPacketizerFrameTransformer(
-      rtc::scoped_refptr<webrtc::FrameTransformerInterface> frame_transformer);
+      rtc::scoped_refptr<libmedia_transfer_protocol::FrameTransformerInterface> frame_transformer);
 
  protected:
   ~RtpSenderInterface() override = default;

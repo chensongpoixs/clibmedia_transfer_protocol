@@ -34,7 +34,7 @@
 // TODO(deadbeef): Use something else for SCTP. It's confusing that we use an
 // SSRC field for SID.
 #include "libmedia_transfer_protocol/media_channel.h"
-#include "ice/packet_transport_internal.h"
+#include "libice/packet_transport_internal.h"
 
 namespace libmedia_transfer_protocol {
 
@@ -130,7 +130,7 @@ class SctpTransportInternal {
   // Returns true iff successful data somewhere on the send-queue/network.
   // Uses `params.ssrc` as the SCTP sid.
   virtual bool SendData(int sid,
-                        const webrtc::SendDataParams& params,
+                        const libmedia_transfer_protocol::SendDataParams& params,
                         const rtc::CopyOnWriteBuffer& payload,
                         SendDataResult* result = nullptr) = 0;
 

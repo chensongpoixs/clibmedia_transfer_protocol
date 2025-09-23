@@ -18,7 +18,7 @@
  ******************************************************************************/
 
 
-#include "media/base/rtp_utils.h"
+#include "libmedia_transfer_protocol/rtp_utils.h"
 
 #include <string.h>
 
