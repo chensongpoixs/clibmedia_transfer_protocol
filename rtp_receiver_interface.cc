@@ -19,9 +19,9 @@
 
 
 
-#include "libmtp/rtp_receiver_interface.h"
+#include "libmedia_transfer_protocol/rtp_receiver_interface.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 std::vector<std::string> RtpReceiverInterface::stream_ids() const {
   return {};

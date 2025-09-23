@@ -20,7 +20,7 @@
 #ifndef _C_API_RTP_TRANSCEIVER_DIRECTION_H_
 #define _C_API_RTP_TRANSCEIVER_DIRECTION_H_
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 // https://w3c.github.io/webrtc-pc/#dom-rtcrtptransceiverdirection
 enum class RtpTransceiverDirection {

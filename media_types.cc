@@ -17,11 +17,11 @@
 
  ******************************************************************************/
 
-#include "libmtp/media_types.h"
+#include "libmedia_transfer_protocol/media_types.h"
 
 #include "rtc_base/checks.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 const char kMediaTypeVideo[] = "video";
 const char kMediaTypeAudio[] = "audio";

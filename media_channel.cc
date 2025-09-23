@@ -18,12 +18,12 @@
  ******************************************************************************/
 
 
-#include "libmtp/media_channel.h"
+#include "libmedia_transfer_protocol/media_channel.h"
 
-#include "libmtp/rtp_utils.h"
+#include "libmedia_transfer_protocol/rtp_utils.h"
 #include "rtc_base/task_utils/to_queued_task.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 using webrtc::FrameDecryptorInterface;
 using webrtc::FrameEncryptorInterface;
 using webrtc::FrameTransformerInterface;

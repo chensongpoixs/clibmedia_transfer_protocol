@@ -23,15 +23,15 @@
 #include <string>
 #include <map>
 #include <vector>
-#include "libmtp/media_constants.h"
+#include "libmedia_transfer_protocol/media_constants.h"
 #include "absl/types/optional.h"
-namespace libmtp
+namespace libmedia_transfer_protocol
 {
  
 	struct FeedbackParam { 
  
 		std::string id_   ;     // e.g. "nack", "ccm"
-		std::string param_ = libmtp::kParamValueEmpty;  // e.g. "", "rpsi", "fir"
+		std::string param_ = libmedia_transfer_protocol::kParamValueEmpty;  // e.g. "", "rpsi", "fir"
 	};  
 	struct   Codec {
 		int id;

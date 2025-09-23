@@ -46,11 +46,11 @@ constexpr int kSctpErrorReturn = 0;
 #include "absl/base/attributes.h"
 #include "absl/types/optional.h"
 #include "api/sequence_checker.h"
-#include "libmtp/ccodec.h"
-#include "libmtp/media_channel.h"
-#include "libmtp/media_constants.h"
-#include "libmtp/stream_params.h"
-#include "libmtp/sctp/usrsctp_transport.h"
+#include "libmedia_transfer_protocol/ccodec.h"
+#include "libmedia_transfer_protocol/media_channel.h"
+#include "libmedia_transfer_protocol/media_constants.h"
+#include "libmedia_transfer_protocol/stream_params.h"
+#include "libmedia_transfer_protocol/sctp/usrsctp_transport.h"
 #include "ice/dtls_transport_internal.h"  // For PF_NORMAL
 #include "rtc_base/arraysize.h"
 #include "rtc_base/copy_on_write_buffer.h"
@@ -63,7 +63,7 @@ constexpr int kSctpErrorReturn = 0;
 #include "rtc_base/thread_annotations.h"
 #include "rtc_base/trace_event.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 namespace {
 
 // The biggest SCTP packet. Starting from a 'safe' wire MTU value of 1280,
@@ -107,7 +107,7 @@ enum {
 };
 
 // Should only be modified by UsrSctpWrapper.
-ABSL_CONST_INIT libmtp::UsrsctpTransportMap* g_transport_map_ = nullptr;
+ABSL_CONST_INIT libmedia_transfer_protocol::UsrsctpTransportMap* g_transport_map_ = nullptr;
 
 // Helper that will call C's free automatically.
 // TODO(b/181900299): Figure out why unique_ptr with a custom deleter is causing
@@ -290,7 +290,7 @@ class UsrsctpTransportMap {
   UsrsctpTransportMap() = default;
 
   // Assigns a new unused ID to the following transport.
-  uintptr_t Register(libmtp::UsrsctpTransport* transport) {
+  uintptr_t Register(libmedia_transfer_protocol::UsrsctpTransport* transport) {
     webrtc::MutexLock lock(&lock_);
     // usrsctp_connect fails with a value of 0...
     if (next_id_ == 0) {

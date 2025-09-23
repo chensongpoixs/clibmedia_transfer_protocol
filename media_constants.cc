@@ -16,9 +16,9 @@
 
 
  ******************************************************************************/
-#include "libmtp/media_constants.h"
+#include "libmedia_transfer_protocol/media_constants.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 const int kVideoCodecClockrate = 90000;
 

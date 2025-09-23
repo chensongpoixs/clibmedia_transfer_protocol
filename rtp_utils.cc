@@ -26,19 +26,19 @@
 
 // PacketTimeUpdateParams is defined in asyncpacketsocket.h.
 // TODO(sergeyu): Find more appropriate place for PacketTimeUpdateParams.
-#include "libmtp/turn_utils.h"
+#include "libmedia_transfer_protocol/turn_utils.h"
 #include "modules/rtp_rtcp/source/rtp_util.h"
 #include "rtc_base/async_packet_socket.h"
 #include "rtc_base/byte_order.h"
 #include "rtc_base/checks.h"
 #include "rtc_base/message_digest.h"
 //  Media Transfer Protocol
-// libmtp_transfer_protocol
+// libmedia_transfer_protocol_transfer_protocol
 
 
 
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 static const size_t kRtcpPayloadTypeOffset = 1;
 static const size_t kRtpExtensionHeaderLen = 4;

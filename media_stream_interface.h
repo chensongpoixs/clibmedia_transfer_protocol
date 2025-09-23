@@ -1,20 +1,29 @@
-/*
- *  Copyright 2012 The WebRTC project authors. All Rights Reserved.
+/******************************************************************************
+ *  Copyright (c) 2025 The CRTC project authors . All Rights Reserved.
+ *
+ *  Please visit https://chensongpoixs.github.io for detail
  *
  *  Use of this source code is governed by a BSD-style license
  *  that can be found in the LICENSE file in the root of the source
  *  tree. An additional intellectual property rights grant can be found
  *  in the file PATENTS.  All contributing project authors may
  *  be found in the AUTHORS file in the root of the source tree.
- */
+ ******************************************************************************/
+ /*****************************************************************************
+				   Author: chensong
+				   date:  2025-09-21
+
+
+
+ ******************************************************************************/
 
 // This file contains interfaces for MediaStream, MediaTrack and MediaSource.
 // These interfaces are used for implementing MediaStream and MediaTrack as
 // defined in http://dev.w3.org/2011/webrtc/editor/webrtc.html#stream-api. These
 // interfaces must be used only with PeerConnection.
 
-#ifndef API_MEDIA_STREAM_INTERFACE_H_
-#define API_MEDIA_STREAM_INTERFACE_H_
+#ifndef _C_API_MEDIA_STREAM_INTERFACE_H_
+#define _C_API_MEDIA_STREAM_INTERFACE_H_
 
 #include <stddef.h>
 
@@ -32,7 +41,7 @@
 #include "rtc_base/ref_count.h"
 #include "rtc_base/system/rtc_export.h"
 
-namespace webrtc {
+namespace libmedia_transfer_protocol {
 
 // Generic observer interface.
 class ObserverInterface {
@@ -108,7 +117,7 @@ class RTC_EXPORT MediaStreamTrackInterface : public rtc::RefCountInterface,
 // can inherit AdaptedVideoTrackSource instead of directly implementing this
 // interface.
 class VideoTrackSourceInterface : public MediaSourceInterface,
-                                  public rtc::VideoSourceInterface<VideoFrame> {
+	public rtc::VideoSourceInterface<webrtc::VideoFrame> {
  public:
   struct Stats {
     // Original size of captured frame, before video adaptation.
@@ -149,11 +158,11 @@ class VideoTrackSourceInterface : public MediaSourceInterface,
   // TODO(bugs.webrtc.org/11114): make pure virtual once downstream project
   // adapts.
   virtual void AddEncodedSink(
-      rtc::VideoSinkInterface<RecordableEncodedFrame>* sink) = 0;
+      rtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>* sink) = 0;
 
   // Removes an encoded video sink from the source.
   virtual void RemoveEncodedSink(
-      rtc::VideoSinkInterface<RecordableEncodedFrame>* sink) = 0;
+      rtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>* sink) = 0;
 
  protected:
   ~VideoTrackSourceInterface() override = default;
@@ -167,7 +176,7 @@ class VideoTrackSourceInterface : public MediaSourceInterface,
 // thread.
 class RTC_EXPORT VideoTrackInterface
     : public MediaStreamTrackInterface,
-      public rtc::VideoSourceInterface<VideoFrame> {
+	public rtc::VideoSourceInterface<webrtc::VideoFrame> {
  public:
   // Video track content hint, used to override the source is_screencast
   // property.
@@ -176,9 +185,9 @@ class RTC_EXPORT VideoTrackInterface
 
   // Register a video sink for this track. Used to connect the track to the
   // underlying video engine.
-  void AddOrUpdateSink(rtc::VideoSinkInterface<VideoFrame>* sink,
+  void AddOrUpdateSink(rtc::VideoSinkInterface<webrtc::VideoFrame>* sink,
                        const rtc::VideoSinkWants& wants) override {}
-  void RemoveSink(rtc::VideoSinkInterface<VideoFrame>* sink) override {}
+  void RemoveSink(rtc::VideoSinkInterface<webrtc::VideoFrame>* sink) override {}
 
   virtual VideoTrackSourceInterface* GetSource() const = 0;
 
@@ -265,7 +274,7 @@ class AudioProcessorInterface : public rtc::RefCountInterface {
  public:
   struct AudioProcessorStatistics {
     bool typing_noise_detected = false;
-    AudioProcessingStats apm_statistics;
+    webrtc::AudioProcessingStats apm_statistics;
   };
 
   // Get audio processor statistics. The `has_remote_tracks` argument should be

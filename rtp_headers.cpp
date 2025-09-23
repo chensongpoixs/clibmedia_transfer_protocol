@@ -19,9 +19,9 @@
 
 
 
-#include "libmtp/rtp_headers.h"
+#include "libmedia_transfer_protocol/rtp_headers.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 RTPHeaderExtension::RTPHeaderExtension()
     : hasTransmissionTimeOffset(false),

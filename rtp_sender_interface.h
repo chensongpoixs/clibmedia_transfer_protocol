@@ -33,14 +33,14 @@
 #include "api/dtmf_sender_interface.h"
 #include "api/frame_transformer_interface.h"
 #include "api/media_stream_interface.h"
-#include "libmtp/media_types.h"
+#include "libmedia_transfer_protocol/media_types.h"
 #include "api/rtc_error.h"
 #include "api/rtp_parameters.h"
 #include "api/scoped_refptr.h"
 #include "rtc_base/ref_count.h"
 #include "rtc_base/system/rtc_export.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 class RTC_EXPORT RtpSenderInterface : public rtc::RefCountInterface {
  public:
@@ -62,7 +62,7 @@ class RTC_EXPORT RtpSenderInterface : public rtc::RefCountInterface {
   virtual uint32_t ssrc() const = 0;
 
   // Audio or video sender?
-  virtual libmtp::MediaType media_type() const = 0;
+  virtual libmedia_transfer_protocol::MediaType media_type() const = 0;
 
   // Not to be confused with "mid", this is a field we can temporarily use
   // to uniquely identify a receiver until we implement Unified Plan SDP.

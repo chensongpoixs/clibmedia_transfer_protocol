@@ -19,9 +19,9 @@
 
 
 
-#include "libmtp/rtp_sender_interface.h"
+#include "libmedia_transfer_protocol/rtp_sender_interface.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 void RtpSenderInterface::SetFrameEncryptor(
     rtc::scoped_refptr<webrtc::FrameEncryptorInterface> frame_encryptor) {}

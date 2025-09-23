@@ -24,7 +24,7 @@
 #include <memory>
 
 // These classes are not part of the API, and are treated as opaque pointers.
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 class SctpTransportInternal;
 }  // namespace cricket
 
@@ -32,7 +32,7 @@ namespace libice {
 class PacketTransportInternal;
 }  // namespace rtc
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 // Factory class which can be used to allow fake SctpTransports to be injected
 // for testing. An application is not intended to implement this interface nor
@@ -43,7 +43,7 @@ class SctpTransportFactoryInterface {
   virtual ~SctpTransportFactoryInterface() = default;
 
   // Create an SCTP transport using `channel` for the underlying transport.
-  virtual std::unique_ptr<libmtp::SctpTransportInternal> CreateSctpTransport(
+  virtual std::unique_ptr<libmedia_transfer_protocol::SctpTransportInternal> CreateSctpTransport(
       libice::PacketTransportInternal* channel) = 0;
 };
 

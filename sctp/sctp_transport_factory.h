@@ -22,14 +22,14 @@
 
 #include <memory>
 
-#include "libmtp/sctp/sctp_transport_factory_interface.h"
-#include "libmtp/sctp/sctp_transport_internal.h"
+#include "libmedia_transfer_protocol/sctp/sctp_transport_factory_interface.h"
+#include "libmedia_transfer_protocol/sctp/sctp_transport_internal.h"
 #include "rtc_base/experiments/field_trial_parser.h"
 #include "rtc_base/thread.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
-class SctpTransportFactory : public libmtp::SctpTransportFactoryInterface {
+class SctpTransportFactory : public libmedia_transfer_protocol::SctpTransportFactoryInterface {
  public:
   explicit SctpTransportFactory(rtc::Thread* network_thread);
 

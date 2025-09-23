@@ -17,9 +17,9 @@
 
  ******************************************************************************/
 
-#include "libmtp/rtp_transceiver_interface.h"
+#include "libmedia_transfer_protocol/rtp_transceiver_interface.h"
 
  
-namespace libmtp {
+namespace libmedia_transfer_protocol {
  
 }  // namespace webrtc

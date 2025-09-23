@@ -27,19 +27,19 @@
 //#include "absl/base/attributes.h"
 //#include "absl/types/optional.h"
 //#include "api/array_view.h"
-#include "libmtp/media_types.h"
-//#include "libmtp/rtp_parameters.h"
-//#include "libmtp/rtp_receiver_interface.h"
-//#include "libmtp/rtp_sender_interface.h"
-#include "libmtp/rtp_transceiver_direction.h"
+#include "libmedia_transfer_protocol/media_types.h"
+//#include "libmedia_transfer_protocol/rtp_parameters.h"
+//#include "libmedia_transfer_protocol/rtp_receiver_interface.h"
+//#include "libmedia_transfer_protocol/rtp_sender_interface.h"
+#include "libmedia_transfer_protocol/rtp_transceiver_direction.h"
 //#include "api/scoped_refptr.h"
 #include "rtc_base/ref_count.h"
 #include "rtc_base/system/rtc_export.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 	 
 struct   RtpTransceiverInit   { 
-  libmtp::RtpTransceiverDirection direction = libmtp::RtpTransceiverDirection::kSendRecv;
+  libmedia_transfer_protocol::RtpTransceiverDirection direction = libmedia_transfer_protocol::RtpTransceiverDirection::kSendRecv;
 
   // The added RtpTransceiver will be added to these streams.
   std::vector<std::string> stream_ids;
@@ -51,7 +51,7 @@ struct   RtpTransceiverInit   {
  
 class   RtpTransceiverInterface : public rtc::RefCountInterface {
  public: 
-  virtual libmtp::MediaType media_type() const = 0;
+  virtual libmedia_transfer_protocol::MediaType media_type() const = 0;
 
    
  protected:

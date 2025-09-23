@@ -29,12 +29,12 @@
 
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
-#include "libmtp/media_types.h"
+#include "libmedia_transfer_protocol/media_types.h"
 #include "api/priority.h"
-#include "libmtp/rtp_transceiver_direction.h"
+#include "libmedia_transfer_protocol/rtp_transceiver_direction.h"
 #include "rtc_base/system/rtc_export.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
  
 enum class FecMechanism {
   RED,
@@ -111,7 +111,7 @@ struct RTC_EXPORT RtpCodecCapability {
   std::string name;
 
   // The media type of this codec. Equivalent to MIME top-level type.
-  libmtp::MediaType kind = libmtp::MEDIA_TYPE_AUDIO;
+  libmedia_transfer_protocol::MediaType kind = libmedia_transfer_protocol::MEDIA_TYPE_AUDIO;
 
   // Clock rate in Hertz. If unset, the codec is applicable to any clock rate.
   absl::optional<int> clock_rate;
@@ -426,7 +426,7 @@ struct RTC_EXPORT RtpCodecParameters {
   std::string name;
 
   // The media type of this codec. Equivalent to MIME top-level type.
-  libmtp::MediaType kind = libmtp::MEDIA_TYPE_AUDIO;
+  libmedia_transfer_protocol::MediaType kind = libmedia_transfer_protocol::MEDIA_TYPE_AUDIO;
 
   // Payload type used to identify this codec in RTP packets.
   // This must always be present, and must be unique across all codecs using

@@ -17,14 +17,14 @@
 
  ******************************************************************************/
 
-#include "libmtp/media_protocol_names.h"
+#include "libmedia_transfer_protocol/media_protocol_names.h"
 
 #include <ctype.h>
 #include <stddef.h>
 
 #include <string>
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 // There are multiple variants of the RTP protocol stack, including
 // UDP/TLS/RTP/SAVPF (WebRTC default), RTP/AVP, RTP/AVPF, RTP/SAVPF,
@@ -51,7 +51,7 @@ bool IsRtpProtocol(absl::string_view protocol) {
   if (protocol.empty()) {
     return true;
   }
-  size_t pos = protocol.find(libmtp::kMediaProtocolRtpPrefix);
+  size_t pos = protocol.find(libmedia_transfer_protocol::kMediaProtocolRtpPrefix);
   if (pos == std::string::npos) {
     return false;
   }

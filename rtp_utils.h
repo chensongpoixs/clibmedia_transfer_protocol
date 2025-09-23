@@ -29,7 +29,7 @@ namespace rtc {
 struct PacketTimeUpdateParams;
 }  // namespace rtc
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 const size_t kMinRtpPacketLen = 12;
 const size_t kMaxRtpPacketLen = 2048;

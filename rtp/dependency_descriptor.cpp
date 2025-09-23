@@ -18,13 +18,13 @@
  ******************************************************************************/
 
 
-#include "libmtp/rtp/dependency_descriptor.h"
+#include "libmedia_transfer_protocol/rtp/dependency_descriptor.h"
 
 #include "absl/container/inlined_vector.h"
 #include "absl/strings/string_view.h"
 #include "rtc_base/checks.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 constexpr int DependencyDescriptor::kMaxSpatialIds;
 constexpr int DependencyDescriptor::kMaxTemporalIds;

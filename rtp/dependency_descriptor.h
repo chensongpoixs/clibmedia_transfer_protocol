@@ -33,7 +33,7 @@
 #include "absl/types/optional.h"
 #include "api/video/render_resolution.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 // Structures to build and parse dependency descriptor as described in
 // https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension
 

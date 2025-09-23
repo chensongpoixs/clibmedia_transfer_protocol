@@ -26,7 +26,7 @@
 
 #include "absl/types/optional.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 // Delayable is used by user code through ApplyConstraints algorithm. Its
 // methods must take precendence over similar functional in `syncable.h`.

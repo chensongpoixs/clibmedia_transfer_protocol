@@ -25,10 +25,10 @@
 #include <stdint.h>
 
 #include "absl/types/optional.h"
-#include "libmtp/rtp_headers.h"
+#include "libmedia_transfer_protocol/rtp_headers.h"
 #include "rtc_base/checks.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 enum class RtpSourceType {
   SSRC,

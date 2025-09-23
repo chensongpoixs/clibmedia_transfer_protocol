@@ -17,7 +17,7 @@
 
  ******************************************************************************/
 
-#include "libmtp/rtp_parameters.h"
+#include "libmedia_transfer_protocol/rtp_parameters.h"
 
 #include <algorithm>
 #include <string>
@@ -26,7 +26,7 @@
 #include "api/array_view.h"
 #include "rtc_base/strings/string_builder.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
  
 const double kDefaultBitratePriority = 1.0;

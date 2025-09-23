@@ -18,7 +18,7 @@
  ******************************************************************************/
 
 
-#include "libmtp/sctp/dcsctp_transport.h"
+#include "libmedia_transfer_protocol/sctp/dcsctp_transport.h"
 
 #include <cstdint>
 #include <limits>
@@ -28,7 +28,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
 #include "api/array_view.h"
-#include "libmtp/media_channel.h"
+#include "libmedia_transfer_protocol/media_channel.h"
 #include "net/dcsctp/public/dcsctp_socket_factory.h"
 #include "net/dcsctp/public/packet_observer.h"
 #include "net/dcsctp/public/text_pcap_packet_observer.h"
@@ -42,7 +42,7 @@
 #include "rtc_base/trace_event.h"
 #include "system_wrappers/include/clock.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 namespace {
 using ::dcsctp::SendPacketStatus;

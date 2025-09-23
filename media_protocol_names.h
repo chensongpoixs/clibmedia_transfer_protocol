@@ -23,7 +23,7 @@
 
 #include "absl/strings/string_view.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 // Names or name prefixes of protocols as defined by SDP specifications.
 extern const char kMediaProtocolRtpPrefix[];

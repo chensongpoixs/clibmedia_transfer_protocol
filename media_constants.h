@@ -25,7 +25,7 @@
 
 // This file contains constants related to media.
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 extern const int kVideoCodecClockrate;
 

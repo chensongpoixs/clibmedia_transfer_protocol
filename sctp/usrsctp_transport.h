@@ -38,8 +38,8 @@
 #include "rtc_base/third_party/sigslot/sigslot.h"
 #include "rtc_base/thread.h"
 // For SendDataParams/ReceiveDataParams.
-#include "libmtp/media_channel.h"
-#include "libmtp/sctp/sctp_transport_internal.h"
+#include "libmedia_transfer_protocol/media_channel.h"
+#include "libmedia_transfer_protocol/sctp/sctp_transport_internal.h"
 
 // Defined by "usrsctplib/usrsctp.h"
 struct sockaddr_conn;
@@ -50,7 +50,7 @@ struct sctp_sendv_spa;
 
 // Defined by <sys/socket.h>
 struct socket;
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 // Holds data to be passed on to a transport.
 struct SctpInboundPacket;

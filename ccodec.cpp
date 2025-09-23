@@ -16,7 +16,7 @@
 
 
  ******************************************************************************/
-#include "libmtp/ccodec.h"
+#include "libmedia_transfer_protocol/ccodec.h"
 #include <string>
 #include <map>
 #include <vector>
@@ -25,7 +25,7 @@
 #include "rtc_base/logging.h"
 #include "rtc_base/string_encode.h"
 #include "rtc_base/strings/string_builder.h"
-namespace libmtp
+namespace libmedia_transfer_protocol
 {
 	std::string AudioCodec::ToString() const
 	{

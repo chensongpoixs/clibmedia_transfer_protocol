@@ -17,21 +17,21 @@
 
  ******************************************************************************/
 
-#include "libmtp/sctp/sctp_transport_factory.h"
+#include "libmedia_transfer_protocol/sctp/sctp_transport_factory.h"
 
 #include "rtc_base/system/unused.h"
 
 #ifdef WEBRTC_HAVE_DCSCTP
-#include "libmtp/sctp/dcsctp_transport.h"          // nogncheck
+#include "libmedia_transfer_protocol/sctp/dcsctp_transport.h"          // nogncheck
 #include "system_wrappers/include/clock.h"        // nogncheck
 #include "system_wrappers/include/field_trial.h"  // nogncheck
 #endif
 
 #ifdef WEBRTC_HAVE_USRSCTP
-#include "libmtp/sctp/usrsctp_transport.h"  // nogncheck
+#include "libmedia_transfer_protocol/sctp/usrsctp_transport.h"  // nogncheck
 #endif
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 SctpTransportFactory::SctpTransportFactory(rtc::Thread* network_thread)
     : network_thread_(network_thread), use_dcsctp_("Enabled", false) {

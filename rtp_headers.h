@@ -35,7 +35,7 @@
 #include "api/video/video_rotation.h"
 #include "api/video/video_timing.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 struct FeedbackRequest {
   // Determines whether the recv delta as specified in

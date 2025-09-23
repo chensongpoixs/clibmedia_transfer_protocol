@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 enum class RidDirection { kSend, kReceive };
  

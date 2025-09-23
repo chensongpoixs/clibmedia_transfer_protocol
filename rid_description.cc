@@ -18,7 +18,7 @@
  ******************************************************************************/
 #include "media/base/rid_description.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
  
 

@@ -34,11 +34,11 @@
 #include "api/crypto/frame_decryptor_interface.h"
 #include "api/crypto/frame_encryptor_interface.h"
 #include "api/frame_transformer_interface.h"
-#include "libmtp/media_stream_interface.h"
+#include "libmedia_transfer_protocol/media_stream_interface.h"
 #include "api/rtc_error.h"
-#include "libmtp/rtp_parameters.h"
-#include "libmtp/sctp/data_channel_transport_interface.h"
-#include "libmtp/rtp/rtp_source.h"
+#include "libmedia_transfer_protocol/rtp_parameters.h"
+#include "libmedia_transfer_protocol/sctp/data_channel_transport_interface.h"
+#include "libmedia_transfer_protocol/rtp/rtp_source.h"
 #include "api/units/time_delta.h"
 #include "api/video/video_content_type.h"
 #include "api/video/video_sink_interface.h"
@@ -47,11 +47,11 @@
 #include "api/video_codecs/video_encoder_config.h"
 #include "call/video_receive_stream.h"
 #include "common_video/include/quality_limitation_reason.h"
-#include "libmtp/ccodec.h"
-#include "libmtp/delayable.h"
-#include "libmtp/media_config.h"
-#include "libmtp/media_constants.h"
-#include "libmtp/stream_params.h"
+#include "libmedia_transfer_protocol/ccodec.h"
+#include "libmedia_transfer_protocol/delayable.h"
+#include "libmedia_transfer_protocol/media_config.h"
+#include "libmedia_transfer_protocol/media_constants.h"
+#include "libmedia_transfer_protocol/stream_params.h"
 #include "modules/audio_processing/include/audio_processing_statistics.h"
 #include "modules/rtp_rtcp/include/report_block_data.h"
 #include "rtc_base/async_packet_socket.h"
@@ -74,7 +74,7 @@ class AudioSinkInterface;
 class VideoFrame;
 }  // namespace webrtc
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 class AudioSource;
 class VideoCapturer;
@@ -918,7 +918,7 @@ struct ReceiveDataParams {
   // SCTP data channels use SIDs.
   int sid = 0;
   // The type of message (binary, text, or control).
-  libmtp::DataMessageType type = libmtp::DataMessageType::kText;
+  libmedia_transfer_protocol::DataMessageType type = libmedia_transfer_protocol::DataMessageType::kText;
   // A per-stream value incremented per packet in the stream.
   int seq_num = 0;
 };

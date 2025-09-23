@@ -17,7 +17,7 @@
 
  ******************************************************************************/
 
-#include "libmtp/stream_params.h"
+#include "libmedia_transfer_protocol/stream_params.h"
 
 #include <stdint.h>
 
@@ -27,7 +27,7 @@
 #include "api/array_view.h"
 #include "rtc_base/strings/string_builder.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 namespace {
 
 void AppendSsrcs(rtc::ArrayView<const uint32_t> ssrcs,

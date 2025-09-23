@@ -28,11 +28,11 @@
 
 
 
-#define  libmtp    libMediaTransferProtocol
+#define  libmtp    libmedia_transfer_protocol
 
 
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 // Construction-time settings, passed on when creating
 // MediaChannels.

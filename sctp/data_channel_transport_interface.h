@@ -27,7 +27,7 @@
 #include "api/rtc_error.h"
 #include "rtc_base/copy_on_write_buffer.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 // Supported types of application data messages.
 enum class DataMessageType {

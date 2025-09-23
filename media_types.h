@@ -28,7 +28,7 @@
 // The cricket and webrtc have separate definitions for what a media type is.
 // They're not compatible. Watch out for this.
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 enum MediaType {
   MEDIA_TYPE_AUDIO,

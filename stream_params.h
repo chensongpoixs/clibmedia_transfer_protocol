@@ -62,11 +62,11 @@
 
 #include "absl/algorithm/container.h"
 //#include "media/base/rid_description.h"
-#include "libmtp/rid_description.h"
+#include "libmedia_transfer_protocol/rid_description.h"
 #include "rtc_base/constructor_magic.h"
 #include "rtc_base/unique_id_generator.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 extern const char kFecSsrcGroupSemantics[];
 extern const char kFecFrSsrcGroupSemantics[];

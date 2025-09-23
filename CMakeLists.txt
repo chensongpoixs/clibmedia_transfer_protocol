@@ -18,13 +18,23 @@ MESSAGE(STATUS  "####################################")
  
 
 
-#
+include_directories(
+	#${XRTC_DIR}
+	#${XRTC_THIRD_PARTY_DIR}/include
+	#${XRTC_DIR}/../xrtc-third_party/NIM_Duilib_Framework
+	../
+	../libwebrtc
+	../deps/libyuv/include
+	../deps/abseil-cpp/
+	../deps/curl-7.81.0/include
+	../deps/jsoncpp/source/include
+)
 
 
 
 #usrsctplib
 
-file(GLOB libmtp_source 
+file(GLOB libmedia_transfer_protocol_source 
 	 
 	*.h
 	*.cpp 
@@ -37,7 +47,7 @@ file(GLOB libmtp_source
 
 
  
-add_library(${PROJECT_NAME}   STATIC  ${libmtp_source})
+add_library(${PROJECT_NAME}   STATIC  ${libmedia_transfer_protocol_source})
  
 
  
@@ -46,7 +56,7 @@ add_library(${PROJECT_NAME}   STATIC  ${libmtp_source})
 #set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /SAFESEH:NO")
 
 
-set(AllFile ${libmtp_source} )
+set(AllFile ${libmedia_transfer_protocol_source} )
 foreach(fileItem ${AllFile})       
     # Get the directory of the source file
     get_filename_component(PARENT_DIR "${fileItem}" DIRECTORY)
@@ -63,6 +73,6 @@ endforeach()
 
 
 
-set_property(TARGET ${PROJECT_NAME}  				PROPERTY FOLDER libice) 
+#set_property(TARGET ${PROJECT_NAME}  				PROPERTY FOLDER libice) 
 
 #file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

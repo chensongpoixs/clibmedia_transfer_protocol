@@ -27,16 +27,16 @@
 #include <string>
 #include <vector>
 
-#include "libmtp/sctp/data_channel_transport_interface.h"
+#include "libmedia_transfer_protocol/sctp/data_channel_transport_interface.h"
 #include "rtc_base/copy_on_write_buffer.h"
 #include "rtc_base/thread.h"
 // For SendDataParams/ReceiveDataParams.
 // TODO(deadbeef): Use something else for SCTP. It's confusing that we use an
 // SSRC field for SID.
-#include "libmtp/media_channel.h"
+#include "libmedia_transfer_protocol/media_channel.h"
 #include "ice/packet_transport_internal.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 // Constants that are important to API users
 // The size of the SCTP association send buffer. 256kB, the usrsctp default.

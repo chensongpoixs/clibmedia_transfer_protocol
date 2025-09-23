@@ -31,14 +31,14 @@
 #include "ice/dtls_transport_interface.h"
 #include "api/frame_transformer_interface.h"
 #include "api/media_stream_interface.h"
-#include "libmtp/media_types.h"
-//#include "libmtp/rtp_parameters.h"
+#include "libmedia_transfer_protocol/media_types.h"
+//#include "libmedia_transfer_protocol/rtp_parameters.h"
 #include "api/scoped_refptr.h"
 #include "api/transport/rtp/rtp_source.h"
 #include "rtc_base/ref_count.h"
 #include "rtc_base/system/rtc_export.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 class RtpReceiverObserverInterface {
  public:
@@ -48,7 +48,7 @@ class RtpReceiverObserverInterface {
   // In the future, it's likely that an RtpReceiver will only call
   // OnFirstPacketReceived when a packet is received specifically for its
   // SSRC/mid.
-  virtual void OnFirstPacketReceived(libmtp::MediaType media_type) = 0;
+  virtual void OnFirstPacketReceived(libmedia_transfer_protocol::MediaType media_type) = 0;
 
  protected:
   virtual ~RtpReceiverObserverInterface() {}
@@ -75,7 +75,7 @@ class RTC_EXPORT RtpReceiverInterface : public rtc::RefCountInterface {
   virtual std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>> streams() const;
 
   // Audio or video receiver?
-  virtual libmtp::MediaType media_type() const = 0;
+  virtual libmedia_transfer_protocol::MediaType media_type() const = 0;
 
   // Not to be confused with "mid", this is a field we can temporarily use
   // to uniquely identify a receiver until we implement Unified Plan SDP.

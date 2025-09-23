@@ -26,7 +26,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
 #include "api/array_view.h"
-#include "libmtp/sctp/sctp_transport_internal.h"
+#include "libmedia_transfer_protocol/sctp/sctp_transport_internal.h"
 #include "net/dcsctp/public/dcsctp_options.h"
 #include "net/dcsctp/public/dcsctp_socket.h"
 #include "net/dcsctp/public/types.h"
@@ -38,7 +38,7 @@
 #include "rtc_base/thread.h"
 #include "system_wrappers/include/clock.h"
 
-namespace libmtp {
+namespace libmedia_transfer_protocol {
 
 class DcSctpTransport : public cricket::SctpTransportInternal,
                         public dcsctp::DcSctpSocketCallbacks,
