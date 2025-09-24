@@ -45,6 +45,9 @@ file(GLOB libmedia_transfer_protocol_source
 	 sctp/*.h
 	 rtp/*.cpp 
 	 rtp/*.h 
+	 rtp_rtcp/rtp_util.h
+	 rtp_rtcp/rtp_util.cpp 
+	 rtp_rtcp/byte_io.h
 	 #rtp_rtcp/*.cpp 
 	 #rtp_rtcp/*.h 
 	 #rtp_rtcp/*.cc 

@@ -24,10 +24,8 @@
 #include "api/array_view.h"
 #include "rtc_base/byte_order.h"
 #include "rtc_base/system/rtc_export.h"
+#include "rtc_base/async_packet_socket.h"
 
-namespace rtc {
-struct PacketTimeUpdateParams;
-}  // namespace rtc
 
 namespace libmedia_transfer_protocol {
 
