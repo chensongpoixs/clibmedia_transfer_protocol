@@ -57,10 +57,10 @@
 
 namespace libmedia_transfer_protocol {
 
-	class Clock;
+	//class Clock;
 	struct PacedPacketInfo;
 	struct RTPVideoHeader;
-
+	class ModuleRtpRtcpImpl2;
 	class ModuleRtpRtcpImpl2 final : public RtpRtcpInterface,
 		public RTCPReceiver::ModuleRtpRtcp {
 	public:

@@ -69,7 +69,7 @@ void DEPRECATED_RtpSenderEgress::NonPacedPacketSender::EnqueuePackets(
     }
     packet->ReserveExtension<TransmissionOffset>();
     packet->ReserveExtension<AbsoluteSendTime>();
-    sender_->SendPacket(packet.get(), PacedPacketInfo());
+    sender_->SendPacket(packet.get(), libice::PacedPacketInfo());
   }
 }
 
@@ -85,8 +85,8 @@ DEPRECATED_RtpSenderEgress::DEPRECATED_RtpSenderEgress(
           !IsDisabled("WebRTC-SendSideBwe-WithOverhead", config.field_trials)),
       clock_(config.clock),
       packet_history_(packet_history),
-      transport_(config.outgoing_transport),
-      event_log_(config.event_log),
+   //   transport_(config.outgoing_transport),
+    //  event_log_(config.event_log),
       is_audio_(config.audio),
       need_rtp_packet_infos_(config.need_rtp_packet_infos),
       transport_feedback_observer_(config.transport_feedback_callback),
@@ -101,7 +101,7 @@ DEPRECATED_RtpSenderEgress::DEPRECATED_RtpSenderEgress(
       sum_delays_ms_(0),
       total_packet_send_delay_ms_(0),
       send_rates_(kNumMediaTypes,
-                  {kBitrateStatisticsWindowMs, RateStatistics::kBpsScale}),
+                  {kBitrateStatisticsWindowMs, webrtc::RateStatistics::kBpsScale}),
       rtp_sequence_number_map_(need_rtp_packet_infos_
                                    ? std::make_unique<RtpSequenceNumberMap>(
                                          kRtpSequenceNumberMapMaxEntries)
@@ -109,7 +109,7 @@ DEPRECATED_RtpSenderEgress::DEPRECATED_RtpSenderEgress(
 
 void DEPRECATED_RtpSenderEgress::SendPacket(
     RtpPacketToSend* packet,
-    const PacedPacketInfo& pacing_info) {
+    const libice::PacedPacketInfo& pacing_info) {
   RTC_DCHECK(packet);
 
   const uint32_t packet_ssrc = packet->Ssrc();
@@ -137,9 +137,9 @@ void DEPRECATED_RtpSenderEgress::SendPacket(
 #endif
   }
 
-  PacketOptions options;
+  webrtc::PacketOptions options;
   {
-    MutexLock lock(&lock_);
+	  webrtc::MutexLock lock(&lock_);
     options.included_in_allocation = force_part_of_allocation_;
 
     if (need_rtp_packet_infos_ &&
@@ -216,7 +216,7 @@ void DEPRECATED_RtpSenderEgress::SendPacket(
   }
 
   if (send_success) {
-    MutexLock lock(&lock_);
+	  webrtc::MutexLock lock(&lock_);
     UpdateRtpStats(*packet);
     media_has_been_sent_ = true;
   }
@@ -226,7 +226,7 @@ void DEPRECATED_RtpSenderEgress::ProcessBitrateAndNotifyObservers() {
   if (!bitrate_callback_)
     return;
 
-  MutexLock lock(&lock_);
+  webrtc::MutexLock lock(&lock_);
   RtpSendRates send_rates = GetSendRatesLocked();
   bitrate_callback_->Notify(
       send_rates.Sum().bps(),
@@ -234,7 +234,7 @@ void DEPRECATED_RtpSenderEgress::ProcessBitrateAndNotifyObservers() {
 }
 
 RtpSendRates DEPRECATED_RtpSenderEgress::GetSendRates() const {
-  MutexLock lock(&lock_);
+	webrtc::MutexLock lock(&lock_);
   return GetSendRatesLocked();
 }
 
@@ -244,7 +244,7 @@ RtpSendRates DEPRECATED_RtpSenderEgress::GetSendRatesLocked() const {
   for (size_t i = 0; i < kNumMediaTypes; ++i) {
     RtpPacketMediaType type = static_cast<RtpPacketMediaType>(i);
     current_rates[type] =
-        DataRate::BitsPerSec(send_rates_[i].Rate(now_ms).value_or(0));
+		webrtc::DataRate::BitsPerSec(send_rates_[i].Rate(now_ms).value_or(0));
   }
   return current_rates;
 }
@@ -252,29 +252,29 @@ RtpSendRates DEPRECATED_RtpSenderEgress::GetSendRatesLocked() const {
 void DEPRECATED_RtpSenderEgress::GetDataCounters(
     StreamDataCounters* rtp_stats,
     StreamDataCounters* rtx_stats) const {
-  MutexLock lock(&lock_);
+	webrtc::MutexLock lock(&lock_);
   *rtp_stats = rtp_stats_;
   *rtx_stats = rtx_rtp_stats_;
 }
 
 void DEPRECATED_RtpSenderEgress::ForceIncludeSendPacketsInAllocation(
     bool part_of_allocation) {
-  MutexLock lock(&lock_);
+	webrtc::MutexLock lock(&lock_);
   force_part_of_allocation_ = part_of_allocation;
 }
 
 bool DEPRECATED_RtpSenderEgress::MediaHasBeenSent() const {
-  MutexLock lock(&lock_);
+	webrtc::MutexLock lock(&lock_);
   return media_has_been_sent_;
 }
 
 void DEPRECATED_RtpSenderEgress::SetMediaHasBeenSent(bool media_sent) {
-  MutexLock lock(&lock_);
+	webrtc::MutexLock lock(&lock_);
   media_has_been_sent_ = media_sent;
 }
 
 void DEPRECATED_RtpSenderEgress::SetTimestampOffset(uint32_t timestamp) {
-  MutexLock lock(&lock_);
+	webrtc::MutexLock lock(&lock_);
   timestamp_offset_ = timestamp;
 }
 
@@ -289,7 +289,7 @@ DEPRECATED_RtpSenderEgress::GetSentRtpPacketInfos(
   std::vector<RtpSequenceNumberMap::Info> results;
   results.reserve(sequence_numbers.size());
 
-  MutexLock lock(&lock_);
+  webrtc::MutexLock lock(&lock_);
   for (uint16_t sequence_number : sequence_numbers) {
     const auto& info = rtp_sequence_number_map_->Get(sequence_number);
     if (!info) {
@@ -324,7 +324,7 @@ bool DEPRECATED_RtpSenderEgress::HasCorrectSsrc(
 void DEPRECATED_RtpSenderEgress::AddPacketToTransportFeedback(
     uint16_t packet_id,
     const RtpPacketToSend& packet,
-    const PacedPacketInfo& pacing_info) {
+    const libice::PacedPacketInfo& pacing_info) {
   if (transport_feedback_observer_) {
     size_t packet_size = packet.payload_size() + packet.padding_size();
     if (send_side_bwe_with_overhead_) {
@@ -354,7 +354,7 @@ void DEPRECATED_RtpSenderEgress::UpdateDelayStatistics(int64_t capture_time_ms,
   int max_delay_ms = 0;
   uint64_t total_packet_send_delay_ms = 0;
   {
-    MutexLock lock(&lock_);
+	  webrtc::MutexLock lock(&lock_);
     // Compute the max and average of the recent capture-to-send delays.
     // The time complexity of the current approach depends on the distribution
     // of the delay values. This could be done more efficiently.
@@ -441,19 +441,20 @@ void DEPRECATED_RtpSenderEgress::UpdateOnSendPacket(int packet_id,
 
 bool DEPRECATED_RtpSenderEgress::SendPacketToNetwork(
     const RtpPacketToSend& packet,
-    const PacketOptions& options,
-    const PacedPacketInfo& pacing_info) {
+    const webrtc::PacketOptions& options,
+    const libice::PacedPacketInfo& pacing_info) {
   int bytes_sent = -1;
+#if 0
   if (transport_) {
     bytes_sent = transport_->SendRtp(packet.data(), packet.size(), options)
                      ? static_cast<int>(packet.size())
                      : -1;
-    if (event_log_ && bytes_sent > 0) {
+  /*  if (event_log_ && bytes_sent > 0) {
       event_log_->Log(std::make_unique<RtcEventRtpPacketOutgoing>(
           packet, pacing_info.probe_cluster_id));
-    }
+    }*/
   }
-
+#endif  // 
   if (bytes_sent <= 0) {
     RTC_LOG(LS_WARNING) << "Transport failed to send packet.";
     return false;

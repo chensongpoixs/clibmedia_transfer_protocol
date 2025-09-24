@@ -30,6 +30,7 @@
 #include "api/array_view.h"
 #include "api/sequence_checker.h"
 #include "api/units/time_delta.h"
+#include "api/video/video_bitrate_allocator.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/report_block_data.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtcp_statistics.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtp_rtcp_defines.h"
@@ -54,6 +55,9 @@ class Rrtr;
 class TargetBitrate;
 class TmmbItem;
 }  // namespace rtcp
+
+
+class ModuleRtpRtcpImpl2;
 
 class RTCPReceiver final {
  public:
@@ -99,10 +103,10 @@ class RTCPReceiver final {
     int round_trip_time_measurements_ = 0;
   };
 
-  RTCPReceiver(const libmedia_transfer_protocol::RtpRtcpInterface::Configuration& config,
+  RTCPReceiver(const RtpRtcpInterface::Configuration& config,
                ModuleRtpRtcp* owner);
 
-  RTCPReceiver(const libmedia_transfer_protocol::RtpRtcpInterface::Configuration& config,
+  RTCPReceiver(const RtpRtcpInterface::Configuration& config,
                ModuleRtpRtcpImpl2* owner);
 
   ~RTCPReceiver();

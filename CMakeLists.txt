@@ -64,15 +64,18 @@ rtp_rtcp/rtp_header_extension_map.cpp
 	rtp_rtcp/rtp_rtcp_defines.cpp 
 	rtp_rtcp/rtp_packet.h
 	rtp_rtcp/rtp_packet.cpp
-	 #rtp_rtcp/*.cpp 
-	 #rtp_rtcp/*.h 
-	 #rtp_rtcp/*.cc 
+	rtp_rtcp/rtcp_packet/*.h 
+	rtp_rtcp/rtcp_packet/*.cc 
+	rtp_rtcp/rtcp_packet/*.cpp 
+	 rtp_rtcp/*.cpp 
+	 rtp_rtcp/*.h 
+	 rtp_rtcp/*.cc 
 	 #rtp_rtcp/rtcp_packet/*.cpp 
 	 #rtp_rtcp/rtcp_packet/*.h 
 	 #rtp_rtcp/rtcp_packet/*.cc 
-	 #rtp_rtcp/deprecated/*.cpp 
-	 #rtp_rtcp/deprecated/*.cc 
-	 #rtp_rtcp/deprecated/*.h 
+	 rtp_rtcp/deprecated/*.cpp 
+	 rtp_rtcp/deprecated/*.cc 
+	 rtp_rtcp/deprecated/*.h 
 ) 
 
 

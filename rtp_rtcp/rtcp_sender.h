@@ -51,7 +51,7 @@ namespace libmedia_transfer_protocol {
 
 //class RTCPReceiver;
 //class RtcEventLog;
-
+	class RTCPReceiver;
 class RTCPSender final {
  public:
   struct Configuration {
@@ -86,7 +86,7 @@ class RTCPSender final {
     // have migrated to the callback solution.
     std::function<void(webrtc::TimeDelta)> schedule_next_rtcp_send_evaluation_function;
 
-    RtcEventLog* event_log = nullptr;
+  //  RtcEventLog* event_log = nullptr;
     absl::optional<webrtc::TimeDelta> rtcp_report_interval;
     ReceiveStatisticsProvider* receive_statistics = nullptr;
     RtcpPacketTypeCounterObserver* rtcp_packet_type_counter_observer = nullptr;
@@ -249,7 +249,7 @@ class RTCPSender final {
   webrtc::Random random_ RTC_GUARDED_BY(mutex_rtcp_sender_);
   RtcpMode method_ RTC_GUARDED_BY(mutex_rtcp_sender_);
 
-  RtcEventLog* const event_log_;
+ // RtcEventLog* const event_log_;
   webrtc::Transport* const transport_;
 
   const webrtc::TimeDelta report_interval_;

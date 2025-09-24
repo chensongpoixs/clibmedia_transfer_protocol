@@ -63,7 +63,7 @@ class DEPRECATED_RtpSenderEgress {
                              RtpPacketHistory* packet_history);
   ~DEPRECATED_RtpSenderEgress() = default;
 
-  void SendPacket(RtpPacketToSend* packet, const PacedPacketInfo& pacing_info)
+  void SendPacket(RtpPacketToSend* packet, const libice::PacedPacketInfo& pacing_info)
       RTC_LOCKS_EXCLUDED(lock_);
   uint32_t Ssrc() const { return ssrc_; }
   absl::optional<uint32_t> RtxSsrc() const { return rtx_ssrc_; }
@@ -100,7 +100,7 @@ class DEPRECATED_RtpSenderEgress {
   bool HasCorrectSsrc(const RtpPacketToSend& packet) const;
   void AddPacketToTransportFeedback(uint16_t packet_id,
                                     const RtpPacketToSend& packet,
-                                    const PacedPacketInfo& pacing_info);
+                                    const libice::PacedPacketInfo& pacing_info);
   void UpdateDelayStatistics(int64_t capture_time_ms,
                              int64_t now_ms,
                              uint32_t ssrc);
@@ -110,8 +110,8 @@ class DEPRECATED_RtpSenderEgress {
                           uint32_t ssrc);
   // Sends packet on to `transport_`, leaving the RTP module.
   bool SendPacketToNetwork(const RtpPacketToSend& packet,
-                           const PacketOptions& options,
-                           const PacedPacketInfo& pacing_info);
+                           const webrtc::PacketOptions& options,
+                           const libice::PacedPacketInfo& pacing_info);
   void UpdateRtpStats(const RtpPacketToSend& packet)
       RTC_EXCLUSIVE_LOCKS_REQUIRED(lock_);
 
@@ -120,10 +120,10 @@ class DEPRECATED_RtpSenderEgress {
   const absl::optional<uint32_t> flexfec_ssrc_;
   const bool populate_network2_timestamp_;
   const bool send_side_bwe_with_overhead_;
-  Clock* const clock_;
+  webrtc::Clock* const clock_;
   RtpPacketHistory* const packet_history_;
-  Transport* const transport_;
-  RtcEventLog* const event_log_;
+  //webrtc::Transport* const transport_;
+  //RtcEventLog* const event_log_;
   const bool is_audio_;
   const bool need_rtp_packet_infos_;
 
@@ -133,7 +133,7 @@ class DEPRECATED_RtpSenderEgress {
   StreamDataCountersCallback* const rtp_stats_callback_;
   BitrateStatisticsObserver* const bitrate_callback_;
 
-  mutable Mutex lock_;
+  mutable webrtc::Mutex lock_;
   bool media_has_been_sent_ RTC_GUARDED_BY(lock_);
   bool force_part_of_allocation_ RTC_GUARDED_BY(lock_);
   uint32_t timestamp_offset_ RTC_GUARDED_BY(lock_);
@@ -146,7 +146,7 @@ class DEPRECATED_RtpSenderEgress {
   StreamDataCounters rtp_stats_ RTC_GUARDED_BY(lock_);
   StreamDataCounters rtx_rtp_stats_ RTC_GUARDED_BY(lock_);
   // One element per value in RtpPacketMediaType, with index matching value.
-  std::vector<RateStatistics> send_rates_ RTC_GUARDED_BY(lock_);
+  std::vector<webrtc::RateStatistics> send_rates_ RTC_GUARDED_BY(lock_);
 
   // Maps sent packets' sequence numbers to a tuple consisting of:
   // 1. The timestamp, without the randomizing offset mandated by the RFC.

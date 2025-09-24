@@ -146,7 +146,7 @@ class RtpSenderEgress {
   const bool send_side_bwe_with_overhead_;
   webrtc::Clock* const clock_;
   RtpPacketHistory* const packet_history_;
-  webrtc::Transport* const transport_;
+  //webrtc::Transport* const transport_;
   //RtcEventLog* const event_log_;
 #if BWE_TEST_LOGGING_COMPILE_TIME_ENABLE
   const bool is_audio_;

@@ -28,10 +28,11 @@
 #include "api/task_queue/task_queue_base.h"
 #include "api/video/video_layers_allocation.h"
 #include "rtc_base/synchronization/mutex.h"
+#include "libmedia_transfer_protocol/rtp_rtcp/rtp_video_header.h"
 
 namespace libmedia_transfer_protocol {
 
-//class RTPSenderVideo;
+class RTPSenderVideo;
 
 // Delegates calls to FrameTransformerInterface to transform frames, and to
 // RTPSenderVideo to send the transformed frames. Ensures thread-safe access to

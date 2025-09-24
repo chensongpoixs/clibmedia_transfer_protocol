@@ -30,6 +30,9 @@
 #include "api/scoped_refptr.h"
 #include "api/transport/webrtc_key_value_config.h"
 #include "api/video/video_bitrate_allocation.h"
+#include "api/video/video_bitrate_allocator.h"
+#include "modules/remote_bitrate_estimator/include/remote_bitrate_estimator.h"
+#include "modules/remote_bitrate_estimator/include/bwe_defines.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/receive_statistics.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/report_block_data.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtp_packet_sender.h"
@@ -54,7 +57,7 @@ namespace libmedia_transfer_protocol {
 	//class RTPSender;
 	//class Transport;
 	//class VideoBitrateAllocationObserver;
-
+	class RTPSender;
 class RtpRtcpInterface : public RtcpFeedbackSenderInterface {
  public:
   struct Configuration {

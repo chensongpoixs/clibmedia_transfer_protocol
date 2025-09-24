@@ -134,7 +134,7 @@ RTCPSender::Configuration RTCPSender::Configuration::FromRtpRtcpConfiguration(
   result.audio = configuration.audio;
   result.local_media_ssrc = configuration.local_media_ssrc;
   result.clock = configuration.clock;
-  result.outgoing_transport = configuration.outgoing_transport;
+  //result.outgoing_transport = configuration.outgoing_transport;
   result.non_sender_rtt_measurement = configuration.non_sender_rtt_measurement;
   //result.event_log = configuration.event_log;
   if (configuration.rtcp_report_interval_ms) {
@@ -153,7 +153,7 @@ RTCPSender::RTCPSender(Configuration config)
       clock_(config.clock),
       random_(clock_->TimeInMicroseconds()),
       method_(RtcpMode::kOff),
-      event_log_(config.event_log),
+     // event_log_(config.event_log),
       transport_(config.outgoing_transport),
       report_interval_(config.rtcp_report_interval.value_or(
 		  webrtc::TimeDelta::Millis(config.audio ? kDefaultAudioReportInterval

@@ -98,7 +98,7 @@ RtpSenderEgress::RtpSenderEgress(const RtpRtcpInterface::Configuration& config,
                         "Disabled")),
       clock_(config.clock),
       packet_history_(packet_history),
-      transport_(config.outgoing_transport),
+     // transport_(config.outgoing_transport),
      // event_log_(config.event_log),
 #if BWE_TEST_LOGGING_COMPILE_TIME_ENABLE
       is_audio_(config.audio),
@@ -121,7 +121,8 @@ RtpSenderEgress::RtpSenderEgress(const RtpRtcpInterface::Configuration& config,
       rtp_sequence_number_map_(need_rtp_packet_infos_
                                    ? std::make_unique<RtpSequenceNumberMap>(
                                          kRtpSequenceNumberMapMaxEntries)
-                                   : nullptr) {
+                                   : nullptr)
+{
   RTC_DCHECK(worker_queue_);
   pacer_checker_.Detach();
   if (bitrate_callback_) {
@@ -561,6 +562,7 @@ bool RtpSenderEgress::SendPacketToNetwork(const RtpPacketToSend& packet,
                                           const webrtc::PacketOptions& options,
                                           const libice::PacedPacketInfo& pacing_info) {
   int bytes_sent = -1;
+#if 0
   if (transport_) {
     bytes_sent = transport_->SendRtp(packet.data(), packet.size(), options)
                      ? static_cast<int>(packet.size())
@@ -570,7 +572,7 @@ bool RtpSenderEgress::SendPacketToNetwork(const RtpPacketToSend& packet,
           packet, pacing_info.probe_cluster_id));
     }*/
   }
-
+#endif 
   if (bytes_sent <= 0) {
     RTC_LOG(LS_WARNING) << "Transport failed to send packet.";
     return false;

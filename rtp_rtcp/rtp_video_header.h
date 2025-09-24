@@ -28,6 +28,7 @@
 #include "absl/types/optional.h"
 #include "absl/types/variant.h"
 #include "libmedia_transfer_protocol/rtp/dependency_descriptor.h"
+#include "libmedia_transfer_protocol/rtp_rtcp/rtp_video_header.h"
 #include "api/video/color_space.h"
 #include "api/video/video_codec_type.h"
 #include "api/video/video_content_type.h"

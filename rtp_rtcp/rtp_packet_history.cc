@@ -473,7 +473,7 @@ int RtpPacketHistory::GetPacketIndex(uint16_t sequence_number) const {
   int packet_index = sequence_number - first_seq;
   constexpr int kSeqNumSpan = std::numeric_limits<uint16_t>::max() + 1;
 
-  if (IsNewerSequenceNumber(sequence_number, first_seq)) {
+  if (webrtc::IsNewerSequenceNumber(sequence_number, first_seq)) {
     if (sequence_number < first_seq) {
       // Forward wrap.
       packet_index += kSeqNumSpan;
