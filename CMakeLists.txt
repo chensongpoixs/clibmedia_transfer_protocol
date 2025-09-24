@@ -39,10 +39,21 @@ file(GLOB libmedia_transfer_protocol_source
 	*.h
 	*.cpp 
 	 *.cc 
+	 crypto/*.h
+	 crypto/*.cpp 
 	 sctp/*.cpp 
 	 sctp/*.h
 	 rtp/*.cpp 
 	 rtp/*.h 
+	 #rtp_rtcp/*.cpp 
+	 #rtp_rtcp/*.h 
+	 #rtp_rtcp/*.cc 
+	 #rtp_rtcp/rtcp_packet/*.cpp 
+	 #rtp_rtcp/rtcp_packet/*.h 
+	 #rtp_rtcp/rtcp_packet/*.cc 
+	 #rtp_rtcp/deprecated/*.cpp 
+	 #rtp_rtcp/deprecated/*.cc 
+	 #rtp_rtcp/deprecated/*.h 
 ) 
 
 

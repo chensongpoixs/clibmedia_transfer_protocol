@@ -24,9 +24,9 @@
 namespace libmedia_transfer_protocol {
 
 void RtpSenderInterface::SetFrameEncryptor(
-    rtc::scoped_refptr<webrtc::FrameEncryptorInterface> frame_encryptor) {}
+    rtc::scoped_refptr<FrameEncryptorInterface> frame_encryptor) {}
 
-rtc::scoped_refptr<webrtc::FrameEncryptorInterface>
+rtc::scoped_refptr<FrameEncryptorInterface>
 RtpSenderInterface::GetFrameEncryptor() const {
   return nullptr;
 }

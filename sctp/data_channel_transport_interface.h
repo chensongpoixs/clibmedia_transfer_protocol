@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *  Copyright (c) 2025 The CRTC project authors . All Rights Reserved.
  *
  *  Please visit https://chensongpoixs.github.io for detail
@@ -23,7 +23,7 @@
 #ifndef _C_API_TRANSPORT_DATA_CHANNEL_TRANSPORT_INTERFACE_H_
 #define _C_API_TRANSPORT_DATA_CHANNEL_TRANSPORT_INTERFACE_H_
 
-#include "absl/types/optional.h"
+//#include "absl/types/optional.h"
 #include "api/rtc_error.h"
 #include "rtc_base/copy_on_write_buffer.h"
 

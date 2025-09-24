@@ -28,7 +28,7 @@
 #include <string>
 #include <vector>
 
-#include "api/crypto/frame_encryptor_interface.h"
+#include "libmedia_transfer_protocol/crypto/frame_encryptor_interface.h"
 #include "libice/dtls_transport_interface.h"
 #include "libmedia_transfer_protocol/dtmf_sender_interface.h"
 #include "libmedia_transfer_protocol/frame_transformer_interface.h"
@@ -98,11 +98,11 @@ class RTC_EXPORT RtpSenderInterface : public rtc::RefCountInterface {
   // using the user provided encryption mechanism regardless of whether SRTP is
   // enabled or not.
   virtual void SetFrameEncryptor(
-      rtc::scoped_refptr<webrtc::FrameEncryptorInterface> frame_encryptor);
+      rtc::scoped_refptr<libmedia_transfer_protocol::FrameEncryptorInterface> frame_encryptor);
 
   // Returns a pointer to the frame encryptor set previously by the
   // user. This can be used to update the state of the object.
-  virtual rtc::scoped_refptr<webrtc::FrameEncryptorInterface> GetFrameEncryptor() const;
+  virtual rtc::scoped_refptr<libmedia_transfer_protocol::FrameEncryptorInterface> GetFrameEncryptor() const;
 
   virtual void SetEncoderToPacketizerFrameTransformer(
       rtc::scoped_refptr<libmedia_transfer_protocol::FrameTransformerInterface> frame_transformer);

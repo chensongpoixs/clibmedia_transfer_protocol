@@ -1,0 +1,58 @@
+/******************************************************************************
+ *  Copyright (c) 2025 The CRTC project authors . All Rights Reserved.
+ *
+ *  Please visit https://chensongpoixs.github.io for detail
+ *
+ *  Use of this source code is governed by a BSD-style license
+ *  that can be found in the LICENSE file in the root of the source
+ *  tree. An additional intellectual property rights grant can be found
+ *  in the file PATENTS.  All contributing project authors may
+ *  be found in the AUTHORS file in the root of the source tree.
+ ******************************************************************************/
+ /*****************************************************************************
+				   Author: chensong
+				   date:  2025-09-24
+
+
+
+ ******************************************************************************/
+
+
+
+#ifndef _C_MODULES_RTP_RTCP_SOURCE_RTCP_PACKET_PSFB_H_
+#define _C_MODULES_RTP_RTCP_SOURCE_RTCP_PACKET_PSFB_H_
+
+#include <stddef.h>
+#include <stdint.h>
+
+#include "libmedia_transfer_protocol/rtp_rtcp/rtcp_packet.h"
+
+namespace libmedia_transfer_protocol {
+namespace rtcp {
+
+// PSFB: Payload-specific feedback message.
+// RFC 4585, Section 6.3.
+class Psfb : public RtcpPacket {
+ public:
+  static constexpr uint8_t kPacketType = 206;
+  static constexpr uint8_t kAfbMessageType = 15;
+
+  Psfb() = default;
+  ~Psfb() override = default;
+
+  void SetMediaSsrc(uint32_t ssrc) { media_ssrc_ = ssrc; }
+
+  uint32_t media_ssrc() const { return media_ssrc_; }
+
+ protected:
+  static constexpr size_t kCommonFeedbackLength = 8;
+  void ParseCommonFeedback(const uint8_t* payload);
+  void CreateCommonFeedback(uint8_t* payload) const;
+
+ private:
+  uint32_t media_ssrc_ = 0;
+};
+
+}  // namespace rtcp
+}  // namespace webrtc
+#endif  // MODULES_RTP_RTCP_SOURCE_RTCP_PACKET_PSFB_H_

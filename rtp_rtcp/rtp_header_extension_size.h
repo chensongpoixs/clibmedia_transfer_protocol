@@ -1,0 +1,42 @@
+/******************************************************************************
+ *  Copyright (c) 2025 The CRTC project authors . All Rights Reserved.
+ *
+ *  Please visit https://chensongpoixs.github.io for detail
+ *
+ *  Use of this source code is governed by a BSD-style license
+ *  that can be found in the LICENSE file in the root of the source
+ *  tree. An additional intellectual property rights grant can be found
+ *  in the file PATENTS.  All contributing project authors may
+ *  be found in the AUTHORS file in the root of the source tree.
+ ******************************************************************************/
+ /*****************************************************************************
+				   Author: chensong
+				   date:  2025-09-21
+
+
+
+ ******************************************************************************/
+
+#ifndef _C_MODULES_RTP_RTCP_SOURCE_RTP_HEADER_EXTENSION_SIZE_H_
+#define _C_MODULES_RTP_RTCP_SOURCE_RTP_HEADER_EXTENSION_SIZE_H_
+
+#include "api/array_view.h"
+#include "libmedia_transfer_protocol/rtp_rtcp/rtp_header_extension_map.h"
+#include "libmedia_transfer_protocol/rtp_rtcp/rtp_rtcp_defines.h"
+
+namespace libmedia_transfer_protocol {
+
+struct RtpExtensionSize {
+  RTPExtensionType type;
+  int value_size;
+};
+
+// Calculates rtp header extension size in bytes assuming packet contain
+// all `extensions` with provided `value_size`.
+// Counts only extensions present among `registered_extensions`.
+int RtpHeaderExtensionSize(rtc::ArrayView<const RtpExtensionSize> extensions,
+                           const RtpHeaderExtensionMap& registered_extensions);
+
+}  // namespace webrtc
+
+#endif  // MODULES_RTP_RTCP_SOURCE_RTP_HEADER_EXTENSION_SIZE_H_
