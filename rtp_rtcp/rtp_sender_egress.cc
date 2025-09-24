@@ -98,7 +98,7 @@ RtpSenderEgress::RtpSenderEgress(const RtpRtcpInterface::Configuration& config,
                         "Disabled")),
       clock_(config.clock),
       packet_history_(packet_history),
-     // transport_(config.outgoing_transport),
+      transport_(config.outgoing_transport),
      // event_log_(config.event_log),
 #if BWE_TEST_LOGGING_COMPILE_TIME_ENABLE
       is_audio_(config.audio),
@@ -256,7 +256,7 @@ void RtpSenderEgress::SendPacket(RtpPacketToSend* packet,
   const bool is_media = packet->packet_type() == RtpPacketMediaType::kAudio ||
                         packet->packet_type() == RtpPacketMediaType::kVideo;
 
-  webrtc::PacketOptions options;
+  PacketOptions options;
   {
 	  webrtc::MutexLock lock(&lock_);
     options.included_in_allocation = force_part_of_allocation_;
@@ -559,10 +559,10 @@ void RtpSenderEgress::UpdateOnSendPacket(int packet_id,
 }
 
 bool RtpSenderEgress::SendPacketToNetwork(const RtpPacketToSend& packet,
-                                          const webrtc::PacketOptions& options,
+                                          const PacketOptions& options,
                                           const libice::PacedPacketInfo& pacing_info) {
   int bytes_sent = -1;
-#if 0
+#if 1
   if (transport_) {
     bytes_sent = transport_->SendRtp(packet.data(), packet.size(), options)
                      ? static_cast<int>(packet.size())

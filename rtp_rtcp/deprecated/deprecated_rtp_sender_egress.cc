@@ -85,7 +85,7 @@ DEPRECATED_RtpSenderEgress::DEPRECATED_RtpSenderEgress(
           !IsDisabled("WebRTC-SendSideBwe-WithOverhead", config.field_trials)),
       clock_(config.clock),
       packet_history_(packet_history),
-   //   transport_(config.outgoing_transport),
+      transport_(config.outgoing_transport),
     //  event_log_(config.event_log),
       is_audio_(config.audio),
       need_rtp_packet_infos_(config.need_rtp_packet_infos),
@@ -137,7 +137,7 @@ void DEPRECATED_RtpSenderEgress::SendPacket(
 #endif
   }
 
-  webrtc::PacketOptions options;
+   PacketOptions options;
   {
 	  webrtc::MutexLock lock(&lock_);
     options.included_in_allocation = force_part_of_allocation_;
@@ -441,7 +441,7 @@ void DEPRECATED_RtpSenderEgress::UpdateOnSendPacket(int packet_id,
 
 bool DEPRECATED_RtpSenderEgress::SendPacketToNetwork(
     const RtpPacketToSend& packet,
-    const webrtc::PacketOptions& options,
+    const  PacketOptions& options,
     const libice::PacedPacketInfo& pacing_info) {
   int bytes_sent = -1;
 #if 0

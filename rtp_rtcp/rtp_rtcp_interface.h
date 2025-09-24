@@ -55,7 +55,7 @@ namespace libmedia_transfer_protocol {
 	//class RemoteBitrateEstimator;
 	//class RtcEventLog;
 	//class RTPSender;
-	//class Transport;
+	class Transport;
 	//class VideoBitrateAllocationObserver;
 	class RTPSender;
 class RtpRtcpInterface : public RtcpFeedbackSenderInterface {
@@ -76,7 +76,7 @@ class RtpRtcpInterface : public RtcpFeedbackSenderInterface {
 
     // Transport object that will be called when packets are ready to be sent
     // out on the network.
-    //webrtc::Transport* outgoing_transport = nullptr;
+     Transport* outgoing_transport = nullptr;
 
     // Called when the receiver requests an intra frame.
     RtcpIntraFrameObserver* intra_frame_callback = nullptr;

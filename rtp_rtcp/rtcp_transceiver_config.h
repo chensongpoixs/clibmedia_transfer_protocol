@@ -36,7 +36,7 @@
 #include "libmedia_transfer_protocol/rtp_rtcp/rtcp_packet/transport_feedback.h"
 #include "system_wrappers/include/clock.h"
 #include "system_wrappers/include/ntp_time.h"
-#include "api/call/transport.h"
+#include "libmedia_transfer_protocol/transport.h"
 namespace libmedia_transfer_protocol {
 class ReceiveStatisticsProvider;
 // call
@@ -103,7 +103,7 @@ struct RtcpTransceiverConfig {
   webrtc::Clock* clock = nullptr;
 
   // Transport to send rtcp packets to. Should be set.
-  webrtc::Transport* outgoing_transport = nullptr;
+   Transport* outgoing_transport = nullptr;
 
   // Queue for scheduling delayed tasks, e.g. sending periodic compound packets.
   webrtc::TaskQueueBase* task_queue = nullptr;

@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "absl/types/optional.h"
-#include "api/call/transport.h"
+#include "libmedia_transfer_protocol/transport.h"
 #include "api/units/time_delta.h"
 #include "api/units/timestamp.h"
 #include "api/video/video_bitrate_allocation.h"
@@ -70,7 +70,7 @@ class RTCPSender final {
     webrtc::Clock* clock = nullptr;
     // Transport object that will be called when packets are ready to be sent
     // out on the network.
-	webrtc::Transport* outgoing_transport = nullptr;
+	Transport* outgoing_transport = nullptr;
     // Estimate RTT as non-sender as described in
     // https://tools.ietf.org/html/rfc3611#section-4.4 and #section-4.5
     bool non_sender_rtt_measurement = false;
@@ -250,7 +250,7 @@ class RTCPSender final {
   RtcpMode method_ RTC_GUARDED_BY(mutex_rtcp_sender_);
 
  // RtcEventLog* const event_log_;
-  webrtc::Transport* const transport_;
+  Transport* const transport_;
 
   const webrtc::TimeDelta report_interval_;
   // Set from

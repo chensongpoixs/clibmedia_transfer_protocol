@@ -27,7 +27,7 @@
 #include <vector>
 
 #include "absl/types/optional.h"
-#include "api/call/transport.h"
+#include "libmedia_transfer_protocol/transport.h"
 //#include "api/rtc_event_log/rtc_event_log.h"
 #include "api/sequence_checker.h"
 #include "api/task_queue/task_queue_base.h"
@@ -122,7 +122,7 @@ class RtpSenderEgress {
                           uint32_t ssrc);
   // Sends packet on to `transport_`, leaving the RTP module.
   bool SendPacketToNetwork(const RtpPacketToSend& packet,
-                           const webrtc::PacketOptions& options,
+                           const PacketOptions& options,
                            const libice::PacedPacketInfo& pacing_info);
 
   void UpdateRtpStats(int64_t now_ms,
@@ -146,7 +146,7 @@ class RtpSenderEgress {
   const bool send_side_bwe_with_overhead_;
   webrtc::Clock* const clock_;
   RtpPacketHistory* const packet_history_;
-  //webrtc::Transport* const transport_;
+   Transport* const transport_;
   //RtcEventLog* const event_log_;
 #if BWE_TEST_LOGGING_COMPILE_TIME_ENABLE
   const bool is_audio_;
