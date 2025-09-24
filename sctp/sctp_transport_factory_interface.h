@@ -23,15 +23,8 @@
 
 #include <memory>
 
-// These classes are not part of the API, and are treated as opaque pointers.
-namespace libmedia_transfer_protocol {
-class SctpTransportInternal;
-}  // namespace cricket
-
-namespace libice {
-class PacketTransportInternal;
-}  // namespace rtc
-
+#include "libmedia_transfer_protocol/sctp/sctp_transport_factory_interface.h"
+#include "libmedia_transfer_protocol/sctp/sctp_transport_internal.h"
 namespace libmedia_transfer_protocol {
 
 // Factory class which can be used to allow fake SctpTransports to be injected
