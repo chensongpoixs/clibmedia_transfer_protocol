@@ -65,7 +65,7 @@ class RtpDependencyDescriptorReader {
   DependencyDescriptor* const descriptor_;
   // Values that are needed while reading the descriptor, but can be discarded
   // when reading is complete.
-  BitstreamReader buffer_;
+  webrtc::BitstreamReader buffer_;
   int frame_dependency_template_id_ = 0;
   bool active_decode_targets_present_flag_ = false;
   bool custom_dtis_flag_ = false;

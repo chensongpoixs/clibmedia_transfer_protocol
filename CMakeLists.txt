@@ -48,6 +48,22 @@ file(GLOB libmedia_transfer_protocol_source
 	 rtp_rtcp/rtp_util.h
 	 rtp_rtcp/rtp_util.cpp 
 	 rtp_rtcp/byte_io.h
+	  rtp_rtcp/rtp_header_extension_map.h
+rtp_rtcp/rtp_header_extension_map.cpp 
+
+	 
+	rtp_rtcp/rtp_dependency_descriptor_extension.h
+	rtp_rtcp/rtp_dependency_descriptor_extension.cpp 
+	rtp_rtcp/rtp_generic_frame_descriptor_extension.h
+	rtp_rtcp/rtp_generic_frame_descriptor_extension.cpp 
+	rtp_rtcp/rtp_header_extensions.h
+	rtp_rtcp/rtp_header_extensions.cpp 
+	rtp_rtcp/rtp_video_layers_allocation_extension.h
+	rtp_rtcp/rtp_video_layers_allocation_extension.cpp
+	rtp_rtcp/rtp_rtcp_defines.h
+	rtp_rtcp/rtp_rtcp_defines.cpp 
+	rtp_rtcp/rtp_packet.h
+	rtp_rtcp/rtp_packet.cpp
 	 #rtp_rtcp/*.cpp 
 	 #rtp_rtcp/*.h 
 	 #rtp_rtcp/*.cc 

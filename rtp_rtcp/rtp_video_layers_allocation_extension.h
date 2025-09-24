@@ -22,7 +22,7 @@
 #define _C_MODULES_RTP_RTCP_SOURCE_RTP_VIDEO_LAYERS_ALLOCATION_EXTENSION_H_
 
 #include "absl/strings/string_view.h"
-#include "api/rtp_parameters.h"
+#include "libmedia_transfer_protocol/rtp_parameters.h"
 #include "api/video/video_layers_allocation.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtp_rtcp_defines.h"
 
