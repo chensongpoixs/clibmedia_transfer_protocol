@@ -33,10 +33,10 @@
 #include "absl/types/optional.h"
 #include "api/audio_options.h"
 #include "api/scoped_refptr.h"
-#include "api/video/recordable_encoded_frame.h"
-#include "api/video/video_frame.h"
-#include "api/video/video_sink_interface.h"
-#include "api/video/video_source_interface.h"
+#include "libmedia_codec/recordable_encoded_frame.h"
+#include "libmedia_codec/video_frame.h"
+#include "libmedia_codec/video_sink_interface.h"
+#include "libmedia_codec/video_source_interface.h"
 #include "modules/audio_processing/include/audio_processing_statistics.h"
 #include "rtc_base/ref_count.h"
 #include "rtc_base/system/rtc_export.h"
@@ -117,7 +117,7 @@ class RTC_EXPORT MediaStreamTrackInterface : public rtc::RefCountInterface,
 // can inherit AdaptedVideoTrackSource instead of directly implementing this
 // interface.
 class VideoTrackSourceInterface : public MediaSourceInterface,
-	public rtc::VideoSourceInterface<webrtc::VideoFrame> {
+	public libmedia_codec::VideoSourceInterface<libmedia_codec::VideoFrame> {
  public:
   struct Stats {
     // Original size of captured frame, before video adaptation.
@@ -158,11 +158,11 @@ class VideoTrackSourceInterface : public MediaSourceInterface,
   // TODO(bugs.webrtc.org/11114): make pure virtual once downstream project
   // adapts.
   virtual void AddEncodedSink(
-      rtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>* sink) = 0;
+	  libmedia_codec::VideoSinkInterface<libmedia_codec::RecordableEncodedFrame>* sink) = 0;
 
   // Removes an encoded video sink from the source.
   virtual void RemoveEncodedSink(
-      rtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>* sink) = 0;
+	  libmedia_codec::VideoSinkInterface<libmedia_codec::RecordableEncodedFrame>* sink) = 0;
 
  protected:
   ~VideoTrackSourceInterface() override = default;
@@ -176,7 +176,7 @@ class VideoTrackSourceInterface : public MediaSourceInterface,
 // thread.
 class RTC_EXPORT VideoTrackInterface
     : public MediaStreamTrackInterface,
-	public rtc::VideoSourceInterface<webrtc::VideoFrame> {
+	public libmedia_codec::VideoSourceInterface<libmedia_codec::VideoFrame> {
  public:
   // Video track content hint, used to override the source is_screencast
   // property.
@@ -185,9 +185,9 @@ class RTC_EXPORT VideoTrackInterface
 
   // Register a video sink for this track. Used to connect the track to the
   // underlying video engine.
-  void AddOrUpdateSink(rtc::VideoSinkInterface<webrtc::VideoFrame>* sink,
-                       const rtc::VideoSinkWants& wants) override {}
-  void RemoveSink(rtc::VideoSinkInterface<webrtc::VideoFrame>* sink) override {}
+  void AddOrUpdateSink(libmedia_codec::VideoSinkInterface<libmedia_codec::VideoFrame>* sink,
+                       const libmedia_codec::VideoSinkWants& wants) override {}
+  void RemoveSink(libmedia_codec::VideoSinkInterface<libmedia_codec::VideoFrame>* sink) override {}
 
   virtual VideoTrackSourceInterface* GetSource() const = 0;
 

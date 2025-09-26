@@ -33,10 +33,10 @@ namespace {
 class TransformableVideoSenderFrame : public TransformableVideoFrameInterface {
  public:
   TransformableVideoSenderFrame(
-      const webrtc::EncodedImage& encoded_image,
+      const libmedia_codec::EncodedImage& encoded_image,
       const RTPVideoHeader& video_header,
       int payload_type,
-      absl::optional<webrtc::VideoCodecType> codec_type,
+      absl::optional<libmedia_codec::VideoCodecType> codec_type,
       uint32_t rtp_timestamp,
       absl::optional<int64_t> expected_retransmission_time_ms,
       uint32_t ssrc)
@@ -62,14 +62,14 @@ class TransformableVideoSenderFrame : public TransformableVideoFrameInterface {
   }
 
   void SetData(rtc::ArrayView<const uint8_t> data) override {
-    encoded_data_ = webrtc::EncodedImageBuffer::Create(data.data(), data.size());
+    encoded_data_ = libmedia_codec::EncodedImageBuffer::Create(data.data(), data.size());
   }
 
   uint32_t GetTimestamp() const override { return timestamp_; }
   uint32_t GetSsrc() const override { return ssrc_; }
 
   bool IsKeyFrame() const override {
-    return frame_type_ == webrtc::VideoFrameType::kVideoFrameKey;
+    return frame_type_ == libmedia_codec::VideoFrameType::kVideoFrameKey;
   }
 
   std::vector<uint8_t> GetAdditionalData() const override {
@@ -80,7 +80,7 @@ class TransformableVideoSenderFrame : public TransformableVideoFrameInterface {
 
   const RTPVideoHeader& GetHeader() const { return header_; }
   uint8_t GetPayloadType() const override { return payload_type_; }
-  absl::optional<webrtc::VideoCodecType> GetCodecType() const { return codec_type_; }
+  absl::optional<libmedia_codec::VideoCodecType> GetCodecType() const { return codec_type_; }
   int64_t GetCaptureTimeMs() const { return capture_time_ms_; }
 
   const absl::optional<int64_t>& GetExpectedRetransmissionTimeMs() const {
@@ -90,12 +90,12 @@ class TransformableVideoSenderFrame : public TransformableVideoFrameInterface {
   Direction GetDirection() const override { return Direction::kSender; }
 
  private:
-  rtc::scoped_refptr<webrtc::EncodedImageBufferInterface> encoded_data_;
+  rtc::scoped_refptr<libmedia_codec::EncodedImageBufferInterface> encoded_data_;
   const RTPVideoHeader header_;
  // const webrtc::VideoFrameMetadata metadata_;
-  const webrtc::VideoFrameType frame_type_;
+  const libmedia_codec::VideoFrameType frame_type_;
   const uint8_t payload_type_;
-  const absl::optional<webrtc::VideoCodecType> codec_type_ = absl::nullopt;
+  const absl::optional<libmedia_codec::VideoCodecType> codec_type_ = absl::nullopt;
   const uint32_t timestamp_;
   const int64_t capture_time_ms_;
   const absl::optional<int64_t> expected_retransmission_time_ms_;
@@ -120,9 +120,9 @@ void RTPSenderVideoFrameTransformerDelegate::Init() {
 
 bool RTPSenderVideoFrameTransformerDelegate::TransformFrame(
     int payload_type,
-    absl::optional<webrtc::VideoCodecType> codec_type,
+    absl::optional<libmedia_codec::VideoCodecType> codec_type,
     uint32_t rtp_timestamp,
-    const webrtc::EncodedImage& encoded_image,
+    const libmedia_codec::EncodedImage& encoded_image,
     RTPVideoHeader video_header,
     absl::optional<int64_t> expected_retransmission_time_ms) {
   if (!encoder_queue_) {
@@ -183,7 +183,7 @@ void RTPSenderVideoFrameTransformerDelegate::SetVideoStructureUnderLock(
 }
 
 void RTPSenderVideoFrameTransformerDelegate::SetVideoLayersAllocationUnderLock(
-	webrtc::VideoLayersAllocation allocation) {
+	libmedia_codec::VideoLayersAllocation allocation) {
 	webrtc::MutexLock lock(&sender_lock_);
   RTC_CHECK(sender_);
   sender_->SetVideoLayersAllocationAfterTransformation(std::move(allocation));

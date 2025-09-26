@@ -346,7 +346,7 @@ bool CalculateObuSizes(ObuInfo* obu_info) {
 
 }  // namespace
 
-rtc::scoped_refptr<webrtc::EncodedImageBuffer> VideoRtpDepacketizerAv1::AssembleFrame(
+rtc::scoped_refptr<libmedia_codec::EncodedImageBuffer> VideoRtpDepacketizerAv1::AssembleFrame(
     rtc::ArrayView<const rtc::ArrayView<const uint8_t>> rtp_payloads) {
   VectorObuInfo obu_infos = ParseObus(rtp_payloads);
   if (obu_infos.empty()) {
@@ -361,8 +361,8 @@ rtc::scoped_refptr<webrtc::EncodedImageBuffer> VideoRtpDepacketizerAv1::Assemble
     frame_size += (obu_info.prefix_size + obu_info.payload_size);
   }
 
-  rtc::scoped_refptr<webrtc::EncodedImageBuffer> bitstream =
-	  webrtc::EncodedImageBuffer::Create(frame_size);
+  rtc::scoped_refptr<libmedia_codec::EncodedImageBuffer> bitstream =
+	  libmedia_codec::EncodedImageBuffer::Create(frame_size);
   uint8_t* write_at = bitstream->data();
   for (const ObuInfo& obu_info : obu_infos) {
     // Copy the obu_header and obu_size fields.
@@ -394,7 +394,7 @@ VideoRtpDepacketizerAv1::Parse(rtc::CopyOnWriteBuffer rtp_payload) {
   // aggregation header.
   parsed->video_payload = std::move(rtp_payload);
 
-  parsed->video_header.codec = webrtc::VideoCodecType::kVideoCodecAV1;
+  parsed->video_header.codec = libmedia_codec::VideoCodecType::kVideoCodecAV1;
   // These are not accurate since frame may consist of several packet aligned
   // chunks of obus, but should be good enough for most cases. It might produce
   // frame that do not map to any real frame, but av1 decoder should be able to
@@ -407,8 +407,8 @@ VideoRtpDepacketizerAv1::Parse(rtc::CopyOnWriteBuffer rtp_payload) {
 
   parsed->video_header.frame_type =
       RtpStartsNewCodedVideoSequence(aggregation_header)
-          ? webrtc::VideoFrameType::kVideoFrameKey
-          : webrtc::VideoFrameType::kVideoFrameDelta;
+          ? libmedia_codec::VideoFrameType::kVideoFrameKey
+          : libmedia_codec::VideoFrameType::kVideoFrameDelta;
   return parsed;
 }
 

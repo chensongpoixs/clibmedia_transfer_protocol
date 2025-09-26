@@ -621,7 +621,7 @@ struct VideoReceiverInfo : public MediaReceiverInfo {
   double sum_squared_frame_durations = 0.0;
   uint32_t jitter_ms = 0;
 
-  webrtc::VideoContentType content_type = webrtc::VideoContentType::UNSPECIFIED;
+  libmedia_codec::VideoContentType content_type = libmedia_codec::VideoContentType::UNSPECIFIED;
 
   // All stats below are gathered per-VideoReceiver, but some will be correlated
   // across MediaStreamTracks.  NOTE(hta): when sinking stats into per-SSRC
@@ -651,7 +651,7 @@ struct VideoReceiverInfo : public MediaReceiverInfo {
 
   // Timing frame info: all important timestamps for a full lifetime of a
   // single 'timing frame'.
-  absl::optional<webrtc::TimingFrameInfo> timing_frame_info;
+  absl::optional<libmedia_codec::TimingFrameInfo> timing_frame_info;
 };
 
 struct BandwidthEstimationInfo {

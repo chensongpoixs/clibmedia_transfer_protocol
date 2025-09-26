@@ -92,7 +92,7 @@ bool RtpPacketizerGeneric::NextPacket(RtpPacketToSend* packet) {
 void RtpPacketizerGeneric::BuildHeader(const RTPVideoHeader& rtp_video_header) {
   header_size_ = kGenericHeaderLength;
   header_[0] = RtpFormatVideoGeneric::kFirstPacketBit;
-  if (rtp_video_header.frame_type == webrtc::VideoFrameType::kVideoFrameKey) {
+  if (rtp_video_header.frame_type == libmedia_codec::VideoFrameType::kVideoFrameKey) {
     header_[0] |= RtpFormatVideoGeneric::kKeyFrameBit;
   }
   if (const auto* generic_header = absl::get_if<RTPVideoHeaderLegacyGeneric>(

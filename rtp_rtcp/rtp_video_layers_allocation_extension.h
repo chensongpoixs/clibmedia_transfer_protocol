@@ -23,7 +23,7 @@
 
 #include "absl/strings/string_view.h"
 #include "libmedia_transfer_protocol/rtp_parameters.h"
-#include "api/video/video_layers_allocation.h"
+#include "libmedia_codec/video_layers_allocation.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtp_rtcp_defines.h"
 
 namespace libmedia_transfer_protocol {
@@ -32,17 +32,17 @@ namespace libmedia_transfer_protocol {
 // the wire format will likely change.
 class RtpVideoLayersAllocationExtension {
  public:
-  using value_type = webrtc::VideoLayersAllocation;
+  using value_type = libmedia_codec::VideoLayersAllocation;
   static constexpr RTPExtensionType kId = kRtpExtensionVideoLayersAllocation;
   static constexpr absl::string_view Uri() {
     return RtpExtension::kVideoLayersAllocationUri;
   }
 
   static bool Parse(rtc::ArrayView<const uint8_t> data,
-	  webrtc::VideoLayersAllocation* allocation);
-  static size_t ValueSize(const webrtc::VideoLayersAllocation& allocation);
+	  libmedia_codec::VideoLayersAllocation* allocation);
+  static size_t ValueSize(const libmedia_codec::VideoLayersAllocation& allocation);
   static bool Write(rtc::ArrayView<uint8_t> data,
-                    const webrtc::VideoLayersAllocation& allocation);
+                    const libmedia_codec::VideoLayersAllocation& allocation);
 };
 
 }  // namespace webrtc

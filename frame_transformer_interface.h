@@ -26,8 +26,8 @@
 #include <vector>
 
 #include "api/scoped_refptr.h"
-#include "api/video/encoded_frame.h"
-#include "api/video/video_frame_metadata.h"
+//#include "api/video/encoded_frame.h"
+//#include "api/video/video_frame_metadata.h"
 #include "rtc_base/ref_count.h"
 #include "libmedia_transfer_protocol/rtp_headers.h"
 namespace libmedia_transfer_protocol {

@@ -27,20 +27,20 @@
 
 #include "api/array_view.h"
 #include "api/scoped_refptr.h"
-#include "api/video/encoded_image.h"
+#include "libmedia_codec/encoded_image.h"
 #include "rtc_base/checks.h"
 
 namespace libmedia_transfer_protocol {
 
-rtc::scoped_refptr<webrtc::EncodedImageBuffer> VideoRtpDepacketizer::AssembleFrame(
+rtc::scoped_refptr<libmedia_codec::EncodedImageBuffer> VideoRtpDepacketizer::AssembleFrame(
     rtc::ArrayView<const rtc::ArrayView<const uint8_t>> rtp_payloads) {
   size_t frame_size = 0;
   for (rtc::ArrayView<const uint8_t> payload : rtp_payloads) {
     frame_size += payload.size();
   }
 
-  rtc::scoped_refptr<webrtc::EncodedImageBuffer> bitstream =
-	  webrtc::EncodedImageBuffer::Create(frame_size);
+  rtc::scoped_refptr<libmedia_codec::EncodedImageBuffer> bitstream =
+	  libmedia_codec::EncodedImageBuffer::Create(frame_size);
 
   uint8_t* write_at = bitstream->data();
   for (rtc::ArrayView<const uint8_t> payload : rtp_payloads) {

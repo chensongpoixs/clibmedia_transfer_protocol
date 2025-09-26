@@ -31,7 +31,7 @@
 #include "libmedia_transfer_protocol/transport.h"
 #include "api/units/time_delta.h"
 #include "api/units/timestamp.h"
-#include "api/video/video_bitrate_allocation.h"
+#include "libmedia_codec/video_bitrate_allocation.h"
 #include "modules/remote_bitrate_estimator/include/remote_bitrate_estimator.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/receive_statistics.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtp_rtcp_defines.h"

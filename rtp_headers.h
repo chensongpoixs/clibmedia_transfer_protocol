@@ -30,10 +30,10 @@
 #include "absl/types/optional.h"
 #include "api/array_view.h"
 #include "api/units/timestamp.h"
-#include "api/video/color_space.h"
-#include "api/video/video_content_type.h"
-#include "api/video/video_rotation.h"
-#include "api/video/video_timing.h"
+#include "libmedia_codec/color_space.h"
+#include "libmedia_codec/video_content_type.h"
+#include "libmedia_codec/video_rotation.h"
+#include "libmedia_codec/video_timing.h"
 
 namespace libmedia_transfer_protocol {
 
@@ -142,17 +142,17 @@ struct RTPHeaderExtension {
   // http://www.etsi.org/deliver/etsi_ts/126100_126199/126114/12.07.00_60/
   // ts_126114v120700p.pdf
   bool hasVideoRotation;
-  webrtc::VideoRotation videoRotation;
+  libmedia_codec::VideoRotation videoRotation;
 
   // TODO(ilnik): Refactor this and one above to be absl::optional() and remove
   // a corresponding bool flag.
   bool hasVideoContentType;
-  webrtc::VideoContentType videoContentType;
+  libmedia_codec::VideoContentType videoContentType;
 
   bool has_video_timing;
-  webrtc::VideoSendTiming video_timing;
+  libmedia_codec::VideoSendTiming video_timing;
 
-  webrtc::VideoPlayoutDelay playout_delay;
+  libmedia_codec::VideoPlayoutDelay playout_delay;
 
   // For identification of a stream when ssrc is not signaled. See
   // https://tools.ietf.org/html/rfc8852
@@ -163,7 +163,7 @@ struct RTPHeaderExtension {
   // https://tools.ietf.org/html/rfc8843
   std::string mid;
 
-  absl::optional<webrtc::ColorSpace> color_space;
+  absl::optional<libmedia_codec::ColorSpace> color_space;
 };
 
 enum { kRtpCsrcSize = 15 };  // RFC 3550 page 13

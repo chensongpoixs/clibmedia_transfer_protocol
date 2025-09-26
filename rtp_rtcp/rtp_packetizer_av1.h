@@ -36,7 +36,7 @@ class RtpPacketizerAv1 : public RtpPacketizer {
  public:
   RtpPacketizerAv1(rtc::ArrayView<const uint8_t> payload,
                    PayloadSizeLimits limits,
-                   webrtc::VideoFrameType frame_type,
+	  libmedia_codec::VideoFrameType frame_type,
                    bool is_last_frame_in_picture);
   ~RtpPacketizerAv1() override = default;
 
@@ -71,7 +71,7 @@ class RtpPacketizerAv1 : public RtpPacketizer {
                                        PayloadSizeLimits limits);
   uint8_t AggregationHeader() const;
 
-  const webrtc::VideoFrameType frame_type_;
+  const libmedia_codec::VideoFrameType frame_type_;
   const std::vector<Obu> obus_;
   const std::vector<Packet> packets_;
   const bool is_last_frame_in_picture_;

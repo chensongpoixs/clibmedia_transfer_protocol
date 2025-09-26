@@ -170,7 +170,7 @@ int VideoRtpDepacketizerVp8::ParseRtpPayload(
   }
 
   video_header->simulcastIdx = 0;
-  video_header->codec = webrtc::kVideoCodecVP8;
+  video_header->codec = libmedia_codec::kVideoCodecVP8;
   auto& vp8_header =
       video_header->video_type_header.emplace<webrtc::RTPVideoHeaderVP8>();
   vp8_header.InitRTPVideoHeaderVP8();
@@ -194,7 +194,7 @@ int VideoRtpDepacketizerVp8::ParseRtpPayload(
 
   // Read P bit from payload header (only at beginning of first partition).
   if (video_header->is_first_packet_in_frame && (*vp8_payload & 0x01) == 0) {
-    video_header->frame_type = webrtc::VideoFrameType::kVideoFrameKey;
+    video_header->frame_type = libmedia_codec::VideoFrameType::kVideoFrameKey;
 
     if (vp8_payload_size < 10) {
       // For an I-frame we should always have the uncompressed VP8 header
@@ -204,7 +204,7 @@ int VideoRtpDepacketizerVp8::ParseRtpPayload(
     video_header->width = ((vp8_payload[7] << 8) + vp8_payload[6]) & 0x3FFF;
     video_header->height = ((vp8_payload[9] << 8) + vp8_payload[8]) & 0x3FFF;
   } else {
-    video_header->frame_type = webrtc::VideoFrameType::kVideoFrameDelta;
+    video_header->frame_type = libmedia_codec::VideoFrameType::kVideoFrameDelta;
 
     video_header->width = 0;
     video_header->height = 0;

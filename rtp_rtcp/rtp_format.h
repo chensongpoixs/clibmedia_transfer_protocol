@@ -30,7 +30,7 @@
 #include "absl/types/optional.h"
 #include "api/array_view.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtp_video_header.h"
-
+#include "libmedia_codec/video_codec_type.h"
 namespace libmedia_transfer_protocol {
 
 class RtpPacketToSend;
@@ -47,7 +47,7 @@ class RtpPacketizer {
 
   // If type is not set, returns a raw packetizer.
   static std::unique_ptr<RtpPacketizer> Create(
-      absl::optional<webrtc::VideoCodecType> type,
+      absl::optional<libmedia_codec::VideoCodecType> type,
       rtc::ArrayView<const uint8_t> payload,
       PayloadSizeLimits limits,
       // Codec-specific details.

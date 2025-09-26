@@ -45,7 +45,10 @@
 #include "system_wrappers/include/ntp_time.h"
 #include "rtc_base/rate_limiter.h"
 
-
+namespace  libmedia_codec
+{
+	class  VideoBitrateAllocationObserver;
+}
 
 namespace libmedia_transfer_protocol {
 
@@ -90,7 +93,7 @@ class RtpRtcpInterface : public RtcpFeedbackSenderInterface {
 
     NetworkStateEstimateObserver* network_state_estimate_observer = nullptr;
     TransportFeedbackObserver* transport_feedback_callback = nullptr;
-    webrtc::VideoBitrateAllocationObserver* bitrate_allocation_observer = nullptr;
+	libmedia_codec::VideoBitrateAllocationObserver* bitrate_allocation_observer = nullptr;
     RtcpRttStats* rtt_stats = nullptr;
     RtcpPacketTypeCounterObserver* rtcp_packet_type_counter_observer = nullptr;
     // Called on receipt of RTCP report block from remote side.

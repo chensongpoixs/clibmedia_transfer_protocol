@@ -391,7 +391,7 @@ constexpr RTPExtensionType VideoOrientation::kId;
 constexpr uint8_t VideoOrientation::kValueSizeBytes;
 
 bool VideoOrientation::Parse(rtc::ArrayView<const uint8_t> data,
-                             webrtc::VideoRotation* rotation) {
+	libmedia_codec::VideoRotation* rotation) {
   if (data.size() != 1)
     return false;
   *rotation = ConvertCVOByteToVideoRotation(data[0]);
@@ -399,7 +399,7 @@ bool VideoOrientation::Parse(rtc::ArrayView<const uint8_t> data,
 }
 
 bool VideoOrientation::Write(rtc::ArrayView<uint8_t> data,
-	webrtc::VideoRotation rotation) {
+	libmedia_codec::VideoRotation rotation) {
   RTC_DCHECK_EQ(data.size(), 1);
   data[0] = ConvertVideoRotationToCVOByte(rotation);
   return true;
@@ -428,7 +428,7 @@ constexpr RTPExtensionType PlayoutDelayLimits::kId;
 constexpr uint8_t PlayoutDelayLimits::kValueSizeBytes;
 
 bool PlayoutDelayLimits::Parse(rtc::ArrayView<const uint8_t> data,
-	webrtc::VideoPlayoutDelay* playout_delay) {
+	libmedia_codec::VideoPlayoutDelay* playout_delay) {
   RTC_DCHECK(playout_delay);
   if (data.size() != 3)
     return false;
@@ -443,7 +443,7 @@ bool PlayoutDelayLimits::Parse(rtc::ArrayView<const uint8_t> data,
 }
 
 bool PlayoutDelayLimits::Write(rtc::ArrayView<uint8_t> data,
-                               const webrtc::VideoPlayoutDelay& playout_delay) {
+                               const libmedia_codec::VideoPlayoutDelay& playout_delay) {
   RTC_DCHECK_EQ(data.size(), 3);
   RTC_DCHECK_LE(0, playout_delay.min_ms);
   RTC_DCHECK_LE(playout_delay.min_ms, playout_delay.max_ms);
@@ -469,17 +469,17 @@ constexpr RTPExtensionType VideoContentTypeExtension::kId;
 constexpr uint8_t VideoContentTypeExtension::kValueSizeBytes;
 
 bool VideoContentTypeExtension::Parse(rtc::ArrayView<const uint8_t> data,
-	webrtc::VideoContentType* content_type) {
+	libmedia_codec::VideoContentType* content_type) {
   if (data.size() == 1 &&
-	  webrtc::videocontenttypehelpers::IsValidContentType(data[0])) {
-    *content_type = static_cast<webrtc::VideoContentType>(data[0]);
+	  libmedia_codec::videocontenttypehelpers::IsValidContentType(data[0])) {
+    *content_type = static_cast<libmedia_codec::VideoContentType>(data[0]);
     return true;
   }
   return false;
 }
 
 bool VideoContentTypeExtension::Write(rtc::ArrayView<uint8_t> data,
-	webrtc::VideoContentType content_type) {
+	libmedia_codec::VideoContentType content_type) {
   RTC_DCHECK_EQ(data.size(), 1);
   data[0] = static_cast<uint8_t>(content_type);
   return true;
@@ -518,7 +518,7 @@ constexpr uint8_t VideoTimingExtension::kNetworkTimestampDeltaOffset;
 constexpr uint8_t VideoTimingExtension::kNetwork2TimestampDeltaOffset;
 
 bool VideoTimingExtension::Parse(rtc::ArrayView<const uint8_t> data,
-	webrtc::VideoSendTiming* timing) {
+	libmedia_codec::VideoSendTiming* timing) {
   RTC_DCHECK(timing);
   // TODO(sprang): Deprecate support for old wire format.
   ptrdiff_t off = 0;
@@ -550,7 +550,7 @@ bool VideoTimingExtension::Parse(rtc::ArrayView<const uint8_t> data,
 }
 
 bool VideoTimingExtension::Write(rtc::ArrayView<uint8_t> data,
-                                 const webrtc::VideoSendTiming& timing) {
+                                 const libmedia_codec::VideoSendTiming& timing) {
   RTC_DCHECK_EQ(data.size(), 1 + 2 * 6);
   ByteWriter<uint8_t>::WriteBigEndian(data.data() + kFlagsOffset, timing.flags);
   ByteWriter<uint16_t>::WriteBigEndian(data.data() + kEncodeStartDeltaOffset,
@@ -620,7 +620,7 @@ constexpr RTPExtensionType ColorSpaceExtension::kId;
 constexpr uint8_t ColorSpaceExtension::kValueSizeBytes;
 
 bool ColorSpaceExtension::Parse(rtc::ArrayView<const uint8_t> data,
-	webrtc::ColorSpace* color_space) {
+	libmedia_codec::ColorSpace* color_space) {
   RTC_DCHECK(color_space);
   if (data.size() != kValueSizeBytes &&
       data.size() != kValueSizeBytesWithoutHdrMetadata)
@@ -649,7 +649,7 @@ bool ColorSpaceExtension::Parse(rtc::ArrayView<const uint8_t> data,
   if (data.size() == kValueSizeBytesWithoutHdrMetadata) {
     color_space->set_hdr_metadata(nullptr);
   } else {
-	  webrtc::HdrMetadata hdr_metadata;
+	  libmedia_codec::HdrMetadata hdr_metadata;
     offset += ParseHdrMetadata(data.subview(offset), &hdr_metadata);
     if (!hdr_metadata.Validate())
       return false;
@@ -660,7 +660,7 @@ bool ColorSpaceExtension::Parse(rtc::ArrayView<const uint8_t> data,
 }
 
 bool ColorSpaceExtension::Write(rtc::ArrayView<uint8_t> data,
-                                const webrtc::ColorSpace& color_space) {
+                                const libmedia_codec::ColorSpace& color_space) {
   RTC_DCHECK_EQ(data.size(), ValueSize(color_space));
   size_t offset = 0;
   // Write color space information.
@@ -686,9 +686,9 @@ bool ColorSpaceExtension::Write(rtc::ArrayView<uint8_t> data,
 //      4-5 Range.
 //      6-7 Unused.
 uint8_t ColorSpaceExtension::CombineRangeAndChromaSiting(
-    webrtc::ColorSpace::RangeID range,
-    webrtc::ColorSpace::ChromaSiting chroma_siting_horizontal,
-    webrtc::ColorSpace::ChromaSiting chroma_siting_vertical) {
+	libmedia_codec::ColorSpace::RangeID range,
+	libmedia_codec::ColorSpace::ChromaSiting chroma_siting_horizontal,
+	libmedia_codec::ColorSpace::ChromaSiting chroma_siting_vertical) {
   RTC_DCHECK_LE(static_cast<uint8_t>(range), 3);
   RTC_DCHECK_LE(static_cast<uint8_t>(chroma_siting_horizontal), 3);
   RTC_DCHECK_LE(static_cast<uint8_t>(chroma_siting_vertical), 3);
@@ -698,7 +698,7 @@ uint8_t ColorSpaceExtension::CombineRangeAndChromaSiting(
 }
 
 size_t ColorSpaceExtension::ParseHdrMetadata(rtc::ArrayView<const uint8_t> data,
-	webrtc::HdrMetadata* hdr_metadata) {
+	libmedia_codec::HdrMetadata* hdr_metadata) {
   RTC_DCHECK_EQ(data.size(),
                 kValueSizeBytes - kValueSizeBytesWithoutHdrMetadata);
   size_t offset = 0;
@@ -727,7 +727,7 @@ size_t ColorSpaceExtension::ParseHdrMetadata(rtc::ArrayView<const uint8_t> data,
 
 size_t ColorSpaceExtension::ParseChromaticity(
     const uint8_t* data,
-	webrtc::HdrMasteringMetadata::Chromaticity* p) {
+	libmedia_codec::HdrMasteringMetadata::Chromaticity* p) {
   uint16_t chromaticity_x_scaled = ByteReader<uint16_t>::ReadBigEndian(data);
   uint16_t chromaticity_y_scaled =
       ByteReader<uint16_t>::ReadBigEndian(data + 2);
@@ -745,7 +745,7 @@ size_t ColorSpaceExtension::ParseLuminance(const uint8_t* data,
 }
 
 size_t ColorSpaceExtension::WriteHdrMetadata(rtc::ArrayView<uint8_t> data,
-                                             const webrtc::HdrMetadata& hdr_metadata) {
+                                             const libmedia_codec::HdrMetadata& hdr_metadata) {
   RTC_DCHECK_EQ(data.size(),
                 kValueSizeBytes - kValueSizeBytesWithoutHdrMetadata);
   RTC_DCHECK(hdr_metadata.Validate());
@@ -776,7 +776,7 @@ size_t ColorSpaceExtension::WriteHdrMetadata(rtc::ArrayView<uint8_t> data,
 
 size_t ColorSpaceExtension::WriteChromaticity(
     uint8_t* data,
-    const webrtc::HdrMasteringMetadata::Chromaticity& p) {
+    const libmedia_codec::HdrMasteringMetadata::Chromaticity& p) {
   RTC_DCHECK_GE(p.x, 0.0f);
   RTC_DCHECK_LE(p.x, 1.0f);
   RTC_DCHECK_GE(p.y, 0.0f);

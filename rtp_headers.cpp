@@ -34,9 +34,9 @@ RTPHeaderExtension::RTPHeaderExtension()
       voiceActivity(false),
       audioLevel(0),
       hasVideoRotation(false),
-      videoRotation(webrtc::kVideoRotation_0),
+      videoRotation(libmedia_codec::kVideoRotation_0),
       hasVideoContentType(false),
-      videoContentType(webrtc::VideoContentType::UNSPECIFIED),
+      videoContentType(libmedia_codec::VideoContentType::UNSPECIFIED),
       has_video_timing(false) {}
 
 RTPHeaderExtension::RTPHeaderExtension(const RTPHeaderExtension& other) =

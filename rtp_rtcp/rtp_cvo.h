@@ -29,36 +29,36 @@ namespace libmedia_transfer_protocol {
 // 12.07.00_60/ts_126114v120700p.pdf Section 7.4.5. The rotation of a frame is
 // the clockwise angle the frames must be rotated in order to display the frames
 // correctly if the display is rotated in its natural orientation.
-inline uint8_t ConvertVideoRotationToCVOByte(webrtc::VideoRotation rotation) {
+inline uint8_t ConvertVideoRotationToCVOByte(libmedia_codec::VideoRotation rotation) {
   switch (rotation) {
-    case webrtc::kVideoRotation_0:
+    case libmedia_codec::kVideoRotation_0:
       return 0;
-    case webrtc::kVideoRotation_90:
+    case libmedia_codec::kVideoRotation_90:
       return 1;
-    case webrtc::kVideoRotation_180:
+    case libmedia_codec::kVideoRotation_180:
       return 2;
-    case webrtc::kVideoRotation_270:
+    case libmedia_codec::kVideoRotation_270:
       return 3;
   }
   RTC_NOTREACHED();
   return 0;
 }
 
-inline webrtc::VideoRotation ConvertCVOByteToVideoRotation(uint8_t cvo_byte) {
+inline libmedia_codec::VideoRotation ConvertCVOByteToVideoRotation(uint8_t cvo_byte) {
   // CVO byte: |0 0 0 0 C F R R|.
   const uint8_t rotation_bits = cvo_byte & 0x3;
   switch (rotation_bits) {
     case 0:
-      return webrtc::kVideoRotation_0;
+      return libmedia_codec::kVideoRotation_0;
     case 1:
-      return webrtc::kVideoRotation_90;
+      return libmedia_codec::kVideoRotation_90;
     case 2:
-      return webrtc::kVideoRotation_180;
+      return libmedia_codec::kVideoRotation_180;
     case 3:
-      return webrtc::kVideoRotation_270;
+      return libmedia_codec::kVideoRotation_270;
     default:
       RTC_NOTREACHED();
-      return webrtc::kVideoRotation_0;
+      return libmedia_codec::kVideoRotation_0;
   }
 }
 

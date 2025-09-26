@@ -24,7 +24,7 @@
 #include <stdint.h>
 
 #include "absl/algorithm/container.h"
-#include "api/video/video_layers_allocation.h"
+#include "libmedia_codec/video_layers_allocation.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/byte_io.h"
 #include "rtc_base/checks.h"
 
@@ -79,14 +79,14 @@ uint64_t ReadLeb128(const uint8_t*& read_at, const uint8_t* end) {
   return 0;
 }
 
-bool AllocationIsValid(const webrtc::VideoLayersAllocation& allocation) {
+bool AllocationIsValid(const libmedia_codec::VideoLayersAllocation& allocation) {
   // Since all multivalue fields are stored in (rtp_stream_id, spatial_id) order
   // assume `allocation.active_spatial_layers` is already sorted. It is simpler
   // to assemble it in the sorted way than to resort during serialization.
   if (!absl::c_is_sorted(
           allocation.active_spatial_layers,
-          [](const webrtc:: VideoLayersAllocation::SpatialLayer& lhs,
-             const webrtc::VideoLayersAllocation::SpatialLayer& rhs) {
+          [](const libmedia_codec:: VideoLayersAllocation::SpatialLayer& lhs,
+             const libmedia_codec::VideoLayersAllocation::SpatialLayer& rhs) {
             return std::make_tuple(lhs.rtp_stream_index, lhs.spatial_id) <
                    std::make_tuple(rhs.rtp_stream_index, rhs.spatial_id);
           })) {
@@ -139,7 +139,7 @@ struct SpatialLayersBitmasks {
 };
 
 SpatialLayersBitmasks SpatialLayersBitmasksPerRtpStream(
-    const webrtc::VideoLayersAllocation& allocation) {
+    const libmedia_codec::VideoLayersAllocation& allocation) {
   RTC_DCHECK(AllocationIsValid(allocation));
   SpatialLayersBitmasks result;
   for (const auto& layer : allocation.active_spatial_layers) {
@@ -216,7 +216,7 @@ SpatialLayersBitmasks SpatialLayersBitmasksPerRtpStream(
 
 bool RtpVideoLayersAllocationExtension::Write(
     rtc::ArrayView<uint8_t> data,
-    const webrtc::VideoLayersAllocation& allocation) {
+    const libmedia_codec::VideoLayersAllocation& allocation) {
   RTC_DCHECK(AllocationIsValid(allocation));
   RTC_DCHECK_GE(data.size(), ValueSize(allocation));
 
@@ -285,7 +285,7 @@ bool RtpVideoLayersAllocationExtension::Write(
 
 bool RtpVideoLayersAllocationExtension::Parse(
     rtc::ArrayView<const uint8_t> data,
-	webrtc::VideoLayersAllocation* allocation) {
+	libmedia_codec::VideoLayersAllocation* allocation) {
   if (data.empty() || allocation == nullptr) {
     return false;
   }
@@ -334,7 +334,7 @@ bool RtpVideoLayersAllocationExtension::Parse(
   // Create `allocation->active_spatial_layers` while iterating though it.
   int bit_offset = 8;
   for (int stream_idx = 0; stream_idx < num_rtp_streams; ++stream_idx) {
-    for (int sid = 0; sid < webrtc::VideoLayersAllocation::kMaxSpatialIds; ++sid) {
+    for (int sid = 0; sid < libmedia_codec::VideoLayersAllocation::kMaxSpatialIds; ++sid) {
       if ((spatial_layers_bitmasks[stream_idx] & (1 << sid)) == 0) {
         continue;
       }
@@ -397,7 +397,7 @@ bool RtpVideoLayersAllocationExtension::Parse(
 }
 
 size_t RtpVideoLayersAllocationExtension::ValueSize(
-    const webrtc::VideoLayersAllocation& allocation) {
+    const libmedia_codec::VideoLayersAllocation& allocation) {
   if (allocation.active_spatial_layers.empty()) {
     return 1;
   }

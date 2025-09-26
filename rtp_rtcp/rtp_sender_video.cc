@@ -88,17 +88,17 @@ bool MinimizeDescriptor(RTPVideoHeader* video_header) {
 
 bool IsBaseLayer(const RTPVideoHeader& video_header) {
   switch (video_header.codec) {
-    case webrtc::kVideoCodecVP8: {
+    case libmedia_codec::kVideoCodecVP8: {
       const auto& vp8 =
           absl::get<webrtc::RTPVideoHeaderVP8>(video_header.video_type_header);
       return (vp8.temporalIdx == 0 || vp8.temporalIdx == webrtc::kNoTemporalIdx);
     }
-    case webrtc::kVideoCodecVP9: {
+    case libmedia_codec::kVideoCodecVP9: {
       const auto& vp9 =
           absl::get<webrtc::RTPVideoHeaderVP9>(video_header.video_type_header);
       return (vp9.temporal_idx == 0 || vp9.temporal_idx == webrtc::kNoTemporalIdx);
     }
-    case webrtc::kVideoCodecH264:
+    case libmedia_codec::kVideoCodecH264:
       // TODO(kron): Implement logic for H264 once WebRTC supports temporal
       // layers for H264.
       break;
@@ -109,13 +109,13 @@ bool IsBaseLayer(const RTPVideoHeader& video_header) {
 }
 
 #if RTC_TRACE_EVENTS_ENABLED
-const char* FrameTypeToString(webrtc::VideoFrameType frame_type) {
+const char* FrameTypeToString(libmedia_codec::VideoFrameType frame_type) {
   switch (frame_type) {
-    case webrtc::VideoFrameType::kEmptyFrame:
+    case libmedia_codec::VideoFrameType::kEmptyFrame:
       return "empty";
-    case webrtc::VideoFrameType::kVideoFrameKey:
+    case libmedia_codec::VideoFrameType::kVideoFrameKey:
       return "video_key";
-    case webrtc::VideoFrameType::kVideoFrameDelta:
+    case libmedia_codec::VideoFrameType::kVideoFrameDelta:
       return "video_delta";
     default:
       RTC_NOTREACHED();
@@ -124,11 +124,11 @@ const char* FrameTypeToString(webrtc::VideoFrameType frame_type) {
 }
 #endif
 
-bool IsNoopDelay(const webrtc::VideoPlayoutDelay& delay) {
+bool IsNoopDelay(const libmedia_codec::VideoPlayoutDelay& delay) {
   return delay.min_ms == -1 && delay.max_ms == -1;
 }
 
-absl::optional<webrtc::VideoPlayoutDelay> LoadVideoPlayoutDelayOverride(
+absl::optional<libmedia_codec::VideoPlayoutDelay> LoadVideoPlayoutDelayOverride(
     const webrtc::WebRtcKeyValueConfig* key_value_config) {
   RTC_DCHECK(key_value_config);
   webrtc::FieldTrialOptional<int> playout_delay_min_ms("min_ms", absl::nullopt);
@@ -136,7 +136,7 @@ absl::optional<webrtc::VideoPlayoutDelay> LoadVideoPlayoutDelayOverride(
   webrtc::ParseFieldTrial({&playout_delay_max_ms, &playout_delay_min_ms},
                   key_value_config->Lookup("WebRTC-ForceSendPlayoutDelay"));
   return playout_delay_max_ms && playout_delay_min_ms
-             ? absl::make_optional<webrtc::VideoPlayoutDelay>(*playout_delay_min_ms,
+             ? absl::make_optional<libmedia_codec::VideoPlayoutDelay>(*playout_delay_min_ms,
                                                       *playout_delay_max_ms)
              : absl::nullopt;
 }
@@ -162,7 +162,7 @@ RTPSenderVideo::RTPSenderVideo(const Config& config)
           config.enable_retransmit_all_layers
               ? kRetransmitAllLayers
               : (kRetransmitBaseLayer | kConditionallyRetransmitHigherLayers)),
-      last_rotation_(webrtc::kVideoRotation_0),
+      last_rotation_(libmedia_codec::kVideoRotation_0),
       transmit_color_space_next_frame_(false),
       send_allocation_(SendVideoLayersAllocation::kDontSend),
       current_playout_delay_{-1, -1},
@@ -286,7 +286,7 @@ void RTPSenderVideo::SetVideoStructureInternal(
 }
 
 void RTPSenderVideo::SetVideoLayersAllocation(
-	webrtc::VideoLayersAllocation allocation) {
+	libmedia_codec::VideoLayersAllocation allocation) {
   if (frame_transformer_delegate_) {
     frame_transformer_delegate_->SetVideoLayersAllocationUnderLock(
         std::move(allocation));
@@ -296,12 +296,12 @@ void RTPSenderVideo::SetVideoLayersAllocation(
 }
 
 void RTPSenderVideo::SetVideoLayersAllocationAfterTransformation(
-	webrtc::VideoLayersAllocation allocation) {
+	libmedia_codec::VideoLayersAllocation allocation) {
   SetVideoLayersAllocationInternal(std::move(allocation));
 }
 
 void RTPSenderVideo::SetVideoLayersAllocationInternal(
-	webrtc::VideoLayersAllocation allocation) {
+	libmedia_codec::VideoLayersAllocation allocation) {
   RTC_DCHECK_RUNS_SERIALIZED(&send_checker_);
   if (!allocation_ || allocation.active_spatial_layers.size() >
                           allocation_->active_spatial_layers.size()) {
@@ -323,7 +323,7 @@ void RTPSenderVideo::AddRtpHeaderExtensions(
   // guarantee that the information is retrieved by the receiver.
   bool set_color_space =
       video_header.color_space != last_color_space_ ||
-      video_header.frame_type == webrtc::VideoFrameType::kVideoFrameKey ||
+      video_header.frame_type == libmedia_codec::VideoFrameType::kVideoFrameKey ||
       transmit_color_space_next_frame_;
   // Color space requires two-byte header extensions if HDR metadata is
   // included. Therefore, it's best to add this extension first so that the
@@ -345,20 +345,20 @@ void RTPSenderVideo::AddRtpHeaderExtensions(
   // Set rotation when key frame or when changed (to follow standard).
   // Or when different from 0 (to follow current receiver implementation).
   bool set_video_rotation =
-      video_header.frame_type == webrtc::VideoFrameType::kVideoFrameKey ||
+      video_header.frame_type == libmedia_codec::VideoFrameType::kVideoFrameKey ||
       video_header.rotation != last_rotation_ ||
-      video_header.rotation != webrtc::kVideoRotation_0;
+      video_header.rotation != libmedia_codec::kVideoRotation_0;
   if (last_packet && set_video_rotation)
     packet->SetExtension<VideoOrientation>(video_header.rotation);
 
   // Report content type only for key frames.
   if (last_packet &&
-      video_header.frame_type == webrtc::VideoFrameType::kVideoFrameKey &&
-      video_header.content_type != webrtc::VideoContentType::UNSPECIFIED)
+      video_header.frame_type == libmedia_codec::VideoFrameType::kVideoFrameKey &&
+      video_header.content_type != libmedia_codec::VideoContentType::UNSPECIFIED)
     packet->SetExtension<VideoContentTypeExtension>(video_header.content_type);
 
   if (last_packet &&
-      video_header.video_timing.flags != webrtc::VideoSendTiming::kInvalid)
+      video_header.video_timing.flags != libmedia_codec::VideoSendTiming::kInvalid)
     packet->SetExtension<VideoTimingExtension>(video_header.video_timing);
 
   // If transmitted, add to all packets; ack logic depends on this.
@@ -403,7 +403,7 @@ void RTPSenderVideo::AddRtpHeaderExtensions(
       // when inter layer dependency is used, i.e. L structures; or to all
       // layers when inter layer dependency is not used, i.e. S structures.
       // Distinguish these two cases by checking if there are any dependencies.
-      if (video_header.frame_type == webrtc::VideoFrameType::kVideoFrameKey &&
+      if (video_header.frame_type == libmedia_codec::VideoFrameType::kVideoFrameKey &&
           video_header.generic->dependencies.empty() && first_packet) {
         // To avoid extra structure copy, temporary share ownership of the
         // video_structure with the dependency descriptor.
@@ -439,7 +439,7 @@ void RTPSenderVideo::AddRtpHeaderExtensions(
         generic_descriptor.SetTemporalLayer(
             video_header.generic->temporal_index);
 
-        if (video_header.frame_type == webrtc::VideoFrameType::kVideoFrameKey) {
+        if (video_header.frame_type == libmedia_codec::VideoFrameType::kVideoFrameKey) {
           generic_descriptor.SetResolution(video_header.width,
                                            video_header.height);
         }
@@ -453,9 +453,9 @@ void RTPSenderVideo::AddRtpHeaderExtensions(
   if (packet->IsRegistered<RtpVideoLayersAllocationExtension>() &&
       first_packet &&
       send_allocation_ != SendVideoLayersAllocation::kDontSend &&
-      (video_header.frame_type == webrtc::VideoFrameType::kVideoFrameKey ||
+      (video_header.frame_type == libmedia_codec::VideoFrameType::kVideoFrameKey ||
        PacketWillLikelyBeRequestedForRestransmitionIfLost(video_header))) {
-	  webrtc::VideoLayersAllocation allocation = allocation_.value();
+	  libmedia_codec::VideoLayersAllocation allocation = allocation_.value();
     allocation.resolution_and_frame_rate_is_valid =
         send_allocation_ == SendVideoLayersAllocation::kSendWithResolution;
     packet->SetExtension<RtpVideoLayersAllocationExtension>(allocation);
@@ -469,7 +469,7 @@ void RTPSenderVideo::AddRtpHeaderExtensions(
 
 bool RTPSenderVideo::SendVideo(
     int payload_type,
-    absl::optional<webrtc::VideoCodecType> codec_type,
+    absl::optional<libmedia_codec::VideoCodecType> codec_type,
     uint32_t rtp_timestamp,
     int64_t capture_time_ms,
     rtc::ArrayView<const uint8_t> payload,
@@ -482,7 +482,7 @@ bool RTPSenderVideo::SendVideo(
 #endif
   RTC_CHECK_RUNS_SERIALIZED(&send_checker_);
 
-  if (video_header.frame_type == webrtc::VideoFrameType::kEmptyFrame)
+  if (video_header.frame_type == libmedia_codec::VideoFrameType::kEmptyFrame)
     return true;
 
   if (payload.empty())
@@ -492,13 +492,13 @@ bool RTPSenderVideo::SendVideo(
   }
 
   int32_t retransmission_settings = retransmission_settings_;
-  if (codec_type == webrtc::VideoCodecType::kVideoCodecH264) {
+  if (codec_type == libmedia_codec::VideoCodecType::kVideoCodecH264) {
     // Backward compatibility for older receivers without temporal layer logic.
     retransmission_settings = kRetransmitBaseLayer | kRetransmitHigherLayers;
   }
 
   MaybeUpdateCurrentPlayoutDelay(video_header);
-  if (video_header.frame_type == webrtc::VideoFrameType::kVideoFrameKey) {
+  if (video_header.frame_type == libmedia_codec::VideoFrameType::kVideoFrameKey) {
     if (!IsNoopDelay(current_playout_delay_)) {
       // Force playout delay on key-frames, if set.
       playout_delay_pending_ = true;
@@ -513,7 +513,7 @@ bool RTPSenderVideo::SendVideo(
     active_decode_targets_tracker_.OnFrame(
         video_structure_->decode_target_protected_by_chain,
         video_header.generic->active_decode_targets,
-        video_header.frame_type == webrtc::VideoFrameType::kVideoFrameKey,
+        video_header.frame_type == libmedia_codec::VideoFrameType::kVideoFrameKey,
         video_header.generic->frame_id, video_header.generic->chain_diffs);
   }
 
@@ -556,7 +556,7 @@ bool RTPSenderVideo::SendVideo(
   if (video_structure_ != nullptr &&
       single_packet->IsRegistered<RtpDependencyDescriptorExtension>() &&
       !single_packet->HasExtension<RtpDependencyDescriptorExtension>()) {
-    RTC_DCHECK_EQ(video_header.frame_type, webrtc::VideoFrameType::kVideoFrameKey);
+    RTC_DCHECK_EQ(video_header.frame_type, libmedia_codec::VideoFrameType::kVideoFrameKey);
     // Disable attaching dependency descriptor to delta packets (including
     // non-first packet of a key frame) when it wasn't attached to a key frame,
     // as dependency descriptor can't be usable in such case.
@@ -681,7 +681,7 @@ bool RTPSenderVideo::SendVideo(
 
     packet->set_allow_retransmission(allow_retransmission);
     packet->set_is_key_frame(video_header.frame_type ==
-                             webrtc::VideoFrameType::kVideoFrameKey);
+		libmedia_codec::VideoFrameType::kVideoFrameKey);
 
     // Put packetization finish timestamp into extension.
     if (packet->HasExtension<VideoTimingExtension>()) {
@@ -732,7 +732,7 @@ bool RTPSenderVideo::SendVideo(
         transmit_color_space_next_frame_ ? !IsBaseLayer(video_header) : false;
   }
 
-  if (video_header.frame_type == webrtc::VideoFrameType::kVideoFrameKey ||
+  if (video_header.frame_type == libmedia_codec::VideoFrameType::kVideoFrameKey ||
       PacketWillLikelyBeRequestedForRestransmitionIfLost(video_header)) {
     // This frame will likely be delivered, no need to populate playout
     // delay extensions until it changes again.
@@ -747,9 +747,9 @@ bool RTPSenderVideo::SendVideo(
 
 bool RTPSenderVideo::SendEncodedImage(
     int payload_type,
-    absl::optional<webrtc::VideoCodecType> codec_type,
+    absl::optional<libmedia_codec::VideoCodecType> codec_type,
     uint32_t rtp_timestamp,
-    const webrtc::EncodedImage& encoded_image,
+    const libmedia_codec::EncodedImage& encoded_image,
     RTPVideoHeader video_header,
     absl::optional<int64_t> expected_retransmission_time_ms) {
   if (frame_transformer_delegate_) {
@@ -859,7 +859,7 @@ bool RTPSenderVideo::UpdateConditionalRetransmit(
 
 void RTPSenderVideo::MaybeUpdateCurrentPlayoutDelay(
     const RTPVideoHeader& header) {
-	webrtc::VideoPlayoutDelay requested_delay =
+	libmedia_codec::VideoPlayoutDelay requested_delay =
       forced_playout_delay_.value_or(header.playout_delay);
 
   if (IsNoopDelay(requested_delay)) {

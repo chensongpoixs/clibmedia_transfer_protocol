@@ -98,7 +98,7 @@ int MaxFragmentSize(int remaining_bytes) {
 
 RtpPacketizerAv1::RtpPacketizerAv1(rtc::ArrayView<const uint8_t> payload,
                                    RtpPacketizer::PayloadSizeLimits limits,
-                                   webrtc::VideoFrameType frame_type,
+	libmedia_codec::VideoFrameType frame_type,
                                    bool is_last_frame_in_picture)
     : frame_type_(frame_type),
       obus_(ParseObus(payload)),
@@ -352,7 +352,7 @@ uint8_t RtpPacketizerAv1::AggregationHeader() const {
   // Encoder may produce key frame without a sequence header, thus double check
   // incoming frame includes the sequence header. Since Temporal delimiter is
   // already filtered out, sequence header should be the first obu when present.
-  if (frame_type_ == webrtc::VideoFrameType::kVideoFrameKey && packet_index_ == 0 &&
+  if (frame_type_ == libmedia_codec::VideoFrameType::kVideoFrameKey && packet_index_ == 0 &&
       ObuType(obus_.front().header) == kObuTypeSequenceHeader) {
     aggregation_header |= (1 << 3);
   }

@@ -29,12 +29,12 @@
 #include "absl/types/variant.h"
 #include "libmedia_transfer_protocol/rtp/dependency_descriptor.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtp_video_header.h"
-#include "api/video/color_space.h"
-#include "api/video/video_codec_type.h"
-#include "api/video/video_content_type.h"
-#include "api/video/video_frame_type.h"
-#include "api/video/video_rotation.h"
-#include "api/video/video_timing.h"
+#include "libmedia_codec/color_space.h"
+#include "libmedia_codec/video_codec_type.h"
+#include "libmedia_codec/video_content_type.h"
+#include "libmedia_codec/video_frame_type.h"
+#include "libmedia_codec/video_rotation.h"
+#include "libmedia_codec/video_timing.h"
 #include "modules/video_coding/codecs/h264/include/h264_globals.h"
 #include "modules/video_coding/codecs/vp8/include/vp8_globals.h"
 #include "modules/video_coding/codecs/vp9/include/vp9_globals.h"
@@ -75,20 +75,20 @@ struct RTPVideoHeader {
 
   absl::optional<GenericDescriptorInfo> generic;
 
-  webrtc::VideoFrameType frame_type = webrtc::VideoFrameType::kEmptyFrame;
+  libmedia_codec::VideoFrameType frame_type = libmedia_codec::VideoFrameType::kEmptyFrame;
   uint16_t width = 0;
   uint16_t height = 0;
-  webrtc::VideoRotation rotation = webrtc::VideoRotation::kVideoRotation_0;
-  webrtc::VideoContentType content_type = webrtc::VideoContentType::UNSPECIFIED;
+  libmedia_codec::VideoRotation rotation = libmedia_codec::VideoRotation::kVideoRotation_0;
+  libmedia_codec::VideoContentType content_type = libmedia_codec::VideoContentType::UNSPECIFIED;
   bool is_first_packet_in_frame = false;
   bool is_last_packet_in_frame = false;
   bool is_last_frame_in_picture = true;
   uint8_t simulcastIdx = 0;
-  webrtc::VideoCodecType codec = webrtc::VideoCodecType::kVideoCodecGeneric;
+  libmedia_codec::VideoCodecType codec = libmedia_codec::VideoCodecType::kVideoCodecGeneric;
 
-  webrtc::VideoPlayoutDelay playout_delay;
-  webrtc::VideoSendTiming video_timing;
-  absl::optional<webrtc::ColorSpace> color_space;
+  libmedia_codec::VideoPlayoutDelay playout_delay;
+  libmedia_codec::VideoSendTiming video_timing;
+  absl::optional<libmedia_codec::ColorSpace> color_space;
   // This field is meant for media quality testing purpose only. When enabled it
   // carries the webrtc::VideoFrame id field from the sender to the receiver.
   absl::optional<uint16_t> video_frame_tracking_id;

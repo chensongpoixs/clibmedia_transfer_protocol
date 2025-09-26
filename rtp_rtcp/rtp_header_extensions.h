@@ -30,10 +30,10 @@
 #include "api/array_view.h"
 #include "libmedia_transfer_protocol/rtp_headers.h"
 #include "libmedia_transfer_protocol/rtp_parameters.h"
-#include "api/video/color_space.h"
-#include "api/video/video_content_type.h"
-#include "api/video/video_rotation.h"
-#include "api/video/video_timing.h"
+#include "libmedia_codec/color_space.h"
+#include "libmedia_codec/video_content_type.h"
+#include "libmedia_codec/video_rotation.h"
+#include "libmedia_codec/video_timing.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtp_rtcp_defines.h"
 
 namespace libmedia_transfer_protocol {
@@ -169,16 +169,16 @@ class TransportSequenceNumberV2 {
 
 class VideoOrientation {
  public:
-  using value_type = webrtc::VideoRotation;
+  using value_type = libmedia_codec::VideoRotation;
   static constexpr RTPExtensionType kId = kRtpExtensionVideoRotation;
   static constexpr uint8_t kValueSizeBytes = 1;
   static constexpr absl::string_view Uri() {
     return RtpExtension::kVideoRotationUri;
   }
 
-  static bool Parse(rtc::ArrayView<const uint8_t> data, webrtc::VideoRotation* value);
-  static size_t ValueSize(webrtc::VideoRotation) { return kValueSizeBytes; }
-  static bool Write(rtc::ArrayView<uint8_t> data, webrtc::VideoRotation value);
+  static bool Parse(rtc::ArrayView<const uint8_t> data, libmedia_codec::VideoRotation* value);
+  static size_t ValueSize(libmedia_codec::VideoRotation) { return kValueSizeBytes; }
+  static bool Write(rtc::ArrayView<uint8_t> data, libmedia_codec::VideoRotation value);
   static bool Parse(rtc::ArrayView<const uint8_t> data, uint8_t* value);
   static size_t ValueSize(uint8_t value) { return kValueSizeBytes; }
   static bool Write(rtc::ArrayView<uint8_t> data, uint8_t value);
@@ -186,7 +186,7 @@ class VideoOrientation {
 
 class PlayoutDelayLimits {
  public:
-  using value_type = webrtc::VideoPlayoutDelay;
+  using value_type = libmedia_codec::VideoPlayoutDelay;
   static constexpr RTPExtensionType kId = kRtpExtensionPlayoutDelay;
   static constexpr uint8_t kValueSizeBytes = 3;
   static constexpr absl::string_view Uri() {
@@ -201,15 +201,15 @@ class PlayoutDelayLimits {
   static constexpr int kMaxMs = 0xfff * kGranularityMs;  // 40950.
 
   static bool Parse(rtc::ArrayView<const uint8_t> data,
-	  webrtc::VideoPlayoutDelay* playout_delay);
-  static size_t ValueSize(const webrtc::VideoPlayoutDelay&) { return kValueSizeBytes; }
+	  libmedia_codec::VideoPlayoutDelay* playout_delay);
+  static size_t ValueSize(const libmedia_codec::VideoPlayoutDelay&) { return kValueSizeBytes; }
   static bool Write(rtc::ArrayView<uint8_t> data,
-                    const webrtc::VideoPlayoutDelay& playout_delay);
+                    const libmedia_codec::VideoPlayoutDelay& playout_delay);
 };
 
 class VideoContentTypeExtension {
  public:
-  using value_type = webrtc::VideoContentType;
+  using value_type = libmedia_codec::VideoContentType;
   static constexpr RTPExtensionType kId = kRtpExtensionVideoContentType;
   static constexpr uint8_t kValueSizeBytes = 1;
   static constexpr absl::string_view Uri() {
@@ -217,15 +217,15 @@ class VideoContentTypeExtension {
   }
 
   static bool Parse(rtc::ArrayView<const uint8_t> data,
-	  webrtc::VideoContentType* content_type);
-  static size_t ValueSize(webrtc::VideoContentType) { return kValueSizeBytes; }
+	  libmedia_codec::VideoContentType* content_type);
+  static size_t ValueSize(libmedia_codec::VideoContentType) { return kValueSizeBytes; }
   static bool Write(rtc::ArrayView<uint8_t> data,
-	  webrtc::VideoContentType content_type);
+	  libmedia_codec::VideoContentType content_type);
 };
 
 class VideoTimingExtension {
  public:
-  using value_type = webrtc::VideoSendTiming;
+  using value_type = libmedia_codec::VideoSendTiming;
   static constexpr RTPExtensionType kId = kRtpExtensionVideoTiming;
   static constexpr uint8_t kValueSizeBytes = 13;
   static constexpr absl::string_view Uri() {
@@ -243,10 +243,10 @@ class VideoTimingExtension {
   static constexpr uint8_t kNetwork2TimestampDeltaOffset = 11;
 
   static bool Parse(rtc::ArrayView<const uint8_t> data,
-	  webrtc::VideoSendTiming* timing);
-  static size_t ValueSize(const webrtc::VideoSendTiming&) { return kValueSizeBytes; }
+	  libmedia_codec::VideoSendTiming* timing);
+  static size_t ValueSize(const libmedia_codec::VideoSendTiming&) { return kValueSizeBytes; }
   static bool Write(rtc::ArrayView<uint8_t> data,
-                    const webrtc::VideoSendTiming& timing);
+                    const libmedia_codec::VideoSendTiming& timing);
 
   static size_t ValueSize(uint16_t time_delta_ms, uint8_t idx) {
     return kValueSizeBytes;
@@ -259,7 +259,7 @@ class VideoTimingExtension {
 
 class ColorSpaceExtension {
  public:
-  using value_type = webrtc::ColorSpace;
+  using value_type = libmedia_codec::ColorSpace;
   static constexpr RTPExtensionType kId = kRtpExtensionColorSpace;
   static constexpr uint8_t kValueSizeBytes = 28;
   static constexpr uint8_t kValueSizeBytesWithoutHdrMetadata = 4;
@@ -268,13 +268,13 @@ class ColorSpaceExtension {
   }
 
   static bool Parse(rtc::ArrayView<const uint8_t> data,
-	  webrtc::ColorSpace* color_space);
-  static size_t ValueSize(const webrtc::ColorSpace& color_space) {
+	  libmedia_codec::ColorSpace* color_space);
+  static size_t ValueSize(const libmedia_codec::ColorSpace& color_space) {
     return color_space.hdr_metadata() ? kValueSizeBytes
                                       : kValueSizeBytesWithoutHdrMetadata;
   }
   static bool Write(rtc::ArrayView<uint8_t> data,
-                    const webrtc::ColorSpace& color_space);
+                    const libmedia_codec::ColorSpace& color_space);
 
  private:
   static constexpr int kChromaticityDenominator = 50000;  // 0.00002 resolution.
@@ -282,18 +282,18 @@ class ColorSpaceExtension {
   static constexpr int kLuminanceMinDenominator = 10000;  // 0.0001 resolution.
 
   static uint8_t CombineRangeAndChromaSiting(
-	  webrtc::ColorSpace::RangeID range,
-	  webrtc::ColorSpace::ChromaSiting chroma_siting_horizontal,
-	  webrtc::ColorSpace::ChromaSiting chroma_siting_vertical);
+	  libmedia_codec::ColorSpace::RangeID range,
+	  libmedia_codec::ColorSpace::ChromaSiting chroma_siting_horizontal,
+	  libmedia_codec::ColorSpace::ChromaSiting chroma_siting_vertical);
   static size_t ParseHdrMetadata(rtc::ArrayView<const uint8_t> data,
-	  webrtc::HdrMetadata* hdr_metadata);
+	  libmedia_codec::HdrMetadata* hdr_metadata);
   static size_t ParseChromaticity(const uint8_t* data,
-	  webrtc::HdrMasteringMetadata::Chromaticity* p);
+	  libmedia_codec::HdrMasteringMetadata::Chromaticity* p);
   static size_t ParseLuminance(const uint8_t* data, float* f, int denominator);
   static size_t WriteHdrMetadata(rtc::ArrayView<uint8_t> data,
-                                 const webrtc::HdrMetadata& hdr_metadata);
+                                 const libmedia_codec::HdrMetadata& hdr_metadata);
   static size_t WriteChromaticity(uint8_t* data,
-                                  const webrtc::HdrMasteringMetadata::Chromaticity& p);
+                                  const libmedia_codec::HdrMasteringMetadata::Chromaticity& p);
   static size_t WriteLuminance(uint8_t* data, float f, int denominator);
 };
 

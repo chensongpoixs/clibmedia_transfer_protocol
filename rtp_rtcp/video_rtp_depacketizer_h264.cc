@@ -84,7 +84,7 @@ absl::optional<VideoRtpDepacketizer::ParsedRtpPayload> ProcessStapAOrSingleNalu(
   parsed_payload->video_payload = rtp_payload;
   parsed_payload->video_header.width = 0;
   parsed_payload->video_header.height = 0;
-  parsed_payload->video_header.codec = webrtc::kVideoCodecH264;
+  parsed_payload->video_header.codec = libmedia_codec::kVideoCodecH264;
   parsed_payload->video_header.simulcastIdx = 0;
   parsed_payload->video_header.is_first_packet_in_frame = true;
   auto& h264_header = parsed_payload->video_header.video_type_header
@@ -113,7 +113,7 @@ absl::optional<VideoRtpDepacketizer::ParsedRtpPayload> ProcessStapAOrSingleNalu(
     nalu_start_offsets.push_back(0);
   }
   h264_header.nalu_type = nal_type;
-  parsed_payload->video_header.frame_type = webrtc::VideoFrameType::kVideoFrameDelta;
+  parsed_payload->video_header.frame_type = libmedia_codec::VideoFrameType::kVideoFrameDelta;
 
   nalu_start_offsets.push_back(rtp_payload.size() +
                                kLengthFieldSize);  // End offset.
@@ -187,7 +187,7 @@ absl::optional<VideoRtpDepacketizer::ParsedRtpPayload> ProcessStapAOrSingleNalu(
           RTC_LOG(LS_WARNING) << "Failed to parse SPS id from SPS slice.";
         }
         parsed_payload->video_header.frame_type =
-			webrtc::VideoFrameType::kVideoFrameKey;
+			libmedia_codec::VideoFrameType::kVideoFrameKey;
         break;
       }
       case webrtc::H264::NaluType::kPps: {
@@ -206,7 +206,7 @@ absl::optional<VideoRtpDepacketizer::ParsedRtpPayload> ProcessStapAOrSingleNalu(
       }
       case webrtc::H264::NaluType::kIdr:
         parsed_payload->video_header.frame_type =
-			webrtc::VideoFrameType::kVideoFrameKey;
+			libmedia_codec::VideoFrameType::kVideoFrameKey;
         ABSL_FALLTHROUGH_INTENDED;
       case webrtc::H264::NaluType::kSlice: {
         absl::optional<uint32_t> pps_id = webrtc::PpsParser::ParsePpsIdFromSlice(
@@ -282,13 +282,13 @@ absl::optional<VideoRtpDepacketizer::ParsedRtpPayload> ParseFuaNalu(
   }
 
   if (original_nal_type == webrtc::H264::NaluType::kIdr) {
-    parsed_payload->video_header.frame_type = webrtc::VideoFrameType::kVideoFrameKey;
+    parsed_payload->video_header.frame_type = libmedia_codec::VideoFrameType::kVideoFrameKey;
   } else {
-    parsed_payload->video_header.frame_type = webrtc::VideoFrameType::kVideoFrameDelta;
+    parsed_payload->video_header.frame_type = libmedia_codec::VideoFrameType::kVideoFrameDelta;
   }
   parsed_payload->video_header.width = 0;
   parsed_payload->video_header.height = 0;
-  parsed_payload->video_header.codec = webrtc::kVideoCodecH264;
+  parsed_payload->video_header.codec = libmedia_codec::kVideoCodecH264;
   parsed_payload->video_header.simulcastIdx = 0;
   parsed_payload->video_header.is_first_packet_in_frame = first_fragment;
   auto& h264_header = parsed_payload->video_header.video_type_header

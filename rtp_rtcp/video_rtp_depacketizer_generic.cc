@@ -56,11 +56,11 @@ VideoRtpDepacketizerGeneric::Parse(rtc::CopyOnWriteBuffer rtp_payload) {
   size_t offset = kGenericHeaderLength;
 
   parsed->video_header.frame_type = (generic_header & kKeyFrameBit)
-                                        ? webrtc::VideoFrameType::kVideoFrameKey
-                                        : webrtc::VideoFrameType::kVideoFrameDelta;
+                                        ? libmedia_codec::VideoFrameType::kVideoFrameKey
+                                        : libmedia_codec::VideoFrameType::kVideoFrameDelta;
   parsed->video_header.is_first_packet_in_frame =
       (generic_header & kFirstPacketBit) != 0;
-  parsed->video_header.codec = webrtc::kVideoCodecGeneric;
+  parsed->video_header.codec = libmedia_codec::kVideoCodecGeneric;
   parsed->video_header.width = 0;
   parsed->video_header.height = 0;
 

@@ -189,10 +189,10 @@ int VideoRtpDepacketizerVp9::ParseRtpPayload(
   video_header->width = 0;
   video_header->height = 0;
   video_header->simulcastIdx = 0;
-  video_header->codec = webrtc::kVideoCodecVP9;
+  video_header->codec = libmedia_codec::kVideoCodecVP9;
 
   video_header->frame_type =
-      p_bit ? webrtc::VideoFrameType::kVideoFrameDelta : webrtc::VideoFrameType::kVideoFrameKey;
+      p_bit ? libmedia_codec::VideoFrameType::kVideoFrameDelta : libmedia_codec::VideoFrameType::kVideoFrameKey;
 
   auto& vp9_header =
       video_header->video_type_header.emplace<webrtc::RTPVideoHeaderVP9>();

@@ -28,7 +28,7 @@
 #include "absl/types/optional.h"
 #include "api/array_view.h"
 #include "api/scoped_refptr.h"
-#include "api/video/encoded_image.h"
+#include "libmedia_codec/encoded_image.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/video_rtp_depacketizer.h"
 #include "rtc_base/copy_on_write_buffer.h"
 
@@ -41,7 +41,7 @@ class VideoRtpDepacketizerAv1 : public VideoRtpDepacketizer {
   VideoRtpDepacketizerAv1& operator=(const VideoRtpDepacketizerAv1&) = delete;
   ~VideoRtpDepacketizerAv1() override = default;
 
-  rtc::scoped_refptr<webrtc::EncodedImageBuffer> AssembleFrame(
+  rtc::scoped_refptr<libmedia_codec::EncodedImageBuffer> AssembleFrame(
       rtc::ArrayView<const rtc::ArrayView<const uint8_t>> rtp_payloads)
       override;
 

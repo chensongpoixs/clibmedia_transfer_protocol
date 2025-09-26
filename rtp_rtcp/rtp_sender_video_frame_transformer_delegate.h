@@ -26,10 +26,12 @@
 #include "libmedia_transfer_protocol/frame_transformer_interface.h"
 #include "api/scoped_refptr.h"
 #include "api/task_queue/task_queue_base.h"
-#include "api/video/video_layers_allocation.h"
+#include "libmedia_codec/video_layers_allocation.h"
 #include "rtc_base/synchronization/mutex.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtp_video_header.h"
-
+#include "libmedia_codec/encoded_image.h"
+#include "libmedia_codec/video_codec_type.h"
+#include "libmedia_codec/video_layers_allocation.h"
 namespace libmedia_transfer_protocol {
 
 class RTPSenderVideo;
@@ -49,9 +51,9 @@ class RTPSenderVideoFrameTransformerDelegate : public TransformedFrameCallback {
 
   // Delegates the call to FrameTransformerInterface::TransformFrame.
   bool TransformFrame(int payload_type,
-                      absl::optional<webrtc::VideoCodecType> codec_type,
+                      absl::optional<libmedia_codec::VideoCodecType> codec_type,
                       uint32_t rtp_timestamp,
-                      const webrtc::EncodedImage& encoded_image,
+                      const libmedia_codec::EncodedImage& encoded_image,
                       RTPVideoHeader video_header,
                       absl::optional<int64_t> expected_retransmission_time_ms);
 
@@ -71,7 +73,7 @@ class RTPSenderVideoFrameTransformerDelegate : public TransformedFrameCallback {
   // Delegates the call to
   // RTPSendVideo::SetVideoLayersAllocationAfterTransformation under
   // `sender_lock_`.
-  void SetVideoLayersAllocationUnderLock(webrtc::VideoLayersAllocation allocation);
+  void SetVideoLayersAllocationUnderLock(libmedia_codec::VideoLayersAllocation allocation);
 
   // Unregisters and releases the `frame_transformer_` reference, and resets
   // `sender_` under lock. Called from RTPSenderVideo destructor to prevent the

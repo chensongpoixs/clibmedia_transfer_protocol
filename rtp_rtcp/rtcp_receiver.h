@@ -27,10 +27,11 @@
 #include <vector>
 
 #include "absl/types/optional.h"
+#include "absl/container/inlined_vector.h"
 #include "api/array_view.h"
 #include "api/sequence_checker.h"
 #include "api/units/time_delta.h"
-#include "api/video/video_bitrate_allocator.h"
+#include "libmedia_codec/video_bitrate_allocator.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/report_block_data.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtcp_statistics.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtp_rtcp_defines.h"
@@ -226,8 +227,8 @@ class RTCPReceiver final {
 
    private:
     RTC_NO_UNIQUE_ADDRESS CustomSequenceChecker packet_sequence_checker_;
-    absl::InlinedVector<uint32_t, kMaxSsrcs> ssrcs_
-        RTC_GUARDED_BY(packet_sequence_checker_);
+
+    absl::InlinedVector<uint32_t, kMaxSsrcs> ssrcs_ RTC_GUARDED_BY(packet_sequence_checker_);
   };
 
   struct PacketInformation;
@@ -398,7 +399,7 @@ class RTCPReceiver final {
   RtcpLossNotificationObserver* const rtcp_loss_notification_observer_;
   NetworkStateEstimateObserver* const network_state_estimate_observer_;
   TransportFeedbackObserver* const transport_feedback_observer_;
-  webrtc::VideoBitrateAllocationObserver* const bitrate_allocation_observer_;
+  libmedia_codec::VideoBitrateAllocationObserver* const bitrate_allocation_observer_;
   const webrtc::TimeDelta report_interval_;
 
   mutable webrtc::Mutex rtcp_receiver_lock_;

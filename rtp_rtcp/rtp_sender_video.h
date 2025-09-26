@@ -34,9 +34,9 @@
 #include "api/sequence_checker.h"
 #include "api/task_queue/task_queue_base.h"
 #include "libmedia_transfer_protocol/rtp/dependency_descriptor.h"
-#include "api/video/video_codec_type.h"
-#include "api/video/video_frame_type.h"
-#include "api/video/video_layers_allocation.h"
+#include "libmedia_codec/video_codec_type.h"
+#include "libmedia_codec/video_frame_type.h"
+#include "libmedia_codec/video_layers_allocation.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtp_rtcp_defines.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/absolute_capture_time_sender.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/active_decode_targets_helper.h"
@@ -50,6 +50,7 @@
 #include "rtc_base/rate_statistics.h"
 #include "rtc_base/synchronization/mutex.h"
 #include "rtc_base/thread_annotations.h"
+#include "libmedia_codec/video_codec_type.h"
 
 namespace libmedia_transfer_protocol {
 //
@@ -108,7 +109,7 @@ class RTPSenderVideo {
   // details. If the sender and the capture has the same clock, it is supposed
   // to be zero valued, which is given as the default.
   bool SendVideo(int payload_type,
-                 absl::optional<webrtc::VideoCodecType> codec_type,
+                 absl::optional<libmedia_codec::VideoCodecType> codec_type,
                  uint32_t rtp_timestamp,
                  int64_t capture_time_ms,
                  rtc::ArrayView<const uint8_t> payload,
@@ -118,9 +119,9 @@ class RTPSenderVideo {
 
   bool SendEncodedImage(
       int payload_type,
-      absl::optional<webrtc::VideoCodecType> codec_type,
+      absl::optional<libmedia_codec::VideoCodecType> codec_type,
       uint32_t rtp_timestamp,
-      const webrtc::EncodedImage& encoded_image,
+      const libmedia_codec::EncodedImage& encoded_image,
       RTPVideoHeader video_header,
       absl::optional<int64_t> expected_retransmission_time_ms);
 
@@ -140,11 +141,11 @@ class RTPSenderVideo {
   // sent in full on every key frame. The allocation will be sent once on a
   // none discardable delta frame per call to this method and will not contain
   // resolution and frame rate.
-  void SetVideoLayersAllocation(webrtc::VideoLayersAllocation allocation);
+  void SetVideoLayersAllocation(libmedia_codec::VideoLayersAllocation allocation);
   // Should only be used by a RTPSenderVideoFrameTransformerDelegate and exists
   // to ensure correct syncronization.
   void SetVideoLayersAllocationAfterTransformation(
-	  webrtc::VideoLayersAllocation allocation);
+	  libmedia_codec::VideoLayersAllocation allocation);
 
   // Returns the current packetization overhead rate, in bps. Note that this is
   // the payload overhead, eg the VP8 payload headers, not the RTP headers
@@ -179,7 +180,7 @@ class RTPSenderVideo {
 
   void SetVideoStructureInternal(
       const FrameDependencyStructure* video_structure);
-  void SetVideoLayersAllocationInternal(webrtc::VideoLayersAllocation allocation);
+  void SetVideoLayersAllocationInternal(libmedia_codec::VideoLayersAllocation allocation);
 
   void AddRtpHeaderExtensions(
       const RTPVideoHeader& video_header,
@@ -212,24 +213,24 @@ class RTPSenderVideo {
   // These members should only be accessed from within SendVideo() to avoid
   // potential race conditions.
   rtc::RaceChecker send_checker_;
-  webrtc::VideoRotation last_rotation_ RTC_GUARDED_BY(send_checker_);
-  absl::optional<webrtc::ColorSpace> last_color_space_ RTC_GUARDED_BY(send_checker_);
+  libmedia_codec::VideoRotation last_rotation_ RTC_GUARDED_BY(send_checker_);
+  absl::optional<libmedia_codec::ColorSpace> last_color_space_ RTC_GUARDED_BY(send_checker_);
   bool transmit_color_space_next_frame_ RTC_GUARDED_BY(send_checker_);
   std::unique_ptr<FrameDependencyStructure> video_structure_
       RTC_GUARDED_BY(send_checker_);
-  absl::optional<webrtc::VideoLayersAllocation> allocation_
+  absl::optional<libmedia_codec::VideoLayersAllocation> allocation_
       RTC_GUARDED_BY(send_checker_);
   // Flag indicating if we should send `allocation_`.
   SendVideoLayersAllocation send_allocation_ RTC_GUARDED_BY(send_checker_);
 
   // Current target playout delay.
-  webrtc::VideoPlayoutDelay current_playout_delay_ RTC_GUARDED_BY(send_checker_);
+  libmedia_codec::VideoPlayoutDelay current_playout_delay_ RTC_GUARDED_BY(send_checker_);
   // Flag indicating if we need to send `current_playout_delay_` in order
   // to guarantee it gets delivered.
   bool playout_delay_pending_;
   // Set by the field trial WebRTC-ForceSendPlayoutDelay to override the playout
   // delay of outgoing video frames.
-  const absl::optional<webrtc::VideoPlayoutDelay> forced_playout_delay_;
+  const absl::optional<libmedia_codec::VideoPlayoutDelay> forced_playout_delay_;
 
   // Should never be held when calling out of this class.
   webrtc::Mutex mutex_;
