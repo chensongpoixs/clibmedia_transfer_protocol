@@ -11,27 +11,19 @@
  ******************************************************************************/
  /*****************************************************************************
 				   Author: chensong
-				   date:  2025-09-21
+				   date:  2025-09-26
 
 
 
  ******************************************************************************/
-#include "libmedia_transfer_protocol/rid_description.h"
+
+
+#include "libmedia_transfer_protocol/bitrate_settings.h"
 
 namespace libmedia_transfer_protocol {
 
-	RidDescription::RidDescription() = default;
-	RidDescription::RidDescription(const std::string& rid, RidDirection direction)
-		: rid{ rid }, direction{ direction } {}
-	RidDescription::RidDescription(const RidDescription& other) = default;
-	RidDescription::~RidDescription() = default;
-	RidDescription& RidDescription::operator=(const RidDescription& other) =
-		default;
-	bool RidDescription::operator==(const RidDescription& other) const {
-		return rid == other.rid && direction == other.direction &&
-			payload_types == other.payload_types &&
-			restrictions == other.restrictions;
-	}
+BitrateSettings::BitrateSettings() = default;
+BitrateSettings::~BitrateSettings() = default;
+BitrateSettings::BitrateSettings(const BitrateSettings&) = default;
 
-
-}  // namespace cricket
+}  // namespace webrtc

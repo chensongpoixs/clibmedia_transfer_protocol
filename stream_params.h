@@ -74,7 +74,20 @@ extern const char kFidSsrcGroupSemantics[];
 extern const char kSimSsrcGroupSemantics[];
 
 struct SsrcGroup {
-   
+	SsrcGroup() = default;
+	SsrcGroup(const std::string& usage, const std::vector<uint32_t>& ssrcs);
+	SsrcGroup(const SsrcGroup&);
+	SsrcGroup(SsrcGroup&&);
+	~SsrcGroup();
+	SsrcGroup& operator=(const SsrcGroup&);
+	SsrcGroup& operator=(SsrcGroup&&);
+
+	bool operator==(const SsrcGroup& other) const {
+		return (semantics == other.semantics && ssrcs == other.ssrcs);
+	}
+	bool operator!=(const SsrcGroup& other) const { return !(*this == other); }
+
+	bool has_semantics(const std::string& semantics) const;
   std::string ToString() const;
 
   std::string semantics;        // e.g FIX, FEC, SIM.
@@ -86,17 +99,99 @@ struct SsrcGroup {
 // MediaContentDescription, while in UnifiedPlan this means that there is one
 // StreamParams per MediaContentDescription.
 struct StreamParams {
-    
-  uint32_t first_ssrc() const {
-    if (ssrcs.empty()) {
-      return 0;
-    }
+     
+  StreamParams();
+  StreamParams(const StreamParams&);
+  StreamParams(StreamParams&&);
+  ~StreamParams();
+  StreamParams& operator=(const StreamParams&);
+  StreamParams& operator=(StreamParams&&);
 
-    return ssrcs[0];
+  static StreamParams CreateLegacy(uint32_t ssrc) {
+	  StreamParams stream;
+	  stream.ssrcs.push_back(ssrc);
+	  return stream;
   }
-   
 
-   
+  bool operator==(const StreamParams& other) const;
+  bool operator!=(const StreamParams& other) const { return !(*this == other); }
+
+  uint32_t first_ssrc() const {
+	  if (ssrcs.empty()) {
+		  return 0;
+	  }
+
+	  return ssrcs[0];
+  }
+  bool has_ssrcs() const { return !ssrcs.empty(); }
+  bool has_ssrc(uint32_t ssrc) const {
+	  return absl::c_linear_search(ssrcs, ssrc);
+  }
+  void add_ssrc(uint32_t ssrc) { ssrcs.push_back(ssrc); }
+  bool has_ssrc_groups() const { return !ssrc_groups.empty(); }
+  bool has_ssrc_group(const std::string& semantics) const {
+	  return (get_ssrc_group(semantics) != NULL);
+  }
+  const SsrcGroup* get_ssrc_group(const std::string& semantics) const {
+	  for (const SsrcGroup& ssrc_group : ssrc_groups) {
+		  if (ssrc_group.has_semantics(semantics)) {
+			  return &ssrc_group;
+		  }
+	  }
+	  return NULL;
+  }
+
+  // Convenience function to add an FID ssrc for a primary_ssrc
+  // that's already been added.
+  bool AddFidSsrc(uint32_t primary_ssrc, uint32_t fid_ssrc) {
+	  return AddSecondarySsrc(kFidSsrcGroupSemantics, primary_ssrc, fid_ssrc);
+  }
+
+  // Convenience function to lookup the FID ssrc for a primary_ssrc.
+  // Returns false if primary_ssrc not found or FID not defined for it.
+  bool GetFidSsrc(uint32_t primary_ssrc, uint32_t* fid_ssrc) const {
+	  return GetSecondarySsrc(kFidSsrcGroupSemantics, primary_ssrc, fid_ssrc);
+  }
+
+  // Convenience function to add an FEC-FR ssrc for a primary_ssrc
+  // that's already been added.
+  bool AddFecFrSsrc(uint32_t primary_ssrc, uint32_t fecfr_ssrc) {
+	  return AddSecondarySsrc(kFecFrSsrcGroupSemantics, primary_ssrc, fecfr_ssrc);
+  }
+
+  // Convenience function to lookup the FEC-FR ssrc for a primary_ssrc.
+  // Returns false if primary_ssrc not found or FEC-FR not defined for it.
+  bool GetFecFrSsrc(uint32_t primary_ssrc, uint32_t* fecfr_ssrc) const {
+	  return GetSecondarySsrc(kFecFrSsrcGroupSemantics, primary_ssrc, fecfr_ssrc);
+  }
+
+  // Convenience function to populate the StreamParams with the requested number
+  // of SSRCs along with accompanying FID and FEC-FR ssrcs if requested.
+  // SSRCs are generated using the given generator.
+  void GenerateSsrcs(int num_layers,
+	  bool generate_fid,
+	  bool generate_fec_fr,
+	  rtc::UniqueRandomIdGenerator* ssrc_generator);
+
+  // Convenience to get all the SIM SSRCs if there are SIM ssrcs, or
+  // the first SSRC otherwise.
+  void GetPrimarySsrcs(std::vector<uint32_t>* ssrcs) const;
+
+  // Convenience to get all the FID SSRCs for the given primary ssrcs.
+  // If a given primary SSRC does not have a FID SSRC, the list of FID
+  // SSRCS will be smaller than the list of primary SSRCs.
+  void GetFidSsrcs(const std::vector<uint32_t>& primary_ssrcs,
+	  std::vector<uint32_t>* fid_ssrcs) const;
+
+  // Stream ids serialized to SDP.
+  std::vector<std::string> stream_ids() const;
+  void set_stream_ids(const std::vector<std::string>& stream_ids);
+
+  // Returns the first stream id or "" if none exist. This method exists only
+  // as temporary backwards compatibility with the old sync_label.
+  std::string first_stream_id() const;
+
+  //std::string ToString() const;
 
   std::string ToString() const;
  
@@ -110,7 +205,23 @@ struct StreamParams {
   std::vector<uint32_t> ssrcs;         // All SSRCs for this source
   std::vector<SsrcGroup> ssrc_groups;  // e.g. FID, FEC, SIM
   std::string cname;                   // RTCP CNAME
-  
+  // RID functionality according to
+  // https://tools.ietf.org/html/draft-ietf-mmusic-rid-15
+  // Each layer can be represented by a RID identifier and can also have
+  // restrictions (such as max-width, max-height, etc.)
+  // If the track has multiple layers (ex. Simulcast), each layer will be
+  // represented by a RID.
+  bool has_rids() const { return !rids_.empty(); }
+  const std::vector<RidDescription>& rids() const { return rids_; }
+  void set_rids(const std::vector<RidDescription>& rids) { rids_ = rids; }
+
+ 
+	 bool AddSecondarySsrc(const std::string& semantics,
+		 uint32_t primary_ssrc,
+		 uint32_t secondary_ssrc);
+	 bool GetSecondarySsrc(const std::string& semantics,
+		 uint32_t primary_ssrc,
+		 uint32_t* secondary_ssrc) const;
   std::vector<std::string> stream_ids_;
 
   std::vector<RidDescription> rids_;

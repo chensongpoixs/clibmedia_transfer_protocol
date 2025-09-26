@@ -30,7 +30,18 @@ enum class RidDirection { kSend, kReceive };
  
 struct RidDescription   {
    
-	 
+	RidDescription();
+	RidDescription(const std::string& rid, RidDirection direction);
+	RidDescription(const RidDescription& other);
+	~RidDescription();
+	RidDescription& operator=(const RidDescription& other);
+
+	// This is currently required for unit tests of StreamParams which contains
+	// RidDescription objects and checks for equality using operator==.
+	bool operator==(const RidDescription& other) const;
+	bool operator!=(const RidDescription& other) const {
+		return !(*this == other);
+	}
   std::string rid;
    
   RidDirection direction;

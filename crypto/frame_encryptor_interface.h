@@ -19,8 +19,8 @@
 
 
 
-#ifndef API_CRYPTO_FRAME_ENCRYPTOR_INTERFACE_H_
-#define API_CRYPTO_FRAME_ENCRYPTOR_INTERFACE_H_
+#ifndef _C_API_CRYPTO_FRAME_ENCRYPTOR_INTERFACE_H_
+#define _C_API_CRYPTO_FRAME_ENCRYPTOR_INTERFACE_H_
 
 #include "api/array_view.h"
 #include "libmedia_transfer_protocol/media_types.h"

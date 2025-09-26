@@ -98,7 +98,17 @@ struct RTC_EXPORT RtcpFeedback {
   absl::optional<RtcpFeedbackMessageType> message_type;
 
    
+  // Constructors for convenience.
+  RtcpFeedback();
+  explicit RtcpFeedback(RtcpFeedbackType type);
+  RtcpFeedback(RtcpFeedbackType type, RtcpFeedbackMessageType message_type);
+  RtcpFeedback(const RtcpFeedback&);
+  ~RtcpFeedback();
 
+  bool operator==(const RtcpFeedback& o) const {
+	  return type == o.type && message_type == o.message_type;
+  }
+  bool operator!=(const RtcpFeedback& o) const { return !(*this == o); }
    
 };
 
@@ -193,7 +203,22 @@ struct RTC_EXPORT RtpHeaderExtensionCapability {
   // RtpTransceiverInterface::HeaderExtensionsToOffer() and
   // SetOfferedRtpHeaderExtensions().
   RtpTransceiverDirection direction = RtpTransceiverDirection::kSendRecv;
-   
+  // Constructors for convenience.
+  RtpHeaderExtensionCapability();
+  explicit RtpHeaderExtensionCapability(absl::string_view uri);
+  RtpHeaderExtensionCapability(absl::string_view uri, int preferred_id);
+  RtpHeaderExtensionCapability(absl::string_view uri,
+	  int preferred_id,
+	  RtpTransceiverDirection direction);
+  ~RtpHeaderExtensionCapability();
+
+  bool operator==(const RtpHeaderExtensionCapability& o) const {
+	  return uri == o.uri && preferred_id == o.preferred_id &&
+		  preferred_encrypt == o.preferred_encrypt && direction == o.direction;
+  }
+  bool operator!=(const RtpHeaderExtensionCapability& o) const {
+	  return !(*this == o);
+  }
 };
 
 // RTP header extension, see RFC8285.
@@ -212,7 +237,42 @@ struct RTC_EXPORT RtpExtension {
 
  
 
+  RtpExtension();
+  RtpExtension(absl::string_view uri, int id);
+  RtpExtension(absl::string_view uri, int id, bool encrypt);
+  ~RtpExtension();
+
   std::string ToString() const;
+  bool operator==(const RtpExtension& rhs) const {
+	  return uri == rhs.uri && id == rhs.id && encrypt == rhs.encrypt;
+  }
+  static bool IsSupportedForAudio(absl::string_view uri);
+  static bool IsSupportedForVideo(absl::string_view uri);
+  // Return "true" if the given RTP header extension URI may be encrypted.
+  static bool IsEncryptionSupported(absl::string_view uri);
+
+  // Returns the header extension with the given URI or nullptr if not found.
+  static const RtpExtension* FindHeaderExtensionByUri(
+	  const std::vector<RtpExtension>& extensions,
+	  absl::string_view uri,
+	  Filter filter);
+  ABSL_DEPRECATED(
+	  "Use RtpExtension::FindHeaderExtensionByUri with filter argument")
+	  static const RtpExtension* FindHeaderExtensionByUri(
+		  const std::vector<RtpExtension>& extensions,
+		  absl::string_view uri);
+
+  // Returns the header extension with the given URI and encrypt parameter,
+  // if found, otherwise nullptr.
+  static const RtpExtension* FindHeaderExtensionByUriAndEncryption(
+	  const std::vector<RtpExtension>& extensions,
+	  absl::string_view uri,
+	  bool encrypt);
+
+  // Returns a list of extensions where any extension URI is unique.
+  static const std::vector<RtpExtension> DeduplicateHeaderExtensions(
+	  const std::vector<RtpExtension>& extensions,
+	  Filter filter);
   
     
 
@@ -420,7 +480,9 @@ struct RTC_EXPORT RtpEncodingParameters {
 };
 
 struct RTC_EXPORT RtpCodecParameters {
-   
+	RtpCodecParameters();
+	RtpCodecParameters(const RtpCodecParameters&);
+	~RtpCodecParameters();
 
   // Used to identify the codec. Equivalent to MIME subtype.
   std::string name;
@@ -466,7 +528,13 @@ struct RTC_EXPORT RtpCodecParameters {
   // Boolean values are represented by the string "1".
   std::map<std::string, std::string> parameters;
 
- 
+  bool operator==(const RtpCodecParameters& o) const {
+	  return name == o.name && kind == o.kind && payload_type == o.payload_type &&
+		  clock_rate == o.clock_rate && num_channels == o.num_channels &&
+		  max_ptime == o.max_ptime && ptime == o.ptime &&
+		  rtcp_feedback == o.rtcp_feedback && parameters == o.parameters;
+  }
+  bool operator!=(const RtpCodecParameters& o) const { return !(*this == o); }
 };
 
 // RtpCapabilities is used to represent the static capabilities of an endpoint.
@@ -484,12 +552,15 @@ struct RTC_EXPORT RtpCapabilities {
   // ulpfec and flexfec codecs used by these mechanisms will still appear in
   // `codecs`.
   std::vector<FecMechanism> fec;
-
+ 
    
 };
 
 struct RtcpParameters final {
  
+	RtcpParameters();
+	RtcpParameters(const RtcpParameters&);
+	~RtcpParameters();
 
   // The SSRC to be used in the "SSRC of packet sender" field. If not set, one
   // will be chosen by the implementation.
@@ -516,7 +587,11 @@ struct RtcpParameters final {
 
   bool remote_estimate = false;
 
-  
+  bool operator==(const RtcpParameters& o) const {
+	  return ssrc == o.ssrc && cname == o.cname &&
+		  reduced_size == o.reduced_size && mux == o.mux;
+  }
+  bool operator!=(const RtcpParameters& o) const { return !(*this == o); }
 };
 
 struct RTC_EXPORT RtpParameters {
