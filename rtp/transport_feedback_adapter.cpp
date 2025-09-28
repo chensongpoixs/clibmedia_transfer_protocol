@@ -87,6 +87,16 @@ namespace libmedia_transfer_protocol {
 		libice::TransportPacketsFeedback msg;
 		msg.feedback_time = feedback_time;
 		msg.packet_feedbacks = ProcessTransportFeedbackInner(feedback, feedback_time);
+
+		if (msg.packet_feedbacks.empty())
+		{
+			return absl::nullopt;
+		}
+		auto it = history_.find(last_ack_seq_num_);
+		if (it != history_.end())
+		{
+			msg.first_unacked_send_time = it->second.sent.send_time;
+		}
 		return msg;
 		//return absl::optional<libice::TransportPacketsFeedback>();
 	}

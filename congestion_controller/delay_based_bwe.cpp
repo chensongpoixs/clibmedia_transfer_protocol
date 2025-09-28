@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *  Copyright (c) 2025 The CRTC project authors . All Rights Reserved.
  *
  *  Please visit https://chensongpoixs.github.io for detail
@@ -11,32 +11,26 @@
  ******************************************************************************/
  /*****************************************************************************
 				   Author: chensong
-				   date:  2025-09-28
+				   date:  2025-09-29
 
 
+				   基于延迟的带宽估计
+
+
+
+				   InterArrivalDelta 计算组包延迟差
+				   TredlineEstimator 延迟趋势估计
+
+
+
+				   AimdRateControl  码率控制  <----  LinkCapacityEstiomator  链路容量估计
 
  ******************************************************************************/
 
-#include "libmedia_transfer_protocol/congestion_controller/goog_cc_network_controller.h"
-
+#include "libmedia_transfer_protocol/congestion_controller/delay_based_bwe.h"
 
 namespace libmtp
 {
-	GoogCcNetworkController::GoogCcNetworkController()
-	{
 
-	}
-	GoogCcNetworkController:: ~GoogCcNetworkController()
-	{
 
-	}
-	libice::NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
-		const libice::TransportPacketsFeedback & report)
-	{
-		if (report.packet_feedbacks.empty())
-		{
-			return libice::NetworkControlUpdate();
-		}
-		return libice::NetworkControlUpdate();
-	}
 }

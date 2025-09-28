@@ -47,7 +47,13 @@ namespace libmtp
 		webrtc::Timestamp feedback_time = webrtc::Timestamp::Millis(clock_->TimeInMilliseconds());
 
 		task_queue_.PostTask([this, feedback, feedback_time]() {
-			transport_feedback_adapter_.ProcessTransportFeedback(feedback, feedback_time);
+			// feedback 网络反馈包转换为应用的数据结构 TransportFeedback ==> TransportPacketsFeedback
+			absl::optional<libice::TransportPacketsFeedback> feedback_msg=	
+				transport_feedback_adapter_.ProcessTransportFeedback(feedback, feedback_time);
+			if (feedback_msg &&controller_)
+			{
+				controller_->OnTransportPacketsFeedback(*feedback_msg);
+			}
 		});
 		
 	}
