@@ -26,7 +26,8 @@
 
 #include "api/units/time_delta.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtcp_packet/rtpfb.h"
-
+#include <string>
+#include <sstream>
 namespace libmedia_transfer_protocol {
 namespace rtcp {
 class CommonHeader;
@@ -49,11 +50,19 @@ class TransportFeedback : public Rtpfb {
     int32_t delta_us() const { return delta_ticks_ * kDeltaScaleFactor; }
     webrtc::TimeDelta delta() const { return webrtc::TimeDelta::Micros(delta_us()); }
     bool received() const { return received_; }
+	std::string  ToString() const
+	{
+		std::stringstream cmd;
+		cmd << "sequence_number : " << sequence_number();
+		cmd << ", delta_ticks: " << delta_ticks();
+		cmd << ", received:" << received();
 
+		return cmd.str();
+	}
    private:
     uint16_t sequence_number_;
     int16_t delta_ticks_;
-    bool received_;
+    bool received_;// 是否收到rtp包
   };
   // TODO(sprang): IANA reg?
   static constexpr uint8_t kFeedbackMessageType = 15;
@@ -111,7 +120,7 @@ class TransportFeedback : public Rtpfb {
               size_t* position,
               size_t max_length,
               PacketReadyCallback callback) const override;
-
+  std::string ToString() const;
  private:
   // Size in bytes of a delta time in rtcp packet.
   // Valid values are 0 (packet wasn't received), 1 or 2.
@@ -138,7 +147,7 @@ class TransportFeedback : public Rtpfb {
     uint16_t EncodeLast() const;
 
     // Decode up to `max_size` delta sizes from `chunk`.
-    void Decode(uint16_t chunk, size_t max_size);
+    void Decode(uint16_t chunk, size_t max_size/*允许解析的大小*/);
     // Appends content of the Lastchunk to `deltas`.
     void AppendTo(std::vector<DeltaSize>* deltas) const;
 
@@ -148,20 +157,42 @@ class TransportFeedback : public Rtpfb {
     static constexpr size_t kMaxTwoBitCapacity = 7;
     static constexpr size_t kMaxVectorCapacity = kMaxOneBitCapacity;
     static constexpr DeltaSize kLarge = 2;
-
+	//  One Bit Status Vector Chunk
+	//
+	//  0                   1
+	//  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+	//  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	//  |T|S|       symbol list         |
+	//  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	//
+	//  T = 1
+	//  S = 0
+	//  Symbol list = 14 entries where 0 = not received, 1 = received 1-byte delta.
+	//  表示两种状态 14的rtp包 0： 没有收到rtp包  1： 收到rtp包了
     uint16_t EncodeOneBit() const;
     void DecodeOneBit(uint16_t chunk, size_t max_size);
 
     uint16_t EncodeTwoBit(size_t size) const;
     void DecodeTwoBit(uint16_t chunk, size_t max_size);
-
+	//  Run Length Status Vector Chunk
+	//
+	//  0                   1
+	//  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+	//  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	//  |T| S |       Run Length        |
+	//  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	//
+	//  T = 0
+	//  S = symbol
+	//  Run Length = Unsigned integer denoting the run length of the symbol
+	// RTP 包的状态的值 ： 0: 表示收到， 1 ： 收到包间隔比较小  2：间隔比较大
     uint16_t EncodeRunLength() const;
     void DecodeRunLength(uint16_t chunk, size_t max_size);
 
     DeltaSize delta_sizes_[kMaxVectorCapacity];
-    size_t size_;
-    bool all_same_;
-    bool has_large_delta_;
+    size_t size_; // rtp 的个数
+    bool all_same_; // 所有的状态是否一样
+    bool has_large_delta_; // 是否包含间隔比较大的
   };
 
   // Reset packet to consistent empty state.
@@ -178,6 +209,7 @@ class TransportFeedback : public Rtpfb {
 
   int64_t last_timestamp_us_;
   std::vector<ReceivedPacket> received_packets_;
+  // 保存所有的数据包 包含没有收到的rtp包
   std::vector<ReceivedPacket> all_packets_;
   // All but last encoded packet chunks.
   std::vector<uint16_t> encoded_chunks_;

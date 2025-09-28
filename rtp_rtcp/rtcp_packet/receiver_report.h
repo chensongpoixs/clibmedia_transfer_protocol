@@ -59,7 +59,7 @@ class ReceiverReport : public RtcpPacket {
               size_t* index,
               size_t max_length,
               PacketReadyCallback callback) const override;
-
+  std::string ToString() const;
  private:
   static const size_t kRrBaseLength = 4;
 

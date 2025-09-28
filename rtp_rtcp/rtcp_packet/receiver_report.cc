@@ -100,6 +100,18 @@ bool ReceiverReport::Create(uint8_t* packet,
   return true;
 }
 
+std::string ReceiverReport::ToString() const
+{
+	std::stringstream cmd;
+	cmd << " RTCP  RR : sender_ssrc: " << sender_ssrc();
+	for (const auto & rb: report_blocks_)
+	{
+		cmd << rb.ToString();
+	}
+	return cmd.str();
+	//return std::string();
+}
+
 bool ReceiverReport::AddReportBlock(const ReportBlock& block) {
   if (report_blocks_.size() >= kMaxNumberOfReportBlocks) {
     RTC_LOG(LS_WARNING) << "Max report blocks reached.";

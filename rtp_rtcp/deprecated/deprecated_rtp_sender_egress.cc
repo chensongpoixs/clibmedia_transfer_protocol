@@ -38,9 +38,11 @@ constexpr size_t kRtpSequenceNumberMapMaxEntries = 1 << 13;
 
 bool IsDisabled(absl::string_view name,
                 const webrtc::WebRtcKeyValueConfig* field_trials) {
-	webrtc::FieldTrialBasedConfig default_trials;
-  auto& trials = field_trials ? *field_trials : default_trials;
-  return absl::StartsWith(trials.Lookup(name), "Disabled");
+	
+	return true;
+	//webrtc::FieldTrialBasedConfig default_trials;
+  //auto& trials = field_trials ? *field_trials : default_trials;
+  //return absl::StartsWith(trials.Lookup(name), "Disabled");
 }
 }  // namespace
 

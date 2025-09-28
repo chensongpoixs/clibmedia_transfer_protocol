@@ -24,7 +24,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-
+#include <string>
 namespace libmedia_transfer_protocol {
 namespace rtcp {
 
@@ -66,7 +66,10 @@ class ReportBlock {
   uint32_t jitter() const { return jitter_; }
   uint32_t last_sr() const { return last_sr_; }
   uint32_t delay_since_last_sr() const { return delay_since_last_sr_; }
+  
 
+
+  std::string ToString() const ;
  private:
   uint32_t source_ssrc_;     // 32 bits
   uint8_t fraction_lost_;    // 8 bits representing a fixed point value 0..1

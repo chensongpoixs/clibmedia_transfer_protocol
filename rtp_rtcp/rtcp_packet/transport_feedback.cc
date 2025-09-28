@@ -212,7 +212,9 @@ void TransportFeedback::LastChunk::DecodeOneBit(uint16_t chunk,
   has_large_delta_ = false;
   all_same_ = false;
   for (size_t i = 0; i < size_; ++i)
-    delta_sizes_[i] = (chunk >> (kMaxOneBitCapacity - 1 - i)) & 0x01;
+  {
+	  delta_sizes_[i] = (chunk >> (kMaxOneBitCapacity - 1 - i)) & 0x01;
+  }
 }
 
 //  Two Bit Status Vector Chunk
@@ -240,8 +242,11 @@ void TransportFeedback::LastChunk::DecodeTwoBit(uint16_t chunk,
   size_ = std::min(kMaxTwoBitCapacity, max_size);
   has_large_delta_ = true;
   all_same_ = false;
+  // 三中状态   0： 没有收到  1： 收到rtp包 时间间隔小   2：  收到rtp包时间间隔比较大
   for (size_t i = 0; i < size_; ++i)
-    delta_sizes_[i] = (chunk >> 2 * (kMaxTwoBitCapacity - 1 - i)) & 0x03;
+  {
+	  delta_sizes_[i] = (chunk >> 2 * (kMaxTwoBitCapacity - 1 - i)) & 0x03;
+  }
 }
 
 //  Run Length Status Vector Chunk
@@ -265,12 +270,15 @@ void TransportFeedback::LastChunk::DecodeRunLength(uint16_t chunk,
                                                    size_t max_count) {
   RTC_DCHECK_EQ(chunk & 0x8000, 0);
   size_ = std::min<size_t>(chunk & 0x1fff, max_count);
+   // RTP 包的状态的值 ： 0: 表示收到， 1 ： 收到包间隔比较小  2：间隔比较大
   DeltaSize delta_size = (chunk >> 13) & 0x03;
   has_large_delta_ = delta_size >= kLarge;
   all_same_ = true;
   // To make it consistent with Add function, populate delta_sizes_ beyond 1st.
   for (size_t i = 0; i < std::min<size_t>(size_, kMaxVectorCapacity); ++i)
-    delta_sizes_[i] = delta_size;
+  {
+	  delta_sizes_[i] = delta_size;
+  }
 }
 
 TransportFeedback::TransportFeedback()
@@ -394,7 +402,7 @@ webrtc::TimeDelta TransportFeedback::GetBaseTime() const {
 
 int64_t TransportFeedback::GetBaseDeltaUs(int64_t prev_timestamp_us) const {
   int64_t delta = GetBaseTimeUs() - prev_timestamp_us;
-
+  // [-, +]  计算前后feedback中时间
   // Detect and compensate for wrap-arounds in base time.
   if (std::abs(delta - kTimeWrapPeriodUs) < std::abs(delta)) {
     delta -= kTimeWrapPeriodUs;  // Wrap backwards.
@@ -414,6 +422,7 @@ bool TransportFeedback::Parse(const CommonHeader& packet) {
   RTC_DCHECK_EQ(packet.fmt(), kFeedbackMessageType);
   TRACE_EVENT0("webrtc", "TransportFeedback::Parse");
 
+  //检测长度是否满足最低要求  
   if (packet.payload_size_bytes() < kMinPayloadSizeBytes) {
     RTC_LOG(LS_WARNING) << "Buffer too small (" << packet.payload_size_bytes()
                         << " bytes) to fit a "
@@ -423,13 +432,17 @@ bool TransportFeedback::Parse(const CommonHeader& packet) {
   }
 
   const uint8_t* const payload = packet.payload();
+  // 解析rtcp通用部分
   ParseCommonFeedback(payload);
-
+  /// 解析transport feedback头部
   base_seq_no_ = ByteReader<uint16_t>::ReadBigEndian(&payload[8]);
+  // 数据的个数
   uint16_t status_count = ByteReader<uint16_t>::ReadBigEndian(&payload[10]);
+  // 参考时间 reftime 
   base_time_ticks_ = ByteReader<int32_t, 3>::ReadBigEndian(&payload[12]);
   feedback_seq_ = payload[15];
   Clear();
+  // rtcp 和feedback头部占用16字节  所以从16开始
   size_t index = 16;
   const size_t end_index = packet.payload_size_bytes();
 
@@ -438,6 +451,7 @@ bool TransportFeedback::Parse(const CommonHeader& packet) {
     return false;
   }
 
+  // 定义一个verctor来保存所有rtp包的状态
   std::vector<uint8_t> delta_sizes;
   delta_sizes.reserve(status_count);
   while (delta_sizes.size() < status_count) {
@@ -450,7 +464,12 @@ bool TransportFeedback::Parse(const CommonHeader& packet) {
     uint16_t chunk = ByteReader<uint16_t>::ReadBigEndian(&payload[index]);
     index += kChunkSizeBytes;
     encoded_chunks_.push_back(chunk);
+	// 三种中状态
+	// |0|0|
+	// |1|0|
+	// |1|1|  
     last_chunk_.Decode(chunk, status_count - delta_sizes.size());
+	// rtp包的状态的保存到delta_sizes 
     last_chunk_.AppendTo(&delta_sizes);
   }
   // Last chunk is stored in the `last_chunk_`.
@@ -459,8 +478,13 @@ bool TransportFeedback::Parse(const CommonHeader& packet) {
   num_seq_no_ = status_count;
 
   uint16_t seq_no = base_seq_no_;
+  // 把delta_sizes中值从0下标开始加起来
+  //  0: rtp包没有收到， 就没有对应的recv_delta
+  //  1: rtp包收到了， 数据包间隔比较小， recv_delta使用1字节表示时间
+  //  2: rtp包收到了， 数据包间隔比较大， recv_delta使用2两个字节表示时间
   size_t recv_delta_size = absl::c_accumulate(delta_sizes, 0);
-
+  // recv delta 数据是根据 
+  // 
   // Determine if timestamps, that is, recv_delta are included in the packet.
   if (end_index >= index + recv_delta_size) {
     for (size_t delta_size : delta_sizes) {
@@ -489,6 +513,7 @@ bool TransportFeedback::Parse(const CommonHeader& packet) {
           if (include_lost_)
             all_packets_.emplace_back(seq_no, delta);
           last_timestamp_us_ += delta * kDeltaScaleFactor;
+		  //  偏移量
           index += delta_size;
           break;
         }
@@ -505,6 +530,7 @@ bool TransportFeedback::Parse(const CommonHeader& packet) {
     }
   } else {
     // The packet does not contain receive deltas.
+	  // 不包含recv_delta数据块
     include_timestamps_ = false;
     for (size_t delta_size : delta_sizes) {
       // Use delta sizes to detect if packet was received.
@@ -513,8 +539,10 @@ bool TransportFeedback::Parse(const CommonHeader& packet) {
       }
       if (include_lost_) {
         if (delta_size > 0) {
+			// 数据包收到的了 没有时间信息
           all_packets_.emplace_back(seq_no, 0);
         } else {
+			// 数据包没有收到
           all_packets_.emplace_back(seq_no);
         }
       }
@@ -676,6 +704,25 @@ bool TransportFeedback::Create(uint8_t* packet,
   }
   RTC_DCHECK_EQ(*position, position_end);
   return true;
+}
+
+std::string TransportFeedback::ToString() const
+{
+	std::stringstream cmd;
+	cmd << "sender_ssrc: " << sender_ssrc();
+	cmd << "media_ssrc: " << media_ssrc();
+	cmd << " base sequence number: " << base_seq_no_;
+	cmd << ", packet status_count:" << num_seq_no_;
+	cmd << ", reference time: " << base_time_ticks_;
+	cmd << ", fb pack, count :" << feedback_seq_;
+//	cmd << ", num_seq_no:" << num_seq_no_;
+	cmd << "\r\n   all packet info : r\n";
+	for (const auto&p : all_packets_)
+	{
+		cmd << p.ToString() <<"\r\n";
+	}
+	return cmd.str();
+
 }
 
 void TransportFeedback::Clear() {

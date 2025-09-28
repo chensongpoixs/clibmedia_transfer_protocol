@@ -23,7 +23,7 @@
 #include "libmedia_transfer_protocol/rtp_rtcp/byte_io.h"
 #include "rtc_base/checks.h"
 #include "rtc_base/logging.h"
-
+#include <sstream>
 namespace libmedia_transfer_protocol {
 namespace rtcp {
 
@@ -104,6 +104,32 @@ uint32_t ReportBlock::cumulative_lost() const {
     return 0;
   }
   return cumulative_lost_;
+}
+
+std::string ReportBlock::ToString() const
+{
+	/*
+	  uint32_t source_ssrc_;     // 32 bits
+  uint8_t fraction_lost_;    // 8 bits representing a fixed point value 0..1
+  int32_t cumulative_lost_;  // Signed 24-bit value
+  uint32_t extended_high_seq_num_;  // 32 bits
+  uint32_t jitter_;                 // 32 bits
+  uint32_t last_sr_;                // 32 bits
+  uint32_t delay_since_last_sr_;    // 32 bits, units of 1/65536 seconds
+	*/
+
+
+	std::stringstream  cmd;
+
+	cmd << "source_ssrc: " << source_ssrc_;
+	cmd << ", fraction_lost: " << fraction_lost_;
+	cmd << ", cumulative_lost:" << cumulative_lost_;
+	cmd << ", extended_high_seq_num: " << extended_high_seq_num_;
+	cmd << ", jitter:" << jitter_;
+	cmd << ", last_sr: " << last_sr_; 
+	cmd << ", delay_since_last_sr:" << delay_since_last_sr_;
+	return cmd.str();
+	return std::string();
 }
 
 }  // namespace rtcp

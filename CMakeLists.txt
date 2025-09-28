@@ -76,6 +76,14 @@ rtp_rtcp/rtp_header_extension_map.cpp
 	 rtp_rtcp/deprecated/*.cpp 
 	 rtp_rtcp/deprecated/*.cc 
 	 rtp_rtcp/deprecated/*.h 
+	 congestion_controller/*.h
+	 congestion_controller/*.cpp 
+	 congestion_controller/*.cc 
+	 
+	 pacing/*.cc 
+	 pacing/*.h 
+	 pacing/*.cpp 
+	 
 	 
 ) 
 

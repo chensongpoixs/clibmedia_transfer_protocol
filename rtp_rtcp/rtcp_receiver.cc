@@ -480,19 +480,23 @@ bool RTCPReceiver::ParseCompoundPacket(rtc::ArrayView<const uint8_t> packet,
 
     if (packet_type_counter_.first_packet_time_ms == -1)
       packet_type_counter_.first_packet_time_ms = clock_->TimeInMilliseconds();
-
+	//RTC_LOG_F(LS_INFO) << "recvice RTCP TYPE = " << rtcp_block.type();
     switch (rtcp_block.type()) {
       case rtcp::SenderReport::kPacketType:
+		//  RTC_LOG_F(LS_INFO) << "recvice SR RTCP TYPE = " << rtcp_block.type();
         HandleSenderReport(rtcp_block, packet_information);
         received_blocks[packet_information->remote_ssrc].sender_report = true;
         break;
       case rtcp::ReceiverReport::kPacketType:
+		//  RTC_LOG_F(LS_INFO) << "recvice RR RTCP TYPE = " << rtcp_block.type();
         HandleReceiverReport(rtcp_block, packet_information);
         break;
       case rtcp::Sdes::kPacketType:
+		  RTC_LOG(LS_INFO) << "recvice SDES RTCP TYPE = " << rtcp_block.type();
         HandleSdes(rtcp_block, packet_information);
         break;
       case rtcp::ExtendedReports::kPacketType: {
+		  RTC_LOG(LS_INFO) << "recvice ExtenderR RTCP TYPE = " << rtcp_block.type();
         bool contains_dlrr = false;
         uint32_t ssrc = 0;
         HandleXr(rtcp_block, packet_information, contains_dlrr, ssrc);
@@ -502,26 +506,34 @@ bool RTCPReceiver::ParseCompoundPacket(rtc::ArrayView<const uint8_t> packet,
         break;
       }
       case rtcp::Bye::kPacketType:
+		  RTC_LOG(LS_INFO) << "recvice Bye RTCP TYPE = " << rtcp_block.type();
         HandleBye(rtcp_block);
         break;
       case rtcp::App::kPacketType:
+		  RTC_LOG(LS_INFO) << "recvice App RTCP TYPE = " << rtcp_block.type();
         HandleApp(rtcp_block, packet_information);
         break;
       case rtcp::Rtpfb::kPacketType:
+		
         switch (rtcp_block.fmt()) {
           case rtcp::Nack::kFeedbackMessageType:
+			//  RTC_LOG_F(LS_INFO) << "recvice rtpfb  nack RTCP TYPE = " << rtcp_block.type() << ", sub_type = " << rtcp_block.fmt();
             HandleNack(rtcp_block, packet_information);
             break;
           case rtcp::Tmmbr::kFeedbackMessageType:
+			  RTC_LOG(LS_INFO) << "recvice rtpfb  tmmbr RTCP TYPE = " << rtcp_block.type() << ", sub_type = " << rtcp_block.fmt();
             HandleTmmbr(rtcp_block, packet_information);
             break;
           case rtcp::Tmmbn::kFeedbackMessageType:
+			  RTC_LOG(LS_INFO) << "recvice rtpfb tmmbn RTCP TYPE = " << rtcp_block.type() << ", sub_type = " << rtcp_block.fmt();
             HandleTmmbn(rtcp_block, packet_information);
             break;
           case rtcp::RapidResyncRequest::kFeedbackMessageType:
+			  RTC_LOG(LS_INFO) << "recvice rtpfb rapidresy ync  RTCP TYPE = " << rtcp_block.type() << ", sub_type = " << rtcp_block.fmt();
             HandleSrReq(rtcp_block, packet_information);
             break;
           case rtcp::TransportFeedback::kFeedbackMessageType:
+			//  RTC_LOG_F(LS_INFO) << "recvice rtpfb transport feedback  RTCP TYPE = " << rtcp_block.type() << ", sub_type = " << rtcp_block.fmt();
             HandleTransportFeedback(rtcp_block, packet_information);
             break;
           default:
@@ -532,12 +544,15 @@ bool RTCPReceiver::ParseCompoundPacket(rtc::ArrayView<const uint8_t> packet,
       case rtcp::Psfb::kPacketType:
         switch (rtcp_block.fmt()) {
           case rtcp::Pli::kFeedbackMessageType:
+			  RTC_LOG(LS_INFO) << "recvice psfb  pli  RTCP TYPE = " << rtcp_block.type() << ", sub_type = " << rtcp_block.fmt();
             HandlePli(rtcp_block, packet_information);
             break;
           case rtcp::Fir::kFeedbackMessageType:
+			  RTC_LOG(LS_INFO) << "recvice psfb  fir  RTCP TYPE = " << rtcp_block.type() << ", sub_type = " << rtcp_block.fmt();
             HandleFir(rtcp_block, packet_information);
             break;
           case rtcp::Psfb::kAfbMessageType:
+			  RTC_LOG(LS_INFO) << "recvice psfb  psfb  af  RTCP TYPE = " << rtcp_block.type() << ", sub_type = " << rtcp_block.fmt();
             HandlePsfbApp(rtcp_block, packet_information);
             break;
           default:
@@ -582,11 +597,14 @@ bool RTCPReceiver::ParseCompoundPacket(rtc::ArrayView<const uint8_t> packet,
 
 void RTCPReceiver::HandleSenderReport(const rtcp::CommonHeader& rtcp_block,
                                       PacketInformation* packet_information) {
+	
   rtcp::SenderReport sender_report;
   if (!sender_report.Parse(rtcp_block)) {
     ++num_skipped_packets_;
     return;
   }
+  //RTC_LOG_F(LS_INFO) << rtcp_block.ToString();
+  RTC_LOG(LS_INFO) << rtcp_block.ToString() << "\r\nSR info:\r\n" << sender_report.ToString();
 
   const uint32_t remote_ssrc = sender_report.sender_ssrc();
 
@@ -617,11 +635,13 @@ void RTCPReceiver::HandleSenderReport(const rtcp::CommonHeader& rtcp_block,
 
 void RTCPReceiver::HandleReceiverReport(const rtcp::CommonHeader& rtcp_block,
                                         PacketInformation* packet_information) {
+	//RTC_LOG_F(LS_INFO) << rtcp_block.ToString();
   rtcp::ReceiverReport receiver_report;
   if (!receiver_report.Parse(rtcp_block)) {
     ++num_skipped_packets_;
     return;
   }
+  RTC_LOG(LS_INFO) << rtcp_block.ToString() <<"\r\nRR info:\r\n"<< receiver_report.ToString();
 
   const uint32_t remote_ssrc = receiver_report.sender_ssrc();
 
@@ -816,7 +836,7 @@ void RTCPReceiver::HandleNack(const rtcp::CommonHeader& rtcp_block,
     ++num_skipped_packets_;
     return;
   }
-
+  RTC_LOG(LS_INFO) << rtcp_block.ToString() << "\r\n Nack info : \n\n" << nack.ToString();
   if (receiver_only_ || main_ssrc_ != nack.media_ssrc())  // Not to us.
     return;
 
@@ -1123,6 +1143,7 @@ void RTCPReceiver::HandleTransportFeedback(
     ++num_skipped_packets_;
     return;
   }
+  RTC_LOG(LS_INFO) << rtcp_block.ToString() <<  " rtcp feedback => " << transport_feedback->ToString();
 
   packet_information->packet_type_flags |= kRtcpTransportFeedback;
   packet_information->transport_feedback = std::move(transport_feedback);

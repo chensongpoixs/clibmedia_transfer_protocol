@@ -169,9 +169,9 @@ class RtpPacket {
     explicit ExtensionInfo(uint8_t id) : ExtensionInfo(id, 0, 0) {}
     ExtensionInfo(uint8_t id, uint8_t length, uint16_t offset)
         : id(id), length(length), offset(offset) {}
-    uint8_t id;
-    uint8_t length;
-    uint16_t offset;
+    uint8_t id; //  扩展的id 
+    uint8_t length; // 扩展的长度
+    uint16_t offset; // 扩展在 rtp头部中偏移量， 不包含扩展头部的字节
   };
 
   // Helper function for Parse. Fill header fields using data in given buffer,
@@ -213,7 +213,9 @@ class RtpPacket {
   size_t payload_size_;
 
   ExtensionManager extensions_;
+  // 已经添加过扩展信息
   std::vector<ExtensionInfo> extension_entries_;
+  // 添加扩展总长度 
   size_t extensions_size_ = 0;  // Unaligned.
   rtc::CopyOnWriteBuffer buffer_;
 };

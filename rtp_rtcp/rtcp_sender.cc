@@ -179,7 +179,7 @@ RTCPSender::RTCPSender(Configuration config)
       packet_type_counter_observer_(config.rtcp_packet_type_counter_observer),
       send_video_bitrate_allocation_(false),
       last_payload_type_(-1) {
-  RTC_DCHECK(transport_ != nullptr);
+//  RTC_DCHECK(transport_ != nullptr);
 
   builders_[kRtcpSr] = &RTCPSender::BuildSR;
   builders_[kRtcpRr] = &RTCPSender::BuildRR;

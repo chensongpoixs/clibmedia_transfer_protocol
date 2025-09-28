@@ -94,5 +94,23 @@ bool CommonHeader::Parse(const uint8_t* buffer, size_t size_bytes) {
   }
   return true;
 }
+std::string CommonHeader::ToString() const
+{
+	std::stringstream cmd;
+	/*
+	
+	  uint8_t packet_type_ = 0;
+  uint8_t count_or_format_ = 0;
+  uint8_t padding_size_ = 0;
+  uint32_t payload_size_ = 0;
+	*/
+
+	cmd << "RTCP commmHeader:packet_type:" << packet_type_;
+	cmd << ",count_or_format: " << count_or_format_;
+	cmd << ", padding_size:" << padding_size_;
+	cmd << ", payload_size:" << payload_size_;
+	return cmd.str();
+	//return std::string();
+}
 }  // namespace rtcp
 }  // namespace webrtc

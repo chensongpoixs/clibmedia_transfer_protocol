@@ -128,6 +128,33 @@ bool SenderReport::Create(uint8_t* packet,
   return true;
 }
 
+std::string SenderReport::ToString() const
+{
+	std::stringstream cmd;
+
+
+	/*
+	 webrtc::NtpTime ntp_;
+  uint32_t rtp_timestamp_;
+  uint32_t sender_packet_count_;
+  uint32_t sender_octet_count_;
+  std::vector<ReportBlock> report_blocks_;
+	*/
+
+	cmd << "SR RTCP  ,sender_ssrc: " << sender_ssrc();
+	cmd << ", ntp: " << ntp_.ToMs();
+	cmd << ", rtp_timestamp:" << rtp_timestamp_;
+	cmd << ", sender_packet_count:" << sender_packet_count_;
+	cmd << ", sender_octet_count:" << sender_octet_count_;
+	cmd << ", report_blocks:";
+	for (const auto & rb : report_blocks_)
+	{
+		cmd << rb.ToString();
+	}
+	return cmd.str();
+	return std::string();
+}
+
 bool SenderReport::AddReportBlock(const ReportBlock& block) {
   if (report_blocks_.size() >= kMaxNumberOfReportBlocks) {
     RTC_LOG(LS_WARNING) << "Max report blocks reached.";

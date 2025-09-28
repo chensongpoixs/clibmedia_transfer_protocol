@@ -71,7 +71,7 @@ enum RTPExtensionType : int {
   kRtpExtensionAbsoluteSendTime,
   kRtpExtensionAbsoluteCaptureTime,
   kRtpExtensionVideoRotation,
-  kRtpExtensionTransportSequenceNumber,
+  kRtpExtensionTransportSequenceNumber,    // transport-cc 接受端 根据 rtp包头 transport_sequence_number 
   kRtpExtensionTransportSequenceNumber02,
   kRtpExtensionPlayoutDelay,
   kRtpExtensionVideoContentType,
@@ -252,7 +252,7 @@ class NetworkStateEstimateObserver {
   virtual void OnRemoteNetworkEstimate(libice::NetworkStateEstimate estimate) = 0;
   virtual ~NetworkStateEstimateObserver() = default;
 };
-
+// 发送端记录发送rtp信息 和处理接受端feedback包处理
 class TransportFeedbackObserver {
  public:
   TransportFeedbackObserver() {}

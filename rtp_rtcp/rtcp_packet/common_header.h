@@ -22,7 +22,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-
+#include <string>
 namespace libmedia_transfer_protocol {
 namespace rtcp {
 class CommonHeader {
@@ -49,7 +49,7 @@ class CommonHeader {
   const uint8_t* NextPacket() const {
     return payload_ + payload_size_ + padding_size_;
   }
-
+  std::string ToString() const ;
  private:
   uint8_t packet_type_ = 0;
   uint8_t count_or_format_ = 0;

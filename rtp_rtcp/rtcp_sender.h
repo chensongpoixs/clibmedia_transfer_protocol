@@ -26,6 +26,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "absl/types/optional.h"
 #include "libmedia_transfer_protocol/transport.h"
@@ -333,7 +334,7 @@ class RTCPSender final {
 
   typedef void (RTCPSender::*BuilderFunc)(const RtcpContext&, PacketSender&);
   // Map from RTCPPacketType to builder.
-  std::map<uint32_t, BuilderFunc> builders_;
+  std::unordered_map<uint32_t, BuilderFunc> builders_;
 };
 }  // namespace webrtc
 

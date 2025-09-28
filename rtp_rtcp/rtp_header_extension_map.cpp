@@ -162,7 +162,7 @@ bool RtpHeaderExtensionMap::Register(int id,
                         << "', id:" << id;
     return true;
   }
-
+  //  type 是否已经被占用了 
   if (registered_type !=
       kInvalidType) {  // `id` used by another extension type.
     RTC_LOG(LS_WARNING) << "Failed to register extension uri:'" << uri

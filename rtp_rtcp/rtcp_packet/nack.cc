@@ -134,7 +134,18 @@ bool Nack::Create(uint8_t* packet,
 
   return true;
 }
-
+std::string  Nack::ToString() const
+{
+	std::stringstream cmd;
+	cmd << "sender_ssrc: " << sender_ssrc();
+	cmd << "media_ssrc: " << media_ssrc();
+	cmd << "nack info:\r\n";
+	for (const auto &n : packet_ids_)
+	{
+		cmd << "[" << n << "]";
+	}
+	return cmd.str();
+}
 void Nack::SetPacketIds(const uint16_t* nack_list, size_t length) {
   RTC_DCHECK(nack_list);
   SetPacketIds(std::vector<uint16_t>(nack_list, nack_list + length));

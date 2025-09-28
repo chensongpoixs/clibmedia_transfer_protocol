@@ -75,7 +75,7 @@ class SenderReport : public RtcpPacket {
               size_t* index,
               size_t max_length,
               PacketReadyCallback callback) const override;
-
+  std::string ToString() const;
  private:
   static constexpr size_t kSenderBaseLength = 24;
 

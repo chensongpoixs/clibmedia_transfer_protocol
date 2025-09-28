@@ -121,7 +121,7 @@ class TransmissionOffset {
   static size_t ValueSize(int32_t rtp_time) { return kValueSizeBytes; }
   static bool Write(rtc::ArrayView<uint8_t> data, int32_t rtp_time);
 };
-
+// @chesong 2025-09-27   transprot-cc    ÍøÂçÆÀ¹À 
 class TransportSequenceNumber {
  public:
   using value_type = uint16_t;

@@ -22,7 +22,8 @@
 
 #include <stddef.h>
 #include <stdint.h>
-
+#include <string>
+#include <sstream>
 #include "api/array_view.h"
 #include "api/function_view.h"
 #include "rtc_base/buffer.h"

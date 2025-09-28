@@ -50,7 +50,7 @@ class Nack : public Rtpfb {
               size_t* index,
               size_t max_length,
               PacketReadyCallback callback) const override;
-
+  std::string  ToString() const;
  private:
   static constexpr size_t kNackItemLength = 4;
   struct PackedNack {
