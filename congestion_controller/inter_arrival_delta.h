@@ -24,6 +24,8 @@
 #include "libmedia_transfer_protocol/media_config.h"
 #include "api/units/time_delta.h"
 #include "api/units/timestamp.h"
+#include "api/units/time_delta.h"
+#include "api/units/timestamp.h"
 #include "libmedia_transfer_protocol/network_controller.h"
 namespace libmtp
 {
@@ -59,7 +61,7 @@ namespace libmtp
 		virtual ~InterArrivalDelta();
 
 	public:
-
+		//  延迟差梯度
 		// 得到 两个组包发送时间差值 send_time_delta
 		 //     两个组包接受时间差差值 arrival_time_delta
 		//      两个组包数据的差值 : packet_size_delta

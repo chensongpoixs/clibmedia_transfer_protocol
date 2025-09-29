@@ -21,7 +21,7 @@
 #ifndef _C_GOOG_CC_NETWORK_CONTROLLER_H_
 #define _C_GOOG_CC_NETWORK_CONTROLLER_H_
 #include "libmedia_transfer_protocol/media_config.h"
-
+#include "libmedia_transfer_protocol/congestion_controller/delay_based_bwe.h"
 #include "libmedia_transfer_protocol/network_controller.h"
 namespace libmtp
 {
@@ -31,6 +31,8 @@ namespace libmtp
 		GoogCcNetworkController();
 		virtual ~GoogCcNetworkController() override;
 		virtual libice::NetworkControlUpdate OnTransportPacketsFeedback(const libice::TransportPacketsFeedback& msg) override;
+	private:
+		std::unique_ptr<DelayBasedBwe>  delay_based_bwe_;
 	};
 }
 

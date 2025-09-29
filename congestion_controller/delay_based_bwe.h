@@ -33,9 +33,47 @@
 #include "libmedia_transfer_protocol/media_config.h"
 
 #include "libmedia_transfer_protocol/network_controller.h"
+#include "libmedia_transfer_protocol/congestion_controller/inter_arrival_delta.h"
 namespace libmtp
 {
+	class DelayBasedBwe
+	{
+	public:
+		struct Result
+		{
+			Result();
+			~Result() = default;
 
+			bool updated; //是否更新
+			bool probe; // 
+			//目标码率
+			webrtc::DataRate target_bitrate = webrtc::DataRate::Zero(); // 
+			bool  recovered_from_overuse;
+			bool  backoff_in_alr;
+		};
+	public:
+		 DelayBasedBwe();
+		//DelayBasedBwe() = delete;
+		DelayBasedBwe(const DelayBasedBwe&) = delete;
+		DelayBasedBwe& operator=(const DelayBasedBwe&) = delete;
+		virtual ~DelayBasedBwe();
+
+	public:
+		Result IncomingPacketFeedbackVector(
+			const libice::TransportPacketsFeedback& msg,
+			/*absl::optional<webrtc::DataRate> acked_bitrate,
+			absl::optional<webrtc::DataRate> probe_bitrate,
+			absl::optional<NetworkStateEstimate> network_estimate,*/
+			bool in_alr);
+
+	private:
+		void IncomingPacketFeedback(const libice::PacketResult& packet_feedback,
+			webrtc::Timestamp at_time);
+	private:
+		std::unique_ptr<InterArrivalDelta> video_inter_arrival_delta_;
+		std::unique_ptr<InterArrivalDelta> audio_inter_arrival_delta_;
+		webrtc::Timestamp last_seen_packet_;
+	};
 
 }
 

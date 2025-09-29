@@ -36,7 +36,7 @@ namespace libmtp
 
 	// 判断两个是否突发包 时间间隔 100ms
 	static constexpr webrtc::TimeDelta kMaxBurstDuration = webrtc::TimeDelta::Millis(100);
-	constexpr webrtc::TimeDelta InterArrivalDelta::kArrivalTimeOffsetThreshold;
+	//constexpr webrtc::TimeDelta InterArrivalDelta::kArrivalTimeOffsetThreshold;
 	InterArrivalDelta::InterArrivalDelta(webrtc::TimeDelta send_time_group_length)
 		: send_time_group_length_(send_time_group_length)
 		,current_timestamp_group_(),

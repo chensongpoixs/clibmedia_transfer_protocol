@@ -23,6 +23,7 @@
 namespace libmtp
 {
 	GoogCcNetworkController::GoogCcNetworkController()
+		: delay_based_bwe_( std::make_unique< DelayBasedBwe>())
 	{
 
 	}
@@ -37,6 +38,8 @@ namespace libmtp
 		{
 			return libice::NetworkControlUpdate();
 		}
+
+		DelayBasedBwe::Result result = delay_based_bwe_->IncomingPacketFeedbackVector(report, true);
 		return libice::NetworkControlUpdate();
 	}
 }

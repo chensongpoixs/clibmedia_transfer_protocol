@@ -113,7 +113,7 @@ namespace libmedia_transfer_protocol {
 		else
 		{
 			webrtc::TimeDelta delta = feedback.GetBaseDelta(last_timestamp_).RoundDownTo(webrtc::TimeDelta::Millis(1));
-			if (current_offset_ < webrtc::Timestamp::Zero() - delta)
+			if (delta < webrtc::Timestamp::Zero() - current_offset_)
 			{
 				RTC_LOG_F(LS_WARNING) << "Unexpected feedback timestamp received.";
 				current_offset_ = feedback_time;
