@@ -32,13 +32,13 @@
 #include "rtc_base/network/sent_packet.h"
 namespace  libmtp
 {
-	class RtpTransportControllerSend
+	class RtpTransportControllerSend  : public TransportFeedbackObserver
 	{
 	public:
 		RtpTransportControllerSend(webrtc::Clock*clock, 
 			PacingController::PacketSender * packet_sender,
 			webrtc::TaskQueueFactory* task_queue_factory);
-		virtual ~RtpTransportControllerSend();
+		virtual ~RtpTransportControllerSend() override;
 
 
 	public:
@@ -46,12 +46,17 @@ namespace  libmtp
 
 
 
-		void OnTransportFeedback(const rtcp::TransportFeedback &feedback);
+		
 	public:
 
+	//	virtual void OnAddPacket(const RtpPacketSendInfo& packet_info) = 0;
+	//	virtual void OnTransportFeedback(const rtcp::TransportFeedback& feedback) = 0;
 
+		// TransportFeedbackObserver  callback
+		void OnAddPacket(const libmedia_transfer_protocol::RtpPacketSendInfo & send_info) override;
+		void OnTransportFeedback(const rtcp::TransportFeedback &feedback) override;
 
-		void OnAddPacket(const libmedia_transfer_protocol::RtpPacketSendInfo & send_info);
+	public:
 		void OnSentPacket(const rtc::SentPacket& sent_packet);
 		void OnNetworkOk(bool  network_ok);
 
