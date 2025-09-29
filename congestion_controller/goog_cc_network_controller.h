@@ -30,7 +30,10 @@ namespace libmtp
 	public:
 		GoogCcNetworkController();
 		virtual ~GoogCcNetworkController() override;
-		virtual libice::NetworkControlUpdate OnTransportPacketsFeedback(const libice::TransportPacketsFeedback& msg) override;
+		virtual libice::NetworkControlUpdate OnTransportPacketsFeedback(
+			const libice::TransportPacketsFeedback& msg) override;
+
+		virtual  libice::NetworkControlUpdate OnRttUpdate(int64_t rtt_ms) override;
 	private:
 		std::unique_ptr<DelayBasedBwe>  delay_based_bwe_;
 	};

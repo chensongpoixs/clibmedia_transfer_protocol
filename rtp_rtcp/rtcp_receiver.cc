@@ -604,7 +604,7 @@ void RTCPReceiver::HandleSenderReport(const rtcp::CommonHeader& rtcp_block,
     return;
   }
   //RTC_LOG_F(LS_INFO) << rtcp_block.ToString();
-  RTC_LOG(LS_INFO) << rtcp_block.ToString() << "\r\nSR info:\r\n" << sender_report.ToString();
+ // RTC_LOG(LS_INFO) << rtcp_block.ToString() << "\r\nSR info:\r\n" << sender_report.ToString();
 
   const uint32_t remote_ssrc = sender_report.sender_ssrc();
 
@@ -641,7 +641,7 @@ void RTCPReceiver::HandleReceiverReport(const rtcp::CommonHeader& rtcp_block,
     ++num_skipped_packets_;
     return;
   }
-  RTC_LOG(LS_INFO) << rtcp_block.ToString() <<"\r\nRR info:\r\n"<< receiver_report.ToString();
+  //RTC_LOG(LS_INFO) << rtcp_block.ToString() <<"\r\nRR info:\r\n"<< receiver_report.ToString();
 
   const uint32_t remote_ssrc = receiver_report.sender_ssrc();
 
@@ -1143,7 +1143,7 @@ void RTCPReceiver::HandleTransportFeedback(
     ++num_skipped_packets_;
     return;
   }
-  RTC_LOG(LS_INFO) << rtcp_block.ToString() <<  " rtcp feedback => " << transport_feedback->ToString();
+ // RTC_LOG(LS_INFO) << rtcp_block.ToString() <<  " rtcp feedback => " << transport_feedback->ToString();
 
   packet_information->packet_type_flags |= kRtcpTransportFeedback;
   packet_information->transport_feedback = std::move(transport_feedback);

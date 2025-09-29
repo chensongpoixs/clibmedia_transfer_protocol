@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *  Copyright (c) 2025 The CRTC project authors . All Rights Reserved.
  *
  *  Please visit https://chensongpoixs.github.io for detail
@@ -14,7 +14,7 @@
 				   date:  2025-09-29
 
 
-				   �ӳ�����
+				   延迟趋势
 
  ******************************************************************************/
 
@@ -39,7 +39,9 @@ namespace libmedia_transfer_protocol {
 namespace {
 
 // Parameters for linear least squares fit of regression line to noisy data.
+	// 历史数据的权重 0.9 
 constexpr double kDefaultTrendlineSmoothingCoeff = 0.9;
+//  增益系数
 constexpr double kDefaultTrendlineThresholdGain = 4.0;
 const char kBweWindowSizeInPacketsExperiment[] =
     "WebRTC-BweWindowSizeInPackets";
@@ -83,7 +85,9 @@ absl::optional<double> LinearFitSlope(
     denominator += (x - x_avg) * (x - x_avg);
   }
   if (denominator == 0)
-    return absl::nullopt;
+  {
+	  return absl::nullopt;
+  }
   return numerator / denominator;
 }
 
@@ -117,6 +121,8 @@ absl::optional<double> ComputeSlopeCap(
 
 constexpr double kMaxAdaptOffsetMs = 15.0;
 constexpr double kOverUsingTimeThreshold = 10;
+
+// 最小统计增益数量
 constexpr int kMinNumDeltas = 60;
 constexpr int kDeltaCounterMax = 1000;
 
@@ -206,16 +212,20 @@ void TrendlineEstimator::UpdateTrendline(double recv_delta_ms,
                                          int64_t send_time_ms,
                                          int64_t arrival_time_ms,
                                          size_t packet_size) {
+	  // 计算传输的延迟差
   const double delta_ms = recv_delta_ms - send_delta_ms;
   ++num_of_deltas_;
   num_of_deltas_ = std::min(num_of_deltas_, kDeltaCounterMax);
   if (first_arrival_time_ms_ == -1)
-    first_arrival_time_ms_ = arrival_time_ms;
+  {
+	  first_arrival_time_ms_ = arrival_time_ms;
+  }
 
-  // Exponential backoff filter.
+  // Exponential backoff filter. 指数退避过滤器。
   accumulated_delay_ += delta_ms;
   //BWE_TEST_LOGGING_PLOT(1, "accumulated_delay_ms", arrival_time_ms,
   //                      accumulated_delay_);
+   //  计算指数平滑后统计延迟差
   smoothed_delay_ = smoothing_coef_ * smoothed_delay_ +
                     (1 - smoothing_coef_) * accumulated_delay_;
   //BWE_TEST_LOGGING_PLOT(1, "smoothed_delay_ms", arrival_time_ms,
@@ -240,10 +250,10 @@ void TrendlineEstimator::UpdateTrendline(double recv_delta_ms,
   double trend = prev_trend_;
   if (delay_hist_.size() == settings_.window_size) {
     // Update trend_ if it is possible to fit a line to the data. The delay
-    // trend can be seen as an estimate of (send_rate - capacity)/capacity.
-    // 0 < trend < 1   ->  the delay increases, queues are filling up
-    //   trend == 0    ->  the delay does not change
-    //   trend < 0     ->  the delay decreases, queues are being emptied
+    // trend can be seen as an estimate of (send_rate - capacity)/capacity. 
+	// 0 < trend < 1   ->  the delay increases, queues are filling up		==> 1、延时增大，路由buffer 正在被填充。
+	//   trend == 0    ->  the delay does not change						==> 2、延时没有发生变化。
+	//   trend < 0     ->  the delay decreases, queues are being emptied	==> 3、延时开始降低，路由buffer正在排空。
     trend = LinearFitSlope(delay_hist_).value_or(trend);
     if (settings_.enable_cap) {
       absl::optional<double> cap = ComputeSlopeCap(delay_hist_, settings_);
@@ -255,7 +265,7 @@ void TrendlineEstimator::UpdateTrendline(double recv_delta_ms,
     }
   }
   //BWE_TEST_LOGGING_PLOT(1, "trendline_slope", arrival_time_ms, trend);
-
+  // 过载检测
   Detect(trend, send_delta_ms, arrival_time_ms);
 }
 
@@ -284,12 +294,14 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
     hypothesis_ = BandwidthUsage::kBwNormal;
     return;
   }
-  const double modified_trend =
-      std::min(num_of_deltas_, kMinNumDeltas) * trend * threshold_gain_;
+  // 1. 对原始trend值进行增益处理， 增加区分度
+  const double modified_trend = 
+	  std::min(num_of_deltas_, kMinNumDeltas) * trend * threshold_gain_;
   prev_modified_trend_ = modified_trend;
  // BWE_TEST_LOGGING_PLOT(1, "T", now_ms, modified_trend);
  // BWE_TEST_LOGGING_PLOT(1, "threshold", now_ms, threshold_);
-  if (modified_trend > threshold_) {
+  if (modified_trend > threshold_) // 有可能过载
+  {
     if (time_over_using_ == -1) {
       // Initialize the timer. Assume that we've been
       // over-using half of the time since the previous
@@ -300,42 +312,63 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
       time_over_using_ += ts_delta;
     }
     overuse_counter_++;
-    if (time_over_using_ > overusing_time_threshold_ && overuse_counter_ > 1) {
-      if (trend >= prev_trend_) {
+	// 时间满足过载时间
+    if (time_over_using_ > overusing_time_threshold_ && overuse_counter_ > 1) 
+	{
+		// 判断过载
+      if (trend >= prev_trend_)  
+	  {
         time_over_using_ = 0;
         overuse_counter_ = 0;
+		 // 带宽使用过载，网络发生拥塞
         hypothesis_ = BandwidthUsage::kBwOverusing;
       }
     }
   } else if (modified_trend < -threshold_) {
     time_over_using_ = -1;
     overuse_counter_ = 0;
+	  // 当前带宽利用不足，可充分利用
     hypothesis_ = BandwidthUsage::kBwUnderusing;
-  } else {
+  } else  //-threshold < modifed_trend < threshold  认为此时处于normal 状态。
+  {
     time_over_using_ = -1;
     overuse_counter_ = 0;
+	//带宽常态使用，既不过载、也不拥塞。
     hypothesis_ = BandwidthUsage::kBwNormal;
   }
   prev_trend_ = trend;
   UpdateThreshold(modified_trend, now_ms);
+
+#if TRENDLINE_ESTIMEATOR_CSV
+  static FILE* out_file_ptr = fopen("trendline_estimator.csv", "wb+");
+  if (out_file_ptr)
+  {
+	  fprintf(out_file_ptr, " %u,%s, %s\n", now_ms - first_arrival_time_ms_, std::to_string(trend).c_str(),std::to_string(threshold_).c_str());
+	  fflush(out_file_ptr);
+  }
+#endif 
 }
 
 void TrendlineEstimator::UpdateThreshold(double modified_trend,
                                          int64_t now_ms) {
-  if (last_update_ms_ == -1)
-    last_update_ms_ = now_ms;
-
+	if (last_update_ms_ == -1)
+	{
+		last_update_ms_ = now_ms;
+  }
+	// modified_trend的值异常大 ， 不更新
   if (fabs(modified_trend) > threshold_ + kMaxAdaptOffsetMs) {
     // Avoid adapting the threshold to big latency spikes, caused e.g.,
     // by a sudden capacity drop.
     last_update_ms_ = now_ms;
     return;
   }
-
+  
+  // / 根据趋势线斜率调整阈值
   const double k = fabs(modified_trend) < threshold_ ? k_down_ : k_up_;
   const int64_t kMaxTimeDeltaMs = 100;
   int64_t time_delta_ms = std::min(now_ms - last_update_ms_, kMaxTimeDeltaMs);
   threshold_ += k * (fabs(modified_trend) - threshold_) * time_delta_ms;
+   //  限定 threshold_ 的值在[6.0f, 600.0f]之间
   threshold_ = rtc::SafeClamp(threshold_, 6.f, 600.f);
   last_update_ms_ = now_ms;
 }

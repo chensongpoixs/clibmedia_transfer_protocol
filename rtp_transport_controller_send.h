@@ -30,9 +30,12 @@
 #include "libmedia_transfer_protocol/rtp/transport_feedback_adapter.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtcp_packet/transport_feedback.h"
 #include "rtc_base/network/sent_packet.h"
+#include "rtc_base/third_party/sigslot/sigslot.h"
 namespace  libmtp
 {
 	class RtpTransportControllerSend  : public TransportFeedbackObserver
+		//, public RtcpBandwidthObserver 
+		//, public  sigslot::has_slots<>
 	{
 	public:
 		RtpTransportControllerSend(webrtc::Clock*clock, 
@@ -41,6 +44,9 @@ namespace  libmtp
 		virtual ~RtpTransportControllerSend() override;
 
 
+	public:
+
+		sigslot::signal3<const ReportBlockList& , int64_t, int64_t> SignalOnNetworkInfo;
 	public:
 		void EnqueuePacket(std::vector<std::unique_ptr<RtpPacketToSend>> packets);
 
@@ -56,11 +62,17 @@ namespace  libmtp
 		void OnAddPacket(const libmedia_transfer_protocol::RtpPacketSendInfo & send_info) override;
 		void OnTransportFeedback(const rtcp::TransportFeedback &feedback) override;
 
+		//RtcpBandwidthObserver  callback 
+		//void OnReceivedEstimatedBitrate(uint32_t bitrate) override; 
+		//void OnReceivedRtcpReceiverReport(
+		//const ReportBlockList& report_blocks,
+		//int64_t rtt,
+		//int64_t now_ms) override;
 	public:
 		void OnSentPacket(const rtc::SentPacket& sent_packet);
 		void OnNetworkOk(bool  network_ok);
 
-
+		void OnRttUpdate(int64_t rtt_ms);// override;
 		
 	private:
 

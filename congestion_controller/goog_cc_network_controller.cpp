@@ -38,8 +38,16 @@ namespace libmtp
 		{
 			return libice::NetworkControlUpdate();
 		}
-
-		DelayBasedBwe::Result result = delay_based_bwe_->IncomingPacketFeedbackVector(report, true);
+		absl::optional<webrtc::DataRate> acked_bitrate;
+			absl::optional<webrtc::DataRate> probe_bitrate;
+			absl::optional<libice::NetworkStateEstimate> network_estimate;
+		DelayBasedBwe::Result result = delay_based_bwe_->IncomingPacketFeedbackVector(
+			report, acked_bitrate, probe_bitrate, network_estimate, true);
+		return libice::NetworkControlUpdate();
+	}
+	libice::NetworkControlUpdate GoogCcNetworkController::OnRttUpdate(int64_t rtt_ms)
+	{
+		delay_based_bwe_->OnRttUpdate(rtt_ms);
 		return libice::NetworkControlUpdate();
 	}
 }

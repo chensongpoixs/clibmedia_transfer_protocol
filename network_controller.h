@@ -33,6 +33,45 @@ namespace libmtp
 		virtual ~NetworkControllerInterface() {}
 		// transport-cc接受端反馈信息接口
 		virtual libice::NetworkControlUpdate OnTransportPacketsFeedback(const libice::TransportPacketsFeedback&) = 0;
+	
+		virtual  libice::NetworkControlUpdate OnRttUpdate(int64_t rtt_ms) = 0;
+		// Called when network availabilty changes.
+		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnNetworkAvailability(
+		//	NetworkAvailability) = 0;
+		//// Called when the receiving or sending endpoint changes address.
+		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnNetworkRouteChange(
+		//	NetworkRouteChange) = 0;
+		//// Called periodically with a periodicy as specified by
+		//// NetworkControllerFactoryInterface::GetProcessInterval.
+		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnProcessInterval(
+		//	ProcessInterval) = 0;
+		//// Called when remotely calculated bitrate is received.
+		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnRemoteBitrateReport(
+		//	RemoteBitrateReport) = 0;
+		//// Called round trip time has been calculated by protocol specific mechanisms.
+		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnRoundTripTimeUpdate(
+		//	RoundTripTimeUpdate) = 0;
+		//// Called when a packet is sent on the network.
+		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnSentPacket(
+		//	SentPacket) = 0;
+		//// Called when a packet is received from the remote client.
+		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnReceivedPacket(
+		//	ReceivedPacket) = 0;
+		//// Called when the stream specific configuration has been updated.
+		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnStreamsConfig(
+		//	StreamsConfig) = 0;
+		//// Called when target transfer rate constraints has been changed.
+		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnTargetRateConstraints(
+		//	TargetRateConstraints) = 0;
+		//// Called when a protocol specific calculation of packet loss has been made.
+		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnTransportLossReport(
+		//	TransportLossReport) = 0;
+		//// Called with per packet feedback regarding receive time.
+		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnTransportPacketsFeedback(
+		//	TransportPacketsFeedback) = 0;
+		//// Called with network state estimate updates.
+		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnNetworkStateEstimate(
+		//	NetworkStateEstimate) = 0;
 	};
 }
 

@@ -27,9 +27,9 @@
 namespace libmedia_transfer_protocol {
 
 enum class BandwidthUsage {
-  kBwNormal = 0,
-  kBwUnderusing = 1,
-  kBwOverusing = 2,
+  kBwNormal = 0,     // Õý³£×´Ì¬
+  kBwUnderusing = 1, // µÍ¸ºÔØ×´Ì¬
+  kBwOverusing = 2, // ¹ýÔØ×´Ì¬
   kLast
 };
 

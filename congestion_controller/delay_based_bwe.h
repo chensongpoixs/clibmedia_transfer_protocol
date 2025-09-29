@@ -31,9 +31,11 @@
 #ifndef _C_DELAY_BASED_BWE_
 #define _C_DELAY_BASED_BWE_
 #include "libmedia_transfer_protocol/media_config.h"
-
+#include "libice/network_types.h"
 #include "libmedia_transfer_protocol/network_controller.h"
 #include "libmedia_transfer_protocol/congestion_controller/inter_arrival_delta.h"
+#include "libmedia_transfer_protocol/congestion_controller/trendline_estimator.h"
+#include "libmedia_transfer_protocol/remote_bitrate_estimator/aimd_rate_control.h"
 namespace libmtp
 {
 	class DelayBasedBwe
@@ -61,18 +63,48 @@ namespace libmtp
 	public:
 		Result IncomingPacketFeedbackVector(
 			const libice::TransportPacketsFeedback& msg,
-			/*absl::optional<webrtc::DataRate> acked_bitrate,
+			absl::optional<webrtc::DataRate> acked_bitrate,
 			absl::optional<webrtc::DataRate> probe_bitrate,
-			absl::optional<NetworkStateEstimate> network_estimate,*/
+			absl::optional<libice::NetworkStateEstimate> network_estimate,
 			bool in_alr);
 
+		void OnRttUpdate(int64_t rtt_ms);
 	private:
 		void IncomingPacketFeedback(const libice::PacketResult& packet_feedback,
 			webrtc::Timestamp at_time);
+
+
+		Result MaybeUpdateEstimate(
+			absl::optional<webrtc::DataRate> acked_bitrate /*确认吞吐量*/,
+			absl::optional<webrtc::DataRate> probe_bitrate,
+			absl::optional<libice::NetworkStateEstimate> state_estimate,
+			bool recovered_from_overuse,
+			bool in_alr,
+			webrtc::Timestamp at_time);
+
+		// estimate exists.
+		bool UpdateEstimate(webrtc::Timestamp at_time,
+			absl::optional<webrtc::DataRate> acked_bitrate,
+			webrtc::DataRate* target_rate);
 	private:
+		//std::unique_ptr<InterArrival> video_inter_arrival_;
 		std::unique_ptr<InterArrivalDelta> video_inter_arrival_delta_;
+		std::unique_ptr<DelayIncreaseDetectorInterface> video_delay_detector_;
+		//std::unique_ptr<InterArrival> audio_inter_arrival_;
 		std::unique_ptr<InterArrivalDelta> audio_inter_arrival_delta_;
+		std::unique_ptr<DelayIncreaseDetectorInterface> audio_delay_detector_;
 		webrtc::Timestamp last_seen_packet_;
+
+
+		//Timestamp last_seen_packet_;
+		bool uma_recorded_;
+		// 码控模块
+		AimdRateControl rate_control_;
+		webrtc::DataRate prev_bitrate_;
+		bool has_once_detected_overuse_;
+		BandwidthUsage prev_state_;
+		const bool use_new_inter_arrival_delta_;
+		bool alr_limited_backoff_enabled_;
 	};
 
 }

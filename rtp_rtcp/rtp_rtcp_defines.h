@@ -158,6 +158,18 @@ struct RTCPReportBlock {
   uint32_t jitter;
   uint32_t last_sender_report_timestamp;
   uint32_t delay_since_last_sender_report;
+  std::string ToString() const {
+
+	  std::stringstream cmd;
+	  cmd << "sender_ssrc : " << sender_ssrc;
+	  cmd << "\r\n source_ssrc£º" << source_ssrc;
+	  cmd << "\r\n fraction_lost£º" << fraction_lost;
+	  cmd << "\r\n extended_highest_sequence_number£º" << extended_highest_sequence_number;
+	  cmd << "\r\n last_sender_report_timestamp£º" << last_sender_report_timestamp;
+	  cmd << "\r\n delay_since_last_sender_report£º" << delay_since_last_sender_report;
+ 
+	  return cmd.str();
+  }
 };
 
 typedef std::list<RTCPReportBlock> ReportBlockList;

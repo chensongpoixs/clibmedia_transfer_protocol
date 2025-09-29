@@ -83,6 +83,9 @@ rtp_rtcp/rtp_header_extension_map.cpp
 	 pacing/*.cc 
 	 pacing/*.h 
 	 pacing/*.cpp 
+	 remote_bitrate_estimator/*.h 
+	 remote_bitrate_estimator/*.cc 
+	 remote_bitrate_estimator/*.cpp 
 	 
 	 
 ) 

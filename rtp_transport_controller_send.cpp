@@ -65,6 +65,9 @@ namespace libmtp
 			transport_feedback_adapter_.AddPacket(  creation_time, send_info.length, send_info);
 		});
 	}
+
+
+	
 	void RtpTransportControllerSend::OnSentPacket(const rtc::SentPacket& sent_packet)
 	{
 		task_queue_.PostTask([this, sent_packet]() {
@@ -93,6 +96,15 @@ namespace libmtp
 			else
 			{
 				MaybeCreateController();
+			}
+		});
+	}
+	void RtpTransportControllerSend::OnRttUpdate(int64_t rtt_ms)
+	{
+		task_queue_.PostTask([this, rtt_ms]() {
+			if (controller_)
+			{
+				controller_->OnRttUpdate(rtt_ms);
 			}
 		});
 	}
