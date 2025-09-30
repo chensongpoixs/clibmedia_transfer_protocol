@@ -342,7 +342,18 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
   }
   prev_trend_ = trend;
   UpdateThreshold(modified_trend, now_ms);
-
+// if (hypothesis_ == BandwidthUsage::kBwNormal)
+// {
+//	  RTC_LOG(LS_INFO) << "BandwidthUsage::kBwNormal";
+// }
+// else if (hypothesis_ == BandwidthUsage::kBwOverusing)
+// {
+//	  RTC_LOG(LS_INFO) << "BandwidthUsage::kBwOverusing";
+// } 
+// else if (hypothesis_ == BandwidthUsage::kBwUnderusing)
+//	  {
+//	  RTC_LOG(LS_INFO) << "BandwidthUsage::kBwUnderusing";
+//	  }
 #if TRENDLINE_ESTIMEATOR_CSV
   static FILE* out_file_ptr = fopen("trendline_estimator.csv", "wb+");
   if (out_file_ptr)

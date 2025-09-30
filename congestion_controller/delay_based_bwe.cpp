@@ -126,7 +126,7 @@ namespace libmtp
 			 
 			 
 			// 延迟趋势
-#if !TRENDLINE_ESTIMEATOR_CSV
+#if TRENDLINE_ESTIMEATOR_CSV == 0
 			video_delay_detector_.reset(
 			new TrendlineEstimator(nullptr/*key_value_config_, network_state_predictor_*/));
 			audio_delay_detector_.reset(
@@ -138,8 +138,8 @@ namespace libmtp
 
 		// As an alternative to ignoring small packets, we can separate audio and
 		// video packets for overuse detection.
-		DelayIncreaseDetectorInterface* delay_detector_for_packet =
-			video_delay_detector_.get();
+		/*DelayIncreaseDetectorInterface* delay_detector_for_packet =
+			video_delay_detector_.get();*/
 		/*if (separate_audio_.enabled) {
 			if (packet_feedback.sent_packet.audio) {
 				delay_detector_for_packet = audio_delay_detector_.get();
@@ -164,18 +164,18 @@ namespace libmtp
 		webrtc::TimeDelta recv_delta = webrtc::TimeDelta::Zero();
 		int size_delta = 0;
 
-		InterArrivalDelta* inter_arrival_for_packet =
-			(/*separate_audio_.enabled && */packet_feedback.sent_packet.audio)
-			? audio_inter_arrival_delta_.get()
-			: video_inter_arrival_delta_.get();
-		bool calculated_deltas = inter_arrival_for_packet->ComputeDeltas(
+		//InterArrivalDelta* inter_arrival_for_packet =
+		//	(/*separate_audio_.enabled && */packet_feedback.sent_packet.audio)
+		//	? audio_inter_arrival_delta_.get()
+		//	: video_inter_arrival_delta_.get();
+		bool calculated_deltas = video_inter_arrival_delta_->ComputeDeltas(
 			packet_feedback.sent_packet.send_time, packet_feedback.receive_time,
 			at_time, packet_size.bytes(), &send_delta, &recv_delta, &size_delta);
 
 
 		//RTC_LOG(LS_INFO) << "video inter arrival send_delta:" << webrtc::ToString(send_delta) << ", recv_delta:" << webrtc::ToString(recv_delta )<< ", size_delta:" <<  size_delta;
 		//inter_arrival_for_packet->ComputeDeltas();
-		delay_detector_for_packet->Update(
+		video_delay_detector_->Update(
 			recv_delta.ms(), send_delta.ms(),
 			packet_feedback.sent_packet.send_time.ms(),
 			packet_feedback.receive_time.ms(), packet_size.bytes(),
@@ -230,7 +230,7 @@ namespace libmtp
 			has_once_detected_overuse_ = true;
 		}
 		else {
-			/*if (probe_bitrate) {
+			if (probe_bitrate) {
 				result.probe = true;
 				result.updated = true;
 				result.target_bitrate = *probe_bitrate;
@@ -240,7 +240,7 @@ namespace libmtp
 				result.updated =
 					UpdateEstimate(at_time, acked_bitrate, &result.target_bitrate);
 				result.recovered_from_overuse = recovered_from_overuse;
-			}*/
+			}
 		}
 		BandwidthUsage detector_state = video_delay_detector_->State();
 		/*if ((result.updated && prev_bitrate_ != result.target_bitrate) ||
