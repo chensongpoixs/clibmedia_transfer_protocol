@@ -23,6 +23,7 @@
 #include "libmedia_transfer_protocol/media_config.h"
 #include "libmedia_transfer_protocol/congestion_controller/delay_based_bwe.h"
 #include "libmedia_transfer_protocol/network_controller.h"
+#include "libmedia_transfer_protocol/congestion_controller/acknowledged_bitrate_estimator.h"
 namespace libmtp
 {
 	class GoogCcNetworkController : public NetworkControllerInterface
@@ -36,6 +37,8 @@ namespace libmtp
 		virtual  libice::NetworkControlUpdate OnRttUpdate(int64_t rtt_ms) override;
 	private:
 		std::unique_ptr<DelayBasedBwe>  delay_based_bwe_;
+
+		std::unique_ptr< AcknowledgedBitrateEstimatorInterface>  acknowledge_bitrate_estimator_;
 	};
 }
 

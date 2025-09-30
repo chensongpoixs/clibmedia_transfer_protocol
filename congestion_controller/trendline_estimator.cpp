@@ -379,7 +379,7 @@ void TrendlineEstimator::UpdateThreshold(double modified_trend,
   }
   
   // / 根据趋势线斜率调整阈值
-  const double k = fabs(modified_trend) < threshold_ ? k_down_ : k_up_;
+  const double k = fabs(modified_trend) < threshold_ ? k_down_ : k_up_/*0.0087*/;
   const int64_t kMaxTimeDeltaMs = 100;
   int64_t time_delta_ms = std::min(now_ms - last_update_ms_, kMaxTimeDeltaMs);
   threshold_ += k * (fabs(modified_trend) - threshold_) * time_delta_ms;

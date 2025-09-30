@@ -69,7 +69,7 @@ namespace libmtp
 		absl::optional<libice::NetworkStateEstimate> network_estimate,
 		bool in_alr)
 	{
-		//按照接受时间排序
+		//按照接受时间排序 
 		auto packet_feedback_vector = msg.SortedByReceiveTime();
 
 		if (packet_feedback_vector.empty()) {
@@ -205,7 +205,9 @@ namespace libmtp
 			//	}
 			//}
 			//else 
-			// 已经知道吞吐量时  码控模块可以进一步降低码流
+			// 已经知道吞吐量时  码控模块可以进一步降低码流  
+			// 每个200ms 码控制模块需要比较当前码流的是否大于吞吐量acked_bitrate的大小
+			 //   如果大于当前吞吐量大小就需要更新啦
 			if (acked_bitrate &&
 				rate_control_.TimeToReduceFurther(at_time, *acked_bitrate))
 			{

@@ -19,11 +19,12 @@
 
 #include "libmedia_transfer_protocol/congestion_controller/goog_cc_network_controller.h"
 
-
+#include "rtc_base/logging.h"
 namespace libmtp
 {
 	GoogCcNetworkController::GoogCcNetworkController()
 		: delay_based_bwe_( std::make_unique< DelayBasedBwe>())
+		, acknowledge_bitrate_estimator_(AcknowledgedBitrateEstimatorInterface::Create())
 	{
 		//设置起始码流
 		delay_based_bwe_->SetStartBitrate(webrtc::DataRate::KilobitsPerSec(300));
@@ -39,11 +40,26 @@ namespace libmtp
 		{
 			return libice::NetworkControlUpdate();
 		}
-		absl::optional<webrtc::DataRate> acked_bitrate;
+
+
+		//absl::optional<webrtc::DataRate> acked_bitrate = webrtc::DataRate::KilobitsPerSec(50000);
+		//设置当前的吞吐量的大小  对方确认收到的数据
+		acknowledge_bitrate_estimator_->IncomingPacketFeedbackVector(report.SortedByReceiveTime());
+		
+		
+
+		absl::optional<webrtc::DataRate> acked_bitrate = acknowledge_bitrate_estimator_->bitrate();
+		
+		if (acked_bitrate.has_value())
+		{
+			RTC_LOG(LS_INFO) << "ack_bitrate : " << webrtc::ToString(*acked_bitrate);
+		}
+		//acked_bitrate.emplace(webrtc::DataRate::KilobitsPerSec(50000));
 			absl::optional<webrtc::DataRate> probe_bitrate;
 			absl::optional<libice::NetworkStateEstimate> network_estimate;
 		DelayBasedBwe::Result result = delay_based_bwe_->IncomingPacketFeedbackVector(
-			report, acked_bitrate, probe_bitrate, network_estimate, true);
+			report, acked_bitrate, probe_bitrate, network_estimate, false);
+		//RTC_LOG(LS_INFO) << "delay bwe:" << result.ToString();
 		return libice::NetworkControlUpdate();
 	}
 	libice::NetworkControlUpdate GoogCcNetworkController::OnRttUpdate(int64_t rtt_ms)

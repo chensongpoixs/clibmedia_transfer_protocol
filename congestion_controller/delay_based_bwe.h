@@ -13,10 +13,15 @@
 				   Author: chensong
 				   date:  2025-09-29
 
+------------------------------------------------------------------------------------------------------------
 
-				   基于延迟的带宽估计  
+				                                    1、 包组延迟计算(InterArrivalDelta)
 
+				   基于延迟的带宽估计 ====>>>>         2、趋势线延迟梯度估计器（TrendlineEstimator）
+					
+													3、AIMD码率控制器（AimdRateControl）
 
+------------------------------------------------------------------------------------------------------------
 
 				   InterArrivalDelta 计算组包延迟差
 				   TredlineEstimator 延迟趋势估计
@@ -35,6 +40,8 @@
 #include "libmedia_transfer_protocol/network_controller.h"
 #include "libmedia_transfer_protocol/congestion_controller/inter_arrival_delta.h"
 #include "libmedia_transfer_protocol/congestion_controller/trendline_estimator.h"
+#include <string>
+#include <sstream>
 #include "libmedia_transfer_protocol/remote_bitrate_estimator/aimd_rate_control.h"
 namespace libmtp
 {
@@ -52,6 +59,15 @@ namespace libmtp
 			webrtc::DataRate target_bitrate = webrtc::DataRate::Zero(); // 
 			bool  recovered_from_overuse;
 			bool  backoff_in_alr;
+
+			std::string ToString() const
+			{
+				std::stringstream cmd;
+
+				cmd << "result updated:" << updated;
+				cmd << ", target_bitrate:" << webrtc::ToString(target_bitrate);
+				return cmd.str();
+			}
 		};
 	public:
 		 DelayBasedBwe();

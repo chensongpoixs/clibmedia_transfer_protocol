@@ -380,7 +380,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
 					AdditiveRateIncrease(at_time, time_last_bitrate_change_);
 				// 增加码流 = 当前码流+ 增加的码流
 				increased_bitrate = current_bitrate_ + additive_increase;
-				RTC_LOG(LS_INFO) << "============ additive_increase: " << webrtc::ToString(additive_increase) << ", increased_bitrate ： " << webrtc::ToString(increased_bitrate);
+				RTC_LOG(LS_INFO) << "++++++++++++++++++++additive_increase: " << webrtc::ToString(additive_increase) << ", increased_bitrate ： " << webrtc::ToString(increased_bitrate);
 
 				
 			}
@@ -392,7 +392,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
 				webrtc::DataRate multiplicative_increase = MultiplicativeRateIncrease(
 					at_time, time_last_bitrate_change_, current_bitrate_);
 				increased_bitrate = current_bitrate_ + multiplicative_increase;
-				RTC_LOG(LS_INFO) << "============ multiplicative_increase: " << webrtc::ToString(multiplicative_increase) <<", increased_bitrate ： " << webrtc::ToString(increased_bitrate);
+				RTC_LOG(LS_INFO) << "************************ multiplicative_increase: " << webrtc::ToString(multiplicative_increase) <<", increased_bitrate ： " << webrtc::ToString(increased_bitrate);
 			}
 			new_bitrate = std::min(increased_bitrate, troughput_based_limit);
 		}
@@ -412,6 +412,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
         // TODO(terelius): The link_capacity estimate may be based on old
         // throughput measurements. Relying on them may lead to unnecessary
         // BWE drops.
+		  //如果大于当前码流 就使用当前链路的容量的大小 
         if (link_capacity_.has_estimate()) 
 		{
           decreased_bitrate = beta_ * link_capacity_.estimate();
@@ -434,7 +435,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
           last_decrease_ = current_bitrate_ - *new_bitrate;
         }
       }
-	  RTC_LOG(LS_INFO) << "============ decreased_bitrate: " << webrtc::ToString(decreased_bitrate) << ", last_decrease_ ： " << webrtc::ToString(*last_decrease_);
+	  RTC_LOG(LS_INFO) << "-------------- decreased_bitrate: " << webrtc::ToString(decreased_bitrate) << ", last_decrease_ ： " << webrtc::ToString(*last_decrease_);
 
 	  // 吞吐量已经低于 链路容量下限 就从重置链路
       if (estimated_throughput < link_capacity_.LowerBound()) {
