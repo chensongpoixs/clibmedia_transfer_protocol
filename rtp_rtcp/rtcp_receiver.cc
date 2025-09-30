@@ -836,7 +836,7 @@ void RTCPReceiver::HandleNack(const rtcp::CommonHeader& rtcp_block,
     ++num_skipped_packets_;
     return;
   }
-  RTC_LOG(LS_INFO) << rtcp_block.ToString() << "\r\n Nack info : \n\n" << nack.ToString();
+  //RTC_LOG(LS_INFO) << rtcp_block.ToString() << "\r\n Nack info : \n\n" << nack.ToString();
   if (receiver_only_ || main_ssrc_ != nack.media_ssrc())  // Not to us.
     return;
 

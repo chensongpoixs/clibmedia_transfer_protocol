@@ -25,7 +25,8 @@ namespace libmtp
 	GoogCcNetworkController::GoogCcNetworkController()
 		: delay_based_bwe_( std::make_unique< DelayBasedBwe>())
 	{
-
+		//设置起始码流
+		delay_based_bwe_->SetStartBitrate(webrtc::DataRate::KilobitsPerSec(300));
 	}
 	GoogCcNetworkController:: ~GoogCcNetworkController()
 	{

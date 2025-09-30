@@ -69,7 +69,7 @@ class AimdRateControl {
   // estimate. Should be used to decide if we should reduce the rate further
   // when over-using.
    // 为防止码流降低过于频繁， 需要码流降低的频率
-  // 两次码流降低的间隔， 必须要大于1RTT
+  // 两次码流降低的间隔， 要大于1RTT
   bool TimeToReduceFurther(webrtc::Timestamp at_time,
 	  webrtc::DataRate estimated_throughput) const;
   // As above. To be used if overusing before we have measured a throughput.
@@ -80,19 +80,26 @@ class AimdRateControl {
   webrtc::DataRate LatestEstimate() const;
   // 设置rtt的方法
   void SetRtt(webrtc::TimeDelta rtt);
+  // 返回最新码流
   webrtc::DataRate Update(const libmedia_transfer_protocol ::RateControlInput* input, webrtc::Timestamp at_time);
   void SetInApplicationLimitedRegion(bool in_alr);
+  // 设置码率
   void SetEstimate(webrtc::DataRate bitrate, webrtc::Timestamp at_time);
   void SetNetworkStateEstimate(
       const absl::optional<libice::NetworkStateEstimate>& estimate);
 
   // Returns the increase rate when used bandwidth is near the link capacity.
+  // 返回每一秒钟 返回增加码流的大小
   double GetNearMaxIncreaseRateBpsPerSecond() const;
   // Returns the expected time between overuse signals (assuming steady state).
   webrtc::TimeDelta GetExpectedBandwidthPeriod() const;
 
  private:
-  enum class RateControlState { kRcHold, kRcIncrease, kRcDecrease };
+  enum class RateControlState { 
+	  kRcHold /*保存码流不变*/, 
+	  kRcIncrease/*增加码流*/, 
+	  kRcDecrease/*下降码流*/ 
+  };
 
   friend class GoogCcStatePrinter;
   // Update the target bitrate based on, among other things, the current rate
@@ -102,9 +109,12 @@ class AimdRateControl {
   // in the "decrease" state the bitrate will be decreased to slightly below the
   // current throughput. When in the "hold" state the bitrate will be kept
   // constant to allow built up queues to drain.
+  // 调整码流的大小
   void ChangeBitrate(const libmedia_transfer_protocol::RateControlInput& input, webrtc::Timestamp at_time);
 
+  // 当前码率限制 最小码流、最大码流  和链路容量大小限制
   webrtc::DataRate ClampBitrate(webrtc::DataRate new_bitrate) const;
+  // 成性增加网络码流  1000bps
   webrtc::DataRate MultiplicativeRateIncrease(webrtc::Timestamp at_time,
 	  webrtc::Timestamp last_ms,
 	  webrtc::DataRate current_bitrate) const;
@@ -118,16 +128,21 @@ class AimdRateControl {
   webrtc::DataRate max_configured_bitrate_;
   // 起始码率
   webrtc::DataRate current_bitrate_;
+  // 记录上一次吞吐量码流
   webrtc::DataRate latest_estimated_throughput_;
   LinkCapacityEstimator link_capacity_;
   absl::optional<libice::NetworkStateEstimate> network_estimate_;
+  // 码流控制 的状态机
   RateControlState rate_control_state_;
   // 上一次码流调整时间的记录
   webrtc::Timestamp time_last_bitrate_change_;
+  // 最新码流降低时间记录
   webrtc::Timestamp time_last_bitrate_decrease_;
+  // 第一次收到更新码流时间
   webrtc::Timestamp time_first_throughput_estimate_;
    // 起始 码流是否设置
   bool bitrate_is_initialized_;
+  // 码流下降的倍数 0.85 
   double beta_;
   bool in_alr_;
   // 默认rtt 200ms

@@ -275,6 +275,7 @@ void TrendlineEstimator::Update(double recv_delta_ms,
                                 int64_t arrival_time_ms,
                                 size_t packet_size,
                                 bool calculated_deltas) {
+	//  数据是否有效
   if (calculated_deltas) {
     UpdateTrendline(recv_delta_ms, send_delta_ms, send_time_ms, arrival_time_ms,
                     packet_size);
@@ -329,7 +330,8 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
     overuse_counter_ = 0;
 	  // 当前带宽利用不足，可充分利用
     hypothesis_ = BandwidthUsage::kBwUnderusing;
-  } else  //-threshold < modifed_trend < threshold  认为此时处于normal 状态。
+  }
+  else  //-threshold < modifed_trend < threshold  认为此时处于normal 状态。
   {
     time_over_using_ = -1;
     overuse_counter_ = 0;

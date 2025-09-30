@@ -94,12 +94,23 @@ namespace libmtp
 			// 更新上一个状态
 			prev_detector_state = video_delay_detector_->State();
 		}
-		return Result();
+		rate_control_.SetInApplicationLimitedRegion(in_alr);
+		rate_control_.SetNetworkStateEstimate(network_estimate);
+		return MaybeUpdateEstimate(acked_bitrate, probe_bitrate,
+			std::move(network_estimate),
+			recovered_from_overuse, in_alr, msg.feedback_time);
 	}
 
 	void DelayBasedBwe::OnRttUpdate(int64_t rtt_ms)
 	{
 		rate_control_.SetRtt(webrtc::TimeDelta::Millis(rtt_ms));
+	}
+
+	void DelayBasedBwe::SetStartBitrate(webrtc::DataRate start_bitrate)
+	{
+		RTC_LOG(LS_INFO) << "BWE Setting start bitrate to: "
+			<< webrtc::ToString(start_bitrate);
+		rate_control_.SetStartBitrate(start_bitrate);
 	}
 
 	void DelayBasedBwe::IncomingPacketFeedback(
@@ -162,7 +173,7 @@ namespace libmtp
 			at_time, packet_size.bytes(), &send_delta, &recv_delta, &size_delta);
 
 
-		RTC_LOG(LS_INFO) << "video inter arrival send_delta:" << webrtc::ToString(send_delta) << ", recv_delta:" << webrtc::ToString(recv_delta )<< ", size_delta:" <<  size_delta;
+		//RTC_LOG(LS_INFO) << "video inter arrival send_delta:" << webrtc::ToString(send_delta) << ", recv_delta:" << webrtc::ToString(recv_delta )<< ", size_delta:" <<  size_delta;
 		//inter_arrival_for_packet->ComputeDeltas();
 		delay_detector_for_packet->Update(
 			recv_delta.ms(), send_delta.ms(),
@@ -198,6 +209,7 @@ namespace libmtp
 			if (acked_bitrate &&
 				rate_control_.TimeToReduceFurther(at_time, *acked_bitrate))
 			{
+				 // 当前码流是否更新
 				result.updated =
 					UpdateEstimate(at_time, acked_bitrate, &result.target_bitrate);
 			}
@@ -208,7 +220,9 @@ namespace libmtp
 				// rate by 50% every 200 ms.
 				// TODO(tschumim): Improve this and/or the acknowledged bitrate estimator
 				// so that we (almost) always have a bitrate estimate.
+				// 不知道吞吐量时候， 将当前码流下降一半
 				rate_control_.SetEstimate(rate_control_.LatestEstimate() / 2, at_time);
+				//码流降低了就需要更新了
 				result.updated = true;
 				result.probe = false;
 				result.target_bitrate = rate_control_.LatestEstimate();

@@ -108,6 +108,7 @@ namespace libmtp
 				*packet_size_delta = static_cast<int>(current_timestamp_group_.size) -
 					static_cast<int>(prev_timestamp_group_.size);
 				calculated_deltas = true;
+				//RTC_LOG(LS_INFO) << "feedback data is -- open ";
 			}
 			prev_timestamp_group_ = current_timestamp_group_;
 			// The new timestamp is now the current frame.

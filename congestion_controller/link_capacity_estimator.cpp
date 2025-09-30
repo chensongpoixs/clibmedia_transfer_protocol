@@ -29,6 +29,9 @@ LinkCapacityEstimator::LinkCapacityEstimator() {}
 
 webrtc::DataRate LinkCapacityEstimator::UpperBound() const {
   if (estimate_kbps_.has_value())
+	  // 估计值+ 3倍的标准差 
+	   // 链路容量估计值加减 3 倍的标准差，得到链路容量的上限和下限。
+	  // 按照统计学原理，正负 3 倍的标准差范围，可以覆盖 99.6%的置信区间
     return webrtc::DataRate::KilobitsPerSec(estimate_kbps_.value() +
                                     3 * deviation_estimate_kbps());
   return webrtc::DataRate::Infinity();
@@ -53,21 +56,31 @@ void LinkCapacityEstimator::OnProbeRate(webrtc::DataRate probe_rate) {
   Update(probe_rate, 0.5);
 }
 
-void LinkCapacityEstimator::Update(webrtc::DataRate capacity_sample, double alpha) {
+void LinkCapacityEstimator::Update(webrtc::DataRate capacity_sample, double alpha) 
+{
   double sample_kbps = capacity_sample.kbps();
-  if (!estimate_kbps_.has_value()) {
+  if (!estimate_kbps_.has_value()) 
+  {
+	  /// 第一次获取样本数据
     estimate_kbps_ = sample_kbps;
-  } else {
+  }
+  else 
+  {
+	  //指数平滑 == >  历史数据权重      +  当前数据的权重
     estimate_kbps_ = (1 - alpha) * estimate_kbps_.value() + alpha * sample_kbps;
   }
   // Estimate the variance of the link capacity estimate and normalize the
   // variance with the link capacity estimate.
+  // 归一化的值 至少是1
   const double norm = std::max(estimate_kbps_.value(), 1.0);
+  // 计算误差的值
   double error_kbps = estimate_kbps_.value() - sample_kbps;
+   // 计算指数平滑后的归一化方差
   deviation_kbps_ =
       (1 - alpha) * deviation_kbps_ + alpha * error_kbps * error_kbps / norm;
   // 0.4 ~= 14 kbit/s at 500 kbit/s
   // 2.5f ~= 35 kbit/s at 500 kbit/s
+  //  控制deviation_kbps_值的范围 ==》 设置上限和下限的值
   deviation_kbps_ = rtc::SafeClamp(deviation_kbps_, 0.4f, 2.5f);
 }
 

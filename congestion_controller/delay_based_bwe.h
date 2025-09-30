@@ -69,6 +69,8 @@ namespace libmtp
 			bool in_alr);
 
 		void OnRttUpdate(int64_t rtt_ms);
+
+		void SetStartBitrate(webrtc::DataRate start_bitrate);
 	private:
 		void IncomingPacketFeedback(const libice::PacketResult& packet_feedback,
 			webrtc::Timestamp at_time);
@@ -85,7 +87,7 @@ namespace libmtp
 		// estimate exists.
 		bool UpdateEstimate(webrtc::Timestamp at_time,
 			absl::optional<webrtc::DataRate> acked_bitrate,
-			webrtc::DataRate* target_rate);
+			webrtc::DataRate* target_rate /*目标码流*/);
 	private:
 		//std::unique_ptr<InterArrival> video_inter_arrival_;
 		std::unique_ptr<InterArrivalDelta> video_inter_arrival_delta_;
