@@ -145,15 +145,23 @@ namespace libmtp
 			{
 				return;
 			}
+			
 			//网络状态发生变化
 			network_ok_ = msg.network_available;
 			if (controller_)
 			{
-
+				
+				
 			}
 			else
 			{
 				MaybeCreateController();
+				//设置掉包起始码流 start , min , max rate 
+				libice::TargetRateConstraints constraints;
+				constraints.starting_rate = webrtc::DataRate::KilobitsPerSec(3000);
+				constraints.min_data_rate = webrtc::DataRate::KilobitsPerSec(3000);
+				constraints.max_data_rate = webrtc::DataRate::KilobitsPerSec(100000);
+				controller_->OnTargetRateConstraints(constraints);
 			}
 		});
 	}
@@ -172,6 +180,6 @@ namespace libmtp
 		{
 			return;
 		}
-		controller_ = std::make_unique<GoogCcNetworkController>();
+		controller_ = std::make_unique<GoogCcNetworkController>(controller_config_);
 	}
 }

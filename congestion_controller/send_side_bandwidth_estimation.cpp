@@ -301,6 +301,7 @@ void SendSideBandwidthEstimation::SetSendBitrate(webrtc::DataRate bitrate,
                                                  webrtc::Timestamp at_time) {
   RTC_DCHECK_GT(bitrate, webrtc::DataRate::Zero());
   // Reset to avoid being capped by the estimate.
+  // 上限值正无限大 
   delay_based_limit_ = webrtc::DataRate::PlusInfinity();
   UpdateTargetBitrate(bitrate, at_time);
   // Clear last sent bitrate history so the new value can be used directly

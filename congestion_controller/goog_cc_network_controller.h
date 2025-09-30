@@ -42,7 +42,7 @@ namespace libmtp
 	class GoogCcNetworkController : public NetworkControllerInterface
 	{
 	public:
-		GoogCcNetworkController();
+		GoogCcNetworkController(const NetworkControllerConfig& config);
 		virtual ~GoogCcNetworkController() override;
 		virtual libice::NetworkControlUpdate OnTransportPacketsFeedback(
 			const libice::TransportPacketsFeedback& msg) override;
@@ -52,11 +52,25 @@ namespace libmtp
 
 		virtual libice::NetworkControlUpdate OnTransportLossReport(
 			libice::TransportLossReport)  override;
+
+		// 网络连接成功后调用  start min max bitrate
+		virtual libice::NetworkControlUpdate OnTargetRateConstraints(
+			libice::TargetRateConstraints) override;
 	private:
+		void MaybeTriggerOnNetworkChanged(libice::NetworkControlUpdate* update,
+			webrtc::Timestamp at_time);
+	private:
+
 		std::unique_ptr<DelayBasedBwe>  delay_based_bwe_;
 
 		std::unique_ptr< AcknowledgedBitrateEstimatorInterface>  acknowledge_bitrate_estimator_;
 		std::unique_ptr< SendSideBandwidthEstimation>    bandwidth_estimation_;
+
+
+		webrtc::DataRate                                     last_loss_based_bitrate_;
+
+		uint8_t last_estimated_fraction_loss_ = 0;
+		webrtc::TimeDelta last_estimated_round_trip_time_ = webrtc::TimeDelta::PlusInfinity();
 	};
 }
 

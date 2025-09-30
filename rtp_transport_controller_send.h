@@ -99,6 +99,7 @@ namespace  libmtp
 		std::map<uint32_t, RTCPReportBlock> last_report_blocks_;
 		//上一次接受RTCP中RR包的时间
 		webrtc::Timestamp last_report_block_time_ = webrtc::Timestamp::MinusInfinity();//
+		NetworkControllerConfig                     controller_config_;
 		
 	};
 }

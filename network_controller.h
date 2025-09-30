@@ -26,6 +26,25 @@
 namespace libmtp
 {
 
+
+	// Configuration sent to factory create function. The parameters here are
+// optional to use for a network controller implementation.
+	struct NetworkControllerConfig {
+		// The initial constraints to start with, these can be changed at any later
+		// time by calls to OnTargetRateConstraints. Note that the starting rate
+		// has to be set initially to provide a starting state for the network
+		// controller, even though the field is marked as optional.
+		libice::TargetRateConstraints constraints;
+		// Initial stream specific configuration, these are changed at any later time
+		// by calls to OnStreamsConfig.
+		libice::StreamsConfig stream_based_config;
+
+		// Optional override of configuration of WebRTC internals. Using nullptr here
+		// indicates that the field trial API will be used.
+		//const WebRtcKeyValueConfig* key_value_config = nullptr;
+		// Optional override of event log.
+		//RtcEventLog* event_log = nullptr;
+	};
 	// 接口类
 	class NetworkControllerInterface
 	{
@@ -39,8 +58,8 @@ namespace libmtp
 		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnNetworkAvailability(
 		//	NetworkAvailability) = 0;
 		//// Called when the receiving or sending endpoint changes address.
-		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnNetworkRouteChange(
-		//	NetworkRouteChange) = 0;
+		//  virtual libice::NetworkControlUpdate OnNetworkRouteChange(
+		//	  libice::NetworkRouteChange) = 0
 		//// Called periodically with a periodicy as specified by
 		//// NetworkControllerFactoryInterface::GetProcessInterval.
 		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnProcessInterval(
@@ -61,8 +80,8 @@ namespace libmtp
 		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnStreamsConfig(
 		//	StreamsConfig) = 0;
 		//// Called when target transfer rate constraints has been changed.
-		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnTargetRateConstraints(
-		//	TargetRateConstraints) = 0;
+		  virtual libice::NetworkControlUpdate OnTargetRateConstraints(
+			  libice::TargetRateConstraints) = 0;
 		//// Called when a protocol specific calculation of packet loss has been made.
 	  virtual libice::NetworkControlUpdate OnTransportLossReport(
 		  libice::TransportLossReport) = 0;

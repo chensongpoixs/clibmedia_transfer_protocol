@@ -19,7 +19,8 @@
 					2. 基于延迟的带宽估计的码流作为基于掉包的带宽估计的码流的上限
 					3. 可以设置最小和最大的码流作为约束条件
 
-
+					默认最小码流 10k
+					默认最大码流10G
  ******************************************************************************/
 
 
@@ -121,11 +122,20 @@ class SendSideBandwidthEstimation {
   // Call when we receive a RTCP message with a ReceiveBlock.
   void UpdateRtt(webrtc::TimeDelta rtt, webrtc::Timestamp at_time);
 
+  //设置起始码流
+ /*
+	param
+	 send_bitrate: 起始码流
+	 min_bitrate: 最小码流
+	 max_bitrate: 最大码流
+
+ */
   void SetBitrates(absl::optional<webrtc::DataRate> send_bitrate,
                    webrtc::DataRate min_bitrate,
                    webrtc::DataRate max_bitrate,
                    webrtc::Timestamp at_time);
   void SetSendBitrate(webrtc::DataRate bitrate, webrtc::Timestamp at_time);
+
   void SetMinMaxBitrate(webrtc::DataRate min_bitrate, webrtc::DataRate max_bitrate);
   int GetMinBitrate() const;
   void SetAcknowledgedRate(absl::optional<webrtc::DataRate> acknowledged_rate,
