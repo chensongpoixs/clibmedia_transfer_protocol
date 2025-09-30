@@ -226,7 +226,7 @@ void TrendlineEstimator::UpdateTrendline(double recv_delta_ms,
   //BWE_TEST_LOGGING_PLOT(1, "accumulated_delay_ms", arrival_time_ms,
   //                      accumulated_delay_);
    //  计算指数平滑后统计延迟差
-  smoothed_delay_ = smoothing_coef_ * smoothed_delay_ +
+  smoothed_delay_ = smoothing_coef_/*历史权重 0.9*/ * smoothed_delay_ +
                     (1 - smoothing_coef_) * accumulated_delay_;
   //BWE_TEST_LOGGING_PLOT(1, "smoothed_delay_ms", arrival_time_ms,
   //                      smoothed_delay_);
@@ -244,7 +244,9 @@ void TrendlineEstimator::UpdateTrendline(double recv_delta_ms,
     }
   }
   if (delay_hist_.size() > settings_.window_size)
-    delay_hist_.pop_front();
+  {
+	  delay_hist_.pop_front();
+  }
 
   // Simple linear regression.
   double trend = prev_trend_;
@@ -297,7 +299,7 @@ void TrendlineEstimator::Detect(double trend, double ts_delta, int64_t now_ms) {
   }
   // 1. 对原始trend值进行增益处理， 增加区分度
   const double modified_trend = 
-	  std::min(num_of_deltas_, kMinNumDeltas) * trend * threshold_gain_;
+	  std::min(num_of_deltas_, kMinNumDeltas) * trend * threshold_gain_ /*增益系数 4.0*/;
   prev_modified_trend_ = modified_trend;
  // BWE_TEST_LOGGING_PLOT(1, "T", now_ms, modified_trend);
  // BWE_TEST_LOGGING_PLOT(1, "threshold", now_ms, threshold_);

@@ -166,8 +166,8 @@ namespace libmtp
 
 		InterArrivalDelta* inter_arrival_for_packet =
 			(/*separate_audio_.enabled && */packet_feedback.sent_packet.audio)
-			? video_inter_arrival_delta_.get()
-			: audio_inter_arrival_delta_.get();
+			? audio_inter_arrival_delta_.get()
+			: video_inter_arrival_delta_.get();
 		bool calculated_deltas = inter_arrival_for_packet->ComputeDeltas(
 			packet_feedback.sent_packet.send_time, packet_feedback.receive_time,
 			at_time, packet_size.bytes(), &send_delta, &recv_delta, &size_delta);
