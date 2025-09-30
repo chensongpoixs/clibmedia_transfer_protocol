@@ -13,6 +13,17 @@
 				   Author: chensong
 				   date:  2025-09-28
 
+													1、基于延迟的带宽估计（DelayBasedBwe）									
+
+													2、基于掉包的带宽估计(SendSideBandwidthEstimation)
+
+	GoogCcNetworkController  依赖五大模块 ===>         3、吞吐量估计器(AcknowledgedBitrateEstimator)
+
+													4、应用限制区域检测器(AlrDetector)
+
+													5、码率快速探测Probe （ProbeController、ProbeBitrateEstimator）
+
+
 
 
  ******************************************************************************/
@@ -24,6 +35,8 @@
 #include "libmedia_transfer_protocol/congestion_controller/delay_based_bwe.h"
 #include "libmedia_transfer_protocol/network_controller.h"
 #include "libmedia_transfer_protocol/congestion_controller/acknowledged_bitrate_estimator.h"
+#include "libmedia_transfer_protocol/congestion_controller/loss_based_bandwidth_estimation.h"
+#include "libmedia_transfer_protocol/congestion_controller/send_side_bandwidth_estimation.h"
 namespace libmtp
 {
 	class GoogCcNetworkController : public NetworkControllerInterface
@@ -34,11 +47,16 @@ namespace libmtp
 		virtual libice::NetworkControlUpdate OnTransportPacketsFeedback(
 			const libice::TransportPacketsFeedback& msg) override;
 
-		virtual  libice::NetworkControlUpdate OnRttUpdate(int64_t rtt_ms) override;
+		virtual  libice::NetworkControlUpdate OnRttUpdate(int64_t rtt_ms, webrtc::Timestamp at_time) override;
+
+
+		virtual libice::NetworkControlUpdate OnTransportLossReport(
+			libice::TransportLossReport)  override;
 	private:
 		std::unique_ptr<DelayBasedBwe>  delay_based_bwe_;
 
 		std::unique_ptr< AcknowledgedBitrateEstimatorInterface>  acknowledge_bitrate_estimator_;
+		std::unique_ptr< SendSideBandwidthEstimation>    bandwidth_estimation_;
 	};
 }
 

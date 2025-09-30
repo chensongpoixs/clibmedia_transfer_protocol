@@ -57,6 +57,64 @@ namespace libmtp
 		});
 		
 	}
+	void  RtpTransportControllerSend::OnReceivedRtcpReceiverReportBlocks(
+		const ReportBlockList& report_blocks, int64_t now_ms)
+	{
+		if (report_blocks.empty())
+		{
+			return;
+		}
+
+		int total_packets_lost_delta = 0;
+		int total_packets_delta = 0;
+		// 基于RR 统计数据计算掉包率 更新掉包网络带宽评估
+		// Compute the packet loss from all report blocks.
+		for (const RTCPReportBlock& report_block : report_blocks) 
+		{
+			auto it = last_report_blocks_.find(report_block.source_ssrc);
+			if (it != last_report_blocks_.end()) 
+			{
+				uint32_t number_of_packets = report_block.extended_highest_sequence_number -
+					it->second.extended_highest_sequence_number;
+				total_packets_delta += number_of_packets;
+				auto lost_delta = report_block.packets_lost - it->second.packets_lost;
+				total_packets_lost_delta += lost_delta;
+			}
+			last_report_blocks_[report_block.source_ssrc] = report_block;
+		}
+		// Can only compute delta if there has been previous blocks to compare to. If
+		// not, total_packets_delta will be unchanged and there's nothing more to do.
+		if (!total_packets_delta)
+		{
+			return;
+		}
+		int packets_received_delta = total_packets_delta - total_packets_lost_delta;
+		// To detect lost packets, at least one packet has to be received. This check
+		// is needed to avoid bandwith detection update in
+		// VideoSendStreamTest.SuspendBelowMinBitrate
+
+		if (packets_received_delta < 1)
+		{
+			return;
+		}
+		webrtc::Timestamp now = webrtc::Timestamp::Millis(now_ms);
+		libice::TransportLossReport msg;
+		msg.packets_lost_delta = total_packets_lost_delta;
+		msg.packets_received_delta = packets_received_delta;
+		msg.receive_time = now;
+		msg.start_time = last_report_block_time_;
+		msg.end_time = now;
+		last_report_block_time_ = now;
+		task_queue_.PostTask([this, msg]() {
+			if (controller_)
+			{
+				controller_->OnTransportLossReport(msg);
+			}
+		});
+		/*if (controller_)
+			PostUpdates(controller_->OnTransportLossReport(msg));*/
+		
+	}
 	void RtpTransportControllerSend::OnAddPacket(const libmedia_transfer_protocol::RtpPacketSendInfo & send_info)
 	{
 		webrtc::Timestamp creation_time = webrtc::Timestamp::Millis(clock_->TimeInMilliseconds());
@@ -99,12 +157,12 @@ namespace libmtp
 			}
 		});
 	}
-	void RtpTransportControllerSend::OnRttUpdate(int64_t rtt_ms)
+	void RtpTransportControllerSend::OnRttUpdate(int64_t rtt_ms, webrtc::Timestamp at_time)
 	{
-		task_queue_.PostTask([this, rtt_ms]() {
+		task_queue_.PostTask([this, rtt_ms, at_time]() {
 			if (controller_)
 			{
-				controller_->OnRttUpdate(rtt_ms);
+				controller_->OnRttUpdate(rtt_ms, at_time);
 			}
 		});
 	}

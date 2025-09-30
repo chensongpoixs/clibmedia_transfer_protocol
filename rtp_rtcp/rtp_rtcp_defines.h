@@ -153,6 +153,7 @@ struct RTCPReportBlock {
   uint32_t sender_ssrc;  // SSRC of sender of this report.
   uint32_t source_ssrc;  // SSRC of the RTP packet sender.
   uint8_t fraction_lost;
+  //ÀÛ¼Æµô°üÊı
   int32_t packets_lost;  // 24 bits valid.
   uint32_t extended_highest_sequence_number;
   uint32_t jitter;

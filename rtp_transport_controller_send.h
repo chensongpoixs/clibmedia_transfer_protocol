@@ -31,6 +31,7 @@
 #include "libmedia_transfer_protocol/rtp_rtcp/rtcp_packet/transport_feedback.h"
 #include "rtc_base/network/sent_packet.h"
 #include "rtc_base/third_party/sigslot/sigslot.h"
+#include "libmedia_transfer_protocol/rtp_rtcp/rtcp_receiver.h"
 namespace  libmtp
 {
 	class RtpTransportControllerSend  : public TransportFeedbackObserver
@@ -62,6 +63,11 @@ namespace  libmtp
 		void OnAddPacket(const libmedia_transfer_protocol::RtpPacketSendInfo & send_info) override;
 		void OnTransportFeedback(const rtcp::TransportFeedback &feedback) override;
 
+
+
+
+		void OnReceivedRtcpReceiverReportBlocks(const ReportBlockList& report_blocks,
+			int64_t now_ms);
 		//RtcpBandwidthObserver  callback 
 		//void OnReceivedEstimatedBitrate(uint32_t bitrate) override; 
 		//void OnReceivedRtcpReceiverReport(
@@ -72,7 +78,7 @@ namespace  libmtp
 		void OnSentPacket(const rtc::SentPacket& sent_packet);
 		void OnNetworkOk(bool  network_ok);
 
-		void OnRttUpdate(int64_t rtt_ms);// override;
+		void OnRttUpdate(int64_t rtt_ms, webrtc::Timestamp at_time);// override;
 		
 	private:
 
@@ -88,6 +94,11 @@ namespace  libmtp
 		bool     network_ok_ = false;
 		rtc::TaskQueue task_queue_;
 		TransportFeedbackAdapter    transport_feedback_adapter_;
+
+		//保存RR 的信息结构
+		std::map<uint32_t, RTCPReportBlock> last_report_blocks_;
+		//上一次接受RTCP中RR包的时间
+		webrtc::Timestamp last_report_block_time_ = webrtc::Timestamp::MinusInfinity();//
 		
 	};
 }

@@ -25,6 +25,7 @@ namespace libmtp
 	GoogCcNetworkController::GoogCcNetworkController()
 		: delay_based_bwe_( std::make_unique< DelayBasedBwe>())
 		, acknowledge_bitrate_estimator_(AcknowledgedBitrateEstimatorInterface::Create())
+		, bandwidth_estimation_(std::make_unique<SendSideBandwidthEstimation>())
 	{
 		//设置起始码流
 		delay_based_bwe_->SetStartBitrate(webrtc::DataRate::KilobitsPerSec(300));
@@ -62,9 +63,23 @@ namespace libmtp
 		//RTC_LOG(LS_INFO) << "delay bwe:" << result.ToString();
 		return libice::NetworkControlUpdate();
 	}
-	libice::NetworkControlUpdate GoogCcNetworkController::OnRttUpdate(int64_t rtt_ms)
+	libice::NetworkControlUpdate GoogCcNetworkController::OnRttUpdate(int64_t rtt_ms, webrtc::Timestamp at_time)
 	{
+		bandwidth_estimation_->UpdateRtt(webrtc::TimeDelta::Millis(rtt_ms), at_time);
 		delay_based_bwe_->OnRttUpdate(rtt_ms);
+		return libice::NetworkControlUpdate();
+	}
+	libice::NetworkControlUpdate GoogCcNetworkController::OnTransportLossReport(
+		libice::TransportLossReport msg)
+	{
+		int64_t total_packets_delta =
+			msg.packets_received_delta + msg.packets_lost_delta;
+		bandwidth_estimation_->UpdatePacketsLost(
+			msg.packets_lost_delta, total_packets_delta, msg.receive_time);
+
+
+		webrtc::DataRate lost_rate = bandwidth_estimation_->target_rate();
+		RTC_LOG(LS_INFO) << "lost rate: " << webrtc::ToString(lost_rate);
 		return libice::NetworkControlUpdate();
 	}
 }

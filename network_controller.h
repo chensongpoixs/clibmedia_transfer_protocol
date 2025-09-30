@@ -34,7 +34,7 @@ namespace libmtp
 		// transport-cc接受端反馈信息接口
 		virtual libice::NetworkControlUpdate OnTransportPacketsFeedback(const libice::TransportPacketsFeedback&) = 0;
 	
-		virtual  libice::NetworkControlUpdate OnRttUpdate(int64_t rtt_ms) = 0;
+		virtual  libice::NetworkControlUpdate OnRttUpdate(int64_t rtt_ms, webrtc::Timestamp at_time) = 0;
 		// Called when network availabilty changes.
 		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnNetworkAvailability(
 		//	NetworkAvailability) = 0;
@@ -64,8 +64,8 @@ namespace libmtp
 		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnTargetRateConstraints(
 		//	TargetRateConstraints) = 0;
 		//// Called when a protocol specific calculation of packet loss has been made.
-		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnTransportLossReport(
-		//	TransportLossReport) = 0;
+	  virtual libice::NetworkControlUpdate OnTransportLossReport(
+		  libice::TransportLossReport) = 0;
 		//// Called with per packet feedback regarding receive time.
 		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnTransportPacketsFeedback(
 		//	TransportPacketsFeedback) = 0;
