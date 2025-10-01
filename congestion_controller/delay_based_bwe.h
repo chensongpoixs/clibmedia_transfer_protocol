@@ -85,7 +85,7 @@ namespace libmtp
 			bool in_alr);
 
 		void OnRttUpdate(int64_t rtt_ms);
-
+		webrtc::TimeDelta GetExpectedBwePeriod() const;
 		void SetStartBitrate(webrtc::DataRate start_bitrate);
 	private:
 		void IncomingPacketFeedback(const libice::PacketResult& packet_feedback,

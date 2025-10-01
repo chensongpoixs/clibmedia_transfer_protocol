@@ -22,11 +22,33 @@
 #include "rtc_base/logging.h"
 namespace libmtp
 {
+	// From RTCPSender video report interval.
+	constexpr webrtc   ::TimeDelta kLossUpdateInterval = webrtc::TimeDelta::Millis(1000);
+
+	// Pacing-rate relative to our target send rate.
+	// Multiplicative factor that is applied to the target bitrate to calculate
+	// the number of bytes that can be transmitted per interval.
+	// Increasing this factor will result in lower delays in cases of bitrate
+	// overshoots from the encoder.
+	constexpr float kDefaultPaceMultiplier = 2.5f;
+
+	// If the probe result is far below the current throughput estimate
+	// it's unlikely that the probe is accurate, so we don't want to drop too far.
+	// However, if we actually are overusing, we want to drop to something slightly
+	// below the current throughput estimate to drain the network queues.
+	constexpr double kProbeDropThroughputFraction = 0.85;
 	GoogCcNetworkController::GoogCcNetworkController(const NetworkControllerConfig& config)
 		: delay_based_bwe_( std::make_unique< DelayBasedBwe>())
 		, acknowledge_bitrate_estimator_(AcknowledgedBitrateEstimatorInterface::Create())
 		, bandwidth_estimation_(std::make_unique<SendSideBandwidthEstimation>())
 		, last_loss_based_bitrate_(webrtc::DataRate::Zero())
+		, last_loss_based_target_rate_(webrtc::DataRate::Zero())
+		, last_pushback_target_rate_(webrtc::DataRate::Zero())
+		, last_stable_target_rate_(webrtc::DataRate::Zero())
+		, pacing_factor_(kDefaultPaceMultiplier) 
+		, min_total_allocated_bitrate_(webrtc::DataRate::Zero())
+		, max_padding_rate_(webrtc::DataRate::Zero())
+		, max_total_allocated_bitrate_(webrtc::DataRate::Zero())
 	{
 		//设置起始码流
 		delay_based_bwe_->SetStartBitrate(webrtc::DataRate::KilobitsPerSec(300));
@@ -65,7 +87,7 @@ namespace libmtp
 		libice::NetworkControlUpdate update;
 		if (result.updated)
 		{
-			bandwidth_estimation_->UpdateDelayBasedEstimate(report.feedback_time, result.target_bitrate);
+			 bandwidth_estimation_->UpdateDelayBasedEstimate(report.feedback_time, result.target_bitrate);
 		
 			MaybeTriggerOnNetworkChanged(&update, report.feedback_time);
 		}
@@ -107,97 +129,79 @@ namespace libmtp
 		libice::NetworkControlUpdate * update, webrtc::Timestamp at_time)
 	{
 
-		uint8_t fraction_loss = bandwidth_estimation_->fraction_loss();
-		webrtc::TimeDelta round_trip_time = bandwidth_estimation_->round_trip_time();
-		webrtc::DataRate loss_based_target_rate = bandwidth_estimation_->target_rate();
-		webrtc::DataRate pushback_target_rate = loss_based_target_rate;
-	
-		if (last_loss_based_bitrate_ != loss_based_target_rate||
-			last_estimated_fraction_loss_ != fraction_loss||
-			last_estimated_round_trip_time_ != round_trip_time)
-		{
-			last_estimated_fraction_loss_ = fraction_loss;
-			last_loss_based_bitrate_ = loss_based_target_rate;
-			last_estimated_round_trip_time_ = round_trip_time;
+		 uint8_t fraction_loss = bandwidth_estimation_->fraction_loss();
+  webrtc::TimeDelta round_trip_time = bandwidth_estimation_->round_trip_time();
+  webrtc::DataRate loss_based_target_rate = bandwidth_estimation_->target_rate();
+  //webrtc::DataRate pushback_target_rate = loss_based_target_rate;
 
-			libice::TargetTransferRate  targettransferrate;
-			targettransferrate.at_time = at_time;
-			targettransferrate.target_rate = loss_based_target_rate;
-			
-			update->target_rate = targettransferrate;
-			RTC_LOG(LS_INFO) << "update bwe ==> target_rate: " <<webrtc::ToString(loss_based_target_rate);
-		}
-		//BWE_TEST_LOGGING_PLOT(1, "fraction_loss_%", at_time.ms(),
-		//	(fraction_loss * 100) / 256);
-		//BWE_TEST_LOGGING_PLOT(1, "rtt_ms", at_time.ms(), round_trip_time.ms());
-		//BWE_TEST_LOGGING_PLOT(1, "Target_bitrate_kbps", at_time.ms(),
-		//	loss_based_target_rate.kbps());
+ 
 
-		//double cwnd_reduce_ratio = 0.0;
-		//if (congestion_window_pushback_controller_) {
-		//	int64_t pushback_rate =
-		//		congestion_window_pushback_controller_->UpdateTargetBitrate(
-		//			loss_based_target_rate.bps());
-		//	pushback_rate = std::max<int64_t>(bandwidth_estimation_->GetMinBitrate(),
-		//		pushback_rate);
-		//	pushback_target_rate = DataRate::BitsPerSec(pushback_rate);
-		//	if (rate_control_settings_.UseCongestionWindowDropFrameOnly()) {
-		//		cwnd_reduce_ratio = static_cast<double>(loss_based_target_rate.bps() -
-		//			pushback_target_rate.bps()) /
-		//			loss_based_target_rate.bps();
-		//	}
-		//}
-		//webrtc::DataRate stable_target_rate =
-		//	bandwidth_estimation_->GetEstimatedLinkCapacity();
-		//if (loss_based_stable_rate_) 
-		//{
-		//	stable_target_rate = std::min(stable_target_rate, loss_based_target_rate);
-		//}
-		//else {
-		//	stable_target_rate = std::min(stable_target_rate, pushback_target_rate);
-		//}
-		//
-		//if ((loss_based_target_rate != last_loss_based_target_rate_) ||
-		//	(fraction_loss != last_estimated_fraction_loss_) ||
-		//	(round_trip_time != last_estimated_round_trip_time_) ||
-		//	(pushback_target_rate != last_pushback_target_rate_) ||
-		//	(stable_target_rate != last_stable_target_rate_)) {
-		//	last_loss_based_target_rate_ = loss_based_target_rate;
-		//	last_pushback_target_rate_ = pushback_target_rate;
-		//	last_estimated_fraction_loss_ = fraction_loss;
-		//	last_estimated_round_trip_time_ = round_trip_time;
-		//	last_stable_target_rate_ = stable_target_rate;
-		//
-		//	alr_detector_->SetEstimatedBitrate(loss_based_target_rate.bps());
-		//
-		//	TimeDelta bwe_period = delay_based_bwe_->GetExpectedBwePeriod();
-		//
-		//	TargetTransferRate target_rate_msg;
-		//	target_rate_msg.at_time = at_time;
-		//	if (rate_control_settings_.UseCongestionWindowDropFrameOnly()) {
-		//		target_rate_msg.target_rate = loss_based_target_rate;
-		//		target_rate_msg.cwnd_reduce_ratio = cwnd_reduce_ratio;
-		//	}
-		//	else {
-		//		target_rate_msg.target_rate = pushback_target_rate;
-		//	}
-		//	target_rate_msg.stable_target_rate = stable_target_rate;
-		//	target_rate_msg.network_estimate.at_time = at_time;
-		//	target_rate_msg.network_estimate.round_trip_time = round_trip_time;
-		//	target_rate_msg.network_estimate.loss_rate_ratio = fraction_loss / 255.0f;
-		//	target_rate_msg.network_estimate.bwe_period = bwe_period;
-		//
-		//	update->target_rate = target_rate_msg;
-		//
-		//	auto probes = probe_controller_->SetEstimatedBitrate(
-		//		loss_based_target_rate.bps(), at_time.ms());
-		//	update->probe_cluster_configs.insert(update->probe_cluster_configs.end(),
-		//		probes.begin(), probes.end());
-		//	update->pacer_config = GetPacingRates(at_time);
-		//
-		//	RTC_LOG(LS_VERBOSE) << "bwe " << at_time.ms() << " pushback_target_bps="
-		//		<< last_pushback_target_rate_.bps()
-		//		<< " estimate_bps=" << loss_based_target_rate.bps();
-		//}
+  //double cwnd_reduce_ratio = 0.0;
+ 
+  //webrtc::DataRate stable_target_rate =
+  //    bandwidth_estimation_->GetEstimatedLinkCapacity();
+  //  stable_target_rate = std::min(stable_target_rate, loss_based_target_rate);
+  
+
+  if ((loss_based_target_rate != last_loss_based_bitrate_) ||
+      (fraction_loss != last_estimated_fraction_loss_) ||
+      (round_trip_time != last_estimated_rtt_) //||
+     // (pushback_target_rate != last_pushback_target_rate_) ||
+     // (stable_target_rate != last_stable_target_rate_)
+	  ) 
+  {
+	  last_loss_based_bitrate_ = loss_based_target_rate;
+     
+    last_estimated_fraction_loss_ = fraction_loss;
+	last_estimated_rtt_ = round_trip_time;
+    
+
+    //alr_detector_->SetEstimatedBitrate(loss_based_target_rate.bps());
+
+    //webrtc::TimeDelta bwe_period = delay_based_bwe_->GetExpectedBwePeriod();
+
+   libice:: TargetTransferRate target_rate_msg;
+    target_rate_msg.at_time = at_time;
+    //if (rate_control_settings_.UseCongestionWindowDropFrameOnly()) {
+    //  target_rate_msg.target_rate = loss_based_target_rate;
+    //  target_rate_msg.cwnd_reduce_ratio = cwnd_reduce_ratio;
+    //} else {
+      target_rate_msg.target_rate = loss_based_target_rate;
+    //}
+ //   target_rate_msg.stable_target_rate = stable_target_rate;
+   //target_rate_msg.network_estimate.at_time = at_time;
+   //target_rate_msg.network_estimate.round_trip_time = round_trip_time;
+   //target_rate_msg.network_estimate.loss_rate_ratio = fraction_loss / 255.0f;
+   //target_rate_msg.network_estimate.bwe_period = bwe_period;
+
+    update->target_rate = target_rate_msg;
+
+    //auto probes = probe_controller_->SetEstimatedBitrate(
+       // loss_based_target_rate.bps(), at_time.ms());
+  //  update->probe_cluster_configs.insert(update->probe_cluster_configs.end(),
+                   //                      probes.begin(), probes.end());
+    update->pacer_config = GetPacingRates(at_time);
+
+    RTC_LOG(LS_INFO) << "bwe " << at_time.ms() << " pushback_target_bps="
+                        << last_pushback_target_rate_.bps()
+                        << " estimate_bps=" << loss_based_target_rate.bps();
+  }
+	}
+	libice::PacerConfig GoogCcNetworkController::GetPacingRates(webrtc::Timestamp at_time) const
+	{
+		// Pacing rate is based on target rate before congestion window pushback,
+  // because we don't want to build queues in the pacer when pushback occurs.
+		// 编码器  输出码流不是太正确和fec， 所以带宽需要适当提高
+		webrtc::DataRate pacing_rate =
+			std::max(min_total_allocated_bitrate_, last_loss_based_bitrate_) *
+			pacing_factor_;
+		webrtc::DataRate padding_rate =
+			std::min(max_padding_rate_, last_pushback_target_rate_);
+		libice::PacerConfig msg;
+		msg.at_time = at_time;
+		msg.time_window = webrtc::TimeDelta::Seconds(1);
+		msg.data_window = pacing_rate * msg.time_window;
+		msg.pad_window = padding_rate * msg.time_window;
+		return msg;
 	}
 }

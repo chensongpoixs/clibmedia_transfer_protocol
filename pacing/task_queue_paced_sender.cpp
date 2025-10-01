@@ -60,7 +60,13 @@ TaskQueuePacedSender::TaskQueuePacedSender(
       is_shutdown_(false),
       task_queue_(task_queue_factory->CreateTaskQueue(
           "TaskQueuePacedSender",
-		  webrtc::TaskQueueFactory::Priority::NORMAL)) {}
+		  webrtc::TaskQueueFactory::Priority::NORMAL)) 
+{
+
+	// 设置码流初始化 pacing 发送大小
+	pacing_controller_.SetPacingRates(webrtc::DataRate::KilobitsPerSec(1500)
+	, webrtc::DataRate::KilobitsPerSec(1500));
+}
 
 TaskQueuePacedSender::~TaskQueuePacedSender() {
   // Post an immediate task to mark the queue as shutting down.
@@ -134,6 +140,7 @@ void TaskQueuePacedSender::SetPacingRates(webrtc::DataRate pacing_rate,
   task_queue_.PostTask([this, pacing_rate, padding_rate]() {
     RTC_DCHECK_RUN_ON(&task_queue_);
     pacing_controller_.SetPacingRates(pacing_rate, padding_rate);
+	// 处理队列中的包
     MaybeProcessPackets(webrtc::Timestamp::MinusInfinity());
   });
 }

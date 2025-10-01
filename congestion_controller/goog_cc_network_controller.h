@@ -59,6 +59,8 @@ namespace libmtp
 	private:
 		void MaybeTriggerOnNetworkChanged(libice::NetworkControlUpdate* update,
 			webrtc::Timestamp at_time);
+
+		libice::PacerConfig GetPacingRates(webrtc::Timestamp at_time) const;
 	private:
 
 		std::unique_ptr<DelayBasedBwe>  delay_based_bwe_;
@@ -71,6 +73,17 @@ namespace libmtp
 
 		uint8_t last_estimated_fraction_loss_ = 0;
 		webrtc::TimeDelta last_estimated_round_trip_time_ = webrtc::TimeDelta::PlusInfinity();
+
+
+		webrtc::TimeDelta  last_estimated_rtt_ = webrtc::TimeDelta::PlusInfinity();
+		webrtc::DataRate last_loss_based_target_rate_;
+		webrtc::DataRate last_pushback_target_rate_;
+		webrtc::DataRate last_stable_target_rate_;
+
+		double pacing_factor_;
+		webrtc::DataRate min_total_allocated_bitrate_;
+		webrtc::DataRate max_padding_rate_;
+		webrtc::DataRate max_total_allocated_bitrate_;
 	};
 }
 

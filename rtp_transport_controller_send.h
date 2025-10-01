@@ -48,6 +48,7 @@ namespace  libmtp
 	public:
 
 		sigslot::signal3<const ReportBlockList& , int64_t, int64_t> SignalOnNetworkInfo;
+		sigslot::signal2<RtpTransportControllerSend*, const libice::TargetTransferRate&> SignalTargetTransferRate;
 	public:
 		void EnqueuePacket(std::vector<std::unique_ptr<RtpPacketToSend>> packets);
 
@@ -83,6 +84,9 @@ namespace  libmtp
 	private:
 
 		void MaybeCreateController();
+
+		//void PostUpdate()
+		void PostUpdates(libice::NetworkControlUpdate update) ;
 	private:
 
 

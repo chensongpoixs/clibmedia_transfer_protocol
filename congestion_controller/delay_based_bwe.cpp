@@ -271,4 +271,9 @@ namespace libmtp
 		return rate_control_.ValidEstimate();
 	}
 
+	webrtc::TimeDelta DelayBasedBwe::GetExpectedBwePeriod() const {
+		return rate_control_.GetExpectedBandwidthPeriod();
+	}
+
+
 }

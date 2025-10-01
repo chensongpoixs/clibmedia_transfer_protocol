@@ -52,7 +52,7 @@ namespace libmtp
 				transport_feedback_adapter_.ProcessTransportFeedback(feedback, feedback_time);
 			if (feedback_msg &&controller_)
 			{
-				controller_->OnTransportPacketsFeedback(*feedback_msg);
+				PostUpdates(controller_->OnTransportPacketsFeedback(*feedback_msg));
 			}
 		});
 		
@@ -108,7 +108,7 @@ namespace libmtp
 		task_queue_.PostTask([this, msg]() {
 			if (controller_)
 			{
-				controller_->OnTransportLossReport(msg);
+				PostUpdates(controller_->OnTransportLossReport(msg));
 			}
 		});
 		/*if (controller_)
@@ -170,7 +170,7 @@ namespace libmtp
 		task_queue_.PostTask([this, rtt_ms, at_time]() {
 			if (controller_)
 			{
-				controller_->OnRttUpdate(rtt_ms, at_time);
+				PostUpdates(controller_->OnRttUpdate(rtt_ms, at_time));
 			}
 		});
 	}
@@ -181,5 +181,26 @@ namespace libmtp
 			return;
 		}
 		controller_ = std::make_unique<GoogCcNetworkController>(controller_config_);
+	}
+
+
+	void RtpTransportControllerSend::PostUpdates(libice::NetworkControlUpdate update) {
+		if (update.congestion_window) {
+			task_queue_pacer_->SetCongestionWindow(*update.congestion_window);
+		}
+		//  将估计的码流值作用到pacer模块中
+		if (update.pacer_config) {
+			task_queue_pacer_->SetPacingRates(update.pacer_config->data_rate(),
+				update.pacer_config->pad_rate());
+		}
+		for (const auto& probe : update.probe_cluster_configs) {
+			task_queue_pacer_->CreateProbeCluster(probe.target_data_rate, probe.id);
+		}
+		// 将估计模块的码流值一发送信号通知其他模块
+		if (update.target_rate) {
+			SignalTargetTransferRate(this, *update.target_rate);
+		//	control_handler_->SetTargetRate(*update.target_rate);
+		//	UpdateControlState();
+		}
 	}
 }
