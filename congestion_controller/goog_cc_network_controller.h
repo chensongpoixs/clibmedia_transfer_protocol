@@ -56,6 +56,11 @@ namespace libmtp
 		// 网络连接成功后调用  start min max bitrate
 		virtual libice::NetworkControlUpdate OnTargetRateConstraints(
 			libice::TargetRateConstraints) override;
+
+
+		// 定时调用
+		virtual libice::NetworkControlUpdate OnProcessInterval(
+			libice::ProcessInterval) override;
 	private:
 		void MaybeTriggerOnNetworkChanged(libice::NetworkControlUpdate* update,
 			webrtc::Timestamp at_time);

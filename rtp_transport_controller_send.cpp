@@ -181,6 +181,10 @@ namespace libmtp
 			return;
 		}
 		controller_ = std::make_unique<GoogCcNetworkController>(controller_config_);
+
+		UpdateControllerWithTimeInterval();
+
+
 	}
 
 
@@ -201,6 +205,27 @@ namespace libmtp
 			SignalTargetTransferRate(this, *update.target_rate);
 		//	control_handler_->SetTargetRate(*update.target_rate);
 		//	UpdateControlState();
+		}
+	}
+	void RtpTransportControllerSend::UpdateControllerWithTimeInterval()
+	{
+		libice::ProcessInterval msg;
+		msg.at_time = webrtc::Timestamp::Millis(clock_->TimeInMilliseconds());
+		//if (add_pacing_to_cwin_)
+		//	msg.pacer_queue = pacer()->QueueSizeData();
+		PostUpdates(controller_->OnProcessInterval(msg));
+	}
+
+	void  RtpTransportControllerSend::StartProcessPeriodicTasks()
+	{
+		controller_task_.Stop();
+		if (process_interval_.IsFinite()) {
+			controller_task_ = webrtc::RepeatingTaskHandle::DelayedStart(
+				task_queue_.Get(), process_interval_, [this]() {
+				RTC_DCHECK_RUN_ON(&task_queue_);
+				UpdateControllerWithTimeInterval();
+				return process_interval_;
+			});
 		}
 	}
 }

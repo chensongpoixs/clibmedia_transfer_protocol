@@ -123,7 +123,9 @@ namespace libmtp
 
 		bandwidth_estimation_->SetBitrates( starting_rate,  min_data_rate,
 			 max_data_rate, constraints.at_time);
-		return libice::NetworkControlUpdate();
+		libice::NetworkControlUpdate update;
+		MaybeTriggerOnNetworkChanged(&update, constraints.at_time);
+		return update;
 	}
 	void GoogCcNetworkController::MaybeTriggerOnNetworkChanged(
 		libice::NetworkControlUpdate * update, webrtc::Timestamp at_time)
@@ -182,9 +184,8 @@ namespace libmtp
                    //                      probes.begin(), probes.end());
     update->pacer_config = GetPacingRates(at_time);
 
-    RTC_LOG(LS_INFO) << "bwe " << at_time.ms() << " pushback_target_bps="
-                        << last_pushback_target_rate_.bps()
-                        << " estimate_bps=" << loss_based_target_rate.bps();
+    RTC_LOG(LS_INFO) << "bwe " /*<< at_time.ms()*/ << " pushback_target_bps="
+                        << last_loss_based_bitrate_.bps();
   }
 	}
 	libice::PacerConfig GoogCcNetworkController::GetPacingRates(webrtc::Timestamp at_time) const
@@ -203,5 +204,14 @@ namespace libmtp
 		msg.data_window = pacing_rate * msg.time_window;
 		msg.pad_window = padding_rate * msg.time_window;
 		return msg;
+	}
+
+	libice::NetworkControlUpdate GoogCcNetworkController::OnProcessInterval(
+		libice::ProcessInterval msg)
+	{
+		bandwidth_estimation_->UpdateEstimate(msg.at_time);
+		libice::NetworkControlUpdate update;
+		MaybeTriggerOnNetworkChanged(&update, msg.at_time);
+		return update;
 	}
 }

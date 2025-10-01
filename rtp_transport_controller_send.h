@@ -32,6 +32,7 @@
 #include "rtc_base/network/sent_packet.h"
 #include "rtc_base/third_party/sigslot/sigslot.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtcp_receiver.h"
+#include "rtc_base/task_utils/repeating_task.h"
 namespace  libmtp
 {
 	class RtpTransportControllerSend  : public TransportFeedbackObserver
@@ -87,6 +88,8 @@ namespace  libmtp
 
 		//void PostUpdate()
 		void PostUpdates(libice::NetworkControlUpdate update) ;
+		void UpdateControllerWithTimeInterval();
+		void StartProcessPeriodicTasks();
 	private:
 
 
@@ -104,6 +107,13 @@ namespace  libmtp
 		//上一次接受RTCP中RR包的时间
 		webrtc::Timestamp last_report_block_time_ = webrtc::Timestamp::MinusInfinity();//
 		NetworkControllerConfig                     controller_config_;
+
+		/*
+		webrtc default const int64_t kUpdateIntervalMs = 25;
+  return TimeDelta::Millis(kUpdateIntervalMs);
+		*/
+		webrtc::TimeDelta process_interval_ = webrtc::TimeDelta::Millis(25);
+		webrtc::RepeatingTaskHandle controller_task_;
 		
 	};
 }

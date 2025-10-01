@@ -62,8 +62,8 @@ namespace libmtp
 		//	  libice::NetworkRouteChange) = 0
 		//// Called periodically with a periodicy as specified by
 		//// NetworkControllerFactoryInterface::GetProcessInterval.
-		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnProcessInterval(
-		//	ProcessInterval) = 0;
+		 virtual libice::NetworkControlUpdate OnProcessInterval(
+			libice::ProcessInterval) = 0;
 		//// Called when remotely calculated bitrate is received.
 		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnRemoteBitrateReport(
 		//	RemoteBitrateReport) = 0;
