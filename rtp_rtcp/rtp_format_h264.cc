@@ -47,10 +47,20 @@ static const size_t kFuAHeaderSize = 2;
 static const size_t kLengthFieldSize = 2;
 
 // Bit masks for FU (A and B) indicators.
-enum NalDefs : uint8_t { kFBit = 0x80, kNriMask = 0x60, kTypeMask = 0x1F };
+// NAL头部的bit mask
+enum NalDefs : uint8_t { 
+	kFBit = 0x80, 
+	kNriMask = 0x60, 
+	kTypeMask = 0x1F 
+};
 
 // Bit masks for FU (A and B) headers.
-enum FuDefs : uint8_t { kSBit = 0x80, kEBit = 0x40, kRBit = 0x20 };
+// FU-Header bit mask
+enum FuDefs : uint8_t { 
+	kSBit = 0x80, 
+	kEBit = 0x40, 
+	kRBit = 0x20 
+};
 
 }  // namespace
 
@@ -87,24 +97,29 @@ size_t RtpPacketizerH264::NumPackets() const {
 
 bool RtpPacketizerH264::GeneratePackets(
     webrtc::H264PacketizationMode packetization_mode) {
+	// 遍历从buffer当中提取的NALU
   for (size_t i = 0; i < input_fragments_.size();) {
     switch (packetization_mode) {
+		// 单包 一帧数据编码出来数据打包一个rtp包中
       case webrtc::H264PacketizationMode::SingleNalUnit:
         if (!PacketizeSingleNalu(i))
           return false;
         ++i;
         break;
-      case webrtc::H264PacketizationMode::NonInterleaved:
+      case webrtc::H264PacketizationMode::NonInterleaved:// 打包到多一个包中
         int fragment_len = input_fragments_[i].size();
+		// 首先获取该NALU容纳负载的最大容量
         int single_packet_capacity = limits_.max_payload_len;
         if (input_fragments_.size() == 1)
           single_packet_capacity -= limits_.single_packet_reduction_len;
-        else if (i == 0)
+        else if (i == 0)// 第一个包
           single_packet_capacity -= limits_.first_packet_reduction_len;
-        else if (i + 1 == input_fragments_.size())
+        else if (i + 1 == input_fragments_.size())// 最后一个包
           single_packet_capacity -= limits_.last_packet_reduction_len;
 
-        if (fragment_len > single_packet_capacity) {
+		// 当 nal包太大了  就需要分片发送
+        if (fragment_len > single_packet_capacity) // 分片打包
+		{
           if (!PacketizeFuA(i))
             return false;
           ++i;
@@ -116,13 +131,14 @@ bool RtpPacketizerH264::GeneratePackets(
   }
   return true;
 }
-
+//分片打包
 bool RtpPacketizerH264::PacketizeFuA(size_t fragment_index) {
   // Fragment payload into packets (FU-A).
   rtc::ArrayView<const uint8_t> fragment = input_fragments_[fragment_index];
 
   PayloadSizeLimits limits = limits_;
   // Leave room for the FU-A header.
+   // 预留FU-A头部的空间
   limits.max_payload_len -= kFuAHeaderSize;
   // Update single/first/last packet reductions unless it is single/first/last
   // fragment.
@@ -130,22 +146,32 @@ bool RtpPacketizerH264::PacketizeFuA(size_t fragment_index) {
     // if this fragment is put into a single packet, it might still be the
     // first or the last packet in the whole sequence of packets.
     if (fragment_index == input_fragments_.size() - 1) {
+		// 这里面只会包含中间的包和最后一个包
       limits.single_packet_reduction_len = limits_.last_packet_reduction_len;
     } else if (fragment_index == 0) {
+		// 这里面只包含第一个包和中间包
       limits.single_packet_reduction_len = limits_.first_packet_reduction_len;
     } else {
+		// 只包含中间包
       limits.single_packet_reduction_len = 0;
     }
   }
   if (fragment_index != 0)
-    limits.first_packet_reduction_len = 0;
+  {
+	  // 第一个包不可能包含在这个NALU
+	  limits.first_packet_reduction_len = 0;
+  }
   if (fragment_index != input_fragments_.size() - 1)
-    limits.last_packet_reduction_len = 0;
+  {
+	  // 最后一个包不可能出现在这个NALU
+	  limits.last_packet_reduction_len = 0;
+  }
 
   // Strip out the original header.
   size_t payload_left = fragment.size() - kNalHeaderSize;
+  // 负载的起始偏移量
   int offset = kNalHeaderSize;
-
+  // 将负载大小分割成大体相同的几个部分
   std::vector<int> payload_sizes = SplitAboutEqually(payload_left, limits);
   if (payload_sizes.empty())
     return false;
@@ -171,7 +197,10 @@ size_t RtpPacketizerH264::PacketizeStapA(size_t fragment_index) {
   if (input_fragments_.size() == 1)
     payload_size_left -= limits_.single_packet_reduction_len;
   else if (fragment_index == 0)
-    payload_size_left -= limits_.first_packet_reduction_len;
+  {
+	  // 第一个包
+	  payload_size_left -= limits_.first_packet_reduction_len;
+  }
   int aggregated_fragments = 0;
   size_t fragment_headers_length = 0;
   rtc::ArrayView<const uint8_t> fragment = input_fragments_[fragment_index];
@@ -208,6 +237,7 @@ size_t RtpPacketizerH264::PacketizeStapA(size_t fragment_index) {
     ++aggregated_fragments;
 
     // Next fragment.
+	// 继续聚合下一个包
     ++fragment_index;
     if (fragment_index == input_fragments_.size())
       break;
@@ -252,14 +282,21 @@ bool RtpPacketizerH264::NextPacket(RtpPacketToSend* rtp_packet) {
   PacketUnit packet = packets_.front();
   if (packet.first_fragment && packet.last_fragment) {
     // Single NAL unit packet.
+	  // 单个NALU包
     size_t bytes_to_send = packet.source_fragment.size();
     uint8_t* buffer = rtp_packet->AllocatePayload(bytes_to_send);
     memcpy(buffer, packet.source_fragment.data(), bytes_to_send);
     packets_.pop();
     input_fragments_.pop_front();
-  } else if (packet.aggregated) {
+  }
+  else if (packet.aggregated) 
+  {
+	  // STAP-A  分包
     NextAggregatePacket(rtp_packet);
-  } else {
+  }
+  else 
+  {
+	  // FU-A 组包
     NextFragmentPacket(rtp_packet);
   }
   rtp_packet->SetMarker(packets_.empty());
@@ -276,16 +313,20 @@ void RtpPacketizerH264::NextAggregatePacket(RtpPacketToSend* rtp_packet) {
   PacketUnit* packet = &packets_.front();
   RTC_CHECK(packet->first_fragment);
   // STAP-A NALU header.
+  // 写入STAP-A header
   buffer[0] = (packet->header & (kFBit | kNriMask)) | webrtc::H264::NaluType::kStapA;
   size_t index = kNalHeaderSize;
   bool is_last_fragment = packet->last_fragment;
+  // 写入NALU
   while (packet->aggregated) {
     rtc::ArrayView<const uint8_t> fragment = packet->source_fragment;
     RTC_CHECK_LE(index + kLengthFieldSize + fragment.size(), payload_capacity);
     // Add NAL unit length field.
+	// 写入NALU length field
     ByteWriter<uint16_t>::WriteBigEndian(&buffer[index], fragment.size());
     index += kLengthFieldSize;
     // Add NAL unit.
+	// 写入NALU
     memcpy(&buffer[index], fragment.data(), fragment.size());
     index += fragment.size();
     packets_.pop();
@@ -304,15 +345,19 @@ void RtpPacketizerH264::NextFragmentPacket(RtpPacketToSend* rtp_packet) {
   // NAL unit fragmented over multiple packets (FU-A).
   // We do not send original NALU header, so it will be replaced by the
   // FU indicator header of the first packet.
+   // 构造FU-Indicator
   uint8_t fu_indicator =
       (packet->header & (kFBit | kNriMask)) | webrtc::H264::NaluType::kFuA;
+  // 构造FU-Header
   uint8_t fu_header = 0;
 
   // S | E | R | 5 bit type.
   fu_header |= (packet->first_fragment ? kSBit : 0);
   fu_header |= (packet->last_fragment ? kEBit : 0);
+  // 提取原始的NALU type
   uint8_t type = packet->header & kTypeMask;
   fu_header |= type;
+  // 写入到rtp buffer
   rtc::ArrayView<const uint8_t> fragment = packet->source_fragment;
   uint8_t* buffer =
       rtp_packet->AllocatePayload(kFuAHeaderSize + fragment.size());

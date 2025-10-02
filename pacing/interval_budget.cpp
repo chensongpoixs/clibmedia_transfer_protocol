@@ -48,9 +48,12 @@ void IntervalBudget::IncreaseBudget(int64_t delta_time_ms) {
   int64_t bytes = target_rate_kbps_ * delta_time_ms / 8;
   if (bytes_remaining_ < 0 || can_build_up_underuse_) {
     // We overused last interval, compensate this interval.
+	  // 上一轮预算使用超标，需要在本轮补偿
+		// 如果can_build_up_underuse_为TRUE，上一轮的预算可以在后续继续使用
     bytes_remaining_ = std::min(bytes_remaining_ + bytes, max_bytes_in_budget_);
   } else {
     // If we underused last interval we can't use it this interval.
+	  // 上一轮预算还有富余，作废
     bytes_remaining_ = std::min(bytes, max_bytes_in_budget_);
   }
 }

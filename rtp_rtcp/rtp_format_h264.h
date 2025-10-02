@@ -14,7 +14,9 @@
 				   date:  2025-09-21
 
 
-
+				    1. 单包
+					2. 拆包  STAP-A
+					3. 组包  FU
  ******************************************************************************/
 
 
@@ -74,10 +76,10 @@ class RtpPacketizerH264 : public RtpPacketizer {
           header(header) {}
 
     rtc::ArrayView<const uint8_t> source_fragment;
-    bool first_fragment;
-    bool last_fragment;
-    bool aggregated;
-    uint8_t header;
+    bool first_fragment;// rtp中的分片的是否开始包
+    bool last_fragment; //rtp总分片是否结束包的大小
+    bool aggregated; //是否分包
+    uint8_t header;// NALU负载大小
   };
 
   bool GeneratePackets(webrtc::H264PacketizationMode packetization_mode);

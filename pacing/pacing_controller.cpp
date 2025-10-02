@@ -1,12 +1,21 @@
-/*
- *  Copyright (c) 2019 The WebRTC project authors. All Rights Reserved.
+/******************************************************************************
+ *  Copyright (c) 2025 The CRTC project authors . All Rights Reserved.
+ *
+ *  Please visit https://chensongpoixs.github.io for detail
  *
  *  Use of this source code is governed by a BSD-style license
  *  that can be found in the LICENSE file in the root of the source
  *  tree. An additional intellectual property rights grant can be found
  *  in the file PATENTS.  All contributing project authors may
  *  be found in the AUTHORS file in the root of the source tree.
- */
+ ******************************************************************************/
+ /*****************************************************************************
+				   Author: chensong
+				   date:  2025-09-28
+
+
+
+ ******************************************************************************/
 
 #include "libmedia_transfer_protocol/pacing/pacing_controller.h"
 
@@ -63,7 +72,7 @@ webrtc::TimeDelta GetDynamicPaddingTarget(/*const WebRtcKeyValueConfig& field_tr
 	//  webrtc::field_trials.Lookup("WebRTC-Pacer-DynamicPaddingTarget"));
 	return webrtc::TimeDelta::Millis(5);// padding_target.Get();
 }
-
+// 值越小，优先级越高
 int GetPriorityForType(RtpPacketMediaType type) {
   // Lower number takes priority over higher.
   switch (type) {
@@ -238,7 +247,9 @@ void PacingController::EnqueuePacket(std::unique_ptr<RtpPacketToSend> packet) {
   RTC_CHECK(packet->packet_type());
   // Get priority first and store in temporary, to avoid chance of object being
   // moved before GetPriorityForType() being called.
+   // 1. 获得RTP packet的优先级
   const int priority = GetPriorityForType(*packet->packet_type());
+  // 2. 插入packet
   EnqueuePacketInternal(std::move(packet), priority);
 }
 
@@ -440,8 +451,9 @@ void PacingController::ProcessPackets() {
       target_send_time = last_process_time_;
     }
   }
-
+  
   webrtc::Timestamp previous_process_time = last_process_time_;
+  // 计算流逝的时间（当前时间距离上一次发送过去了多长时间）
   webrtc::TimeDelta elapsed_time = UpdateTimeAndGetElapsed(now);
 
   if (ShouldSendKeepalive(now)) {
@@ -468,9 +480,10 @@ void PacingController::ProcessPackets() {
   if (paused_) {
     return;
   }
-
+  
   if (elapsed_time > webrtc::TimeDelta::Zero()) {
 	  webrtc::DataRate target_rate = pacing_bitrate_;
+	  // 队列当中正在排队的总字节数
 	  webrtc::DataSize queue_size_data = packet_queue_.Size();
     if (queue_size_data > webrtc::DataSize::Zero()) {
       // Assuming equal size packets and input/output rate, the average packet
@@ -478,6 +491,7 @@ void PacingController::ProcessPackets() {
       // time constraint shall be met. Determine bitrate needed for that.
       packet_queue_.UpdateQueueTime(now);
       if (drain_large_queues_) {
+		  // 当前队列的平均排队时间
 		  webrtc::TimeDelta avg_time_left =
             std::max(webrtc::TimeDelta::Millis(1),
                      queue_time_limit - packet_queue_.AverageQueueTime());
@@ -494,6 +508,7 @@ void PacingController::ProcessPackets() {
       // In periodic processing mode, the IntevalBudget allows positive budget
       // up to (process interval duration) * (target rate), so we only need to
       // update it once before the packet sending loop.
+		 // 更新预算
       media_budget_.set_target_rate_kbps(target_rate.kbps());
       UpdateBudgetWithElapsedTime(elapsed_time);
     } else {
@@ -552,11 +567,13 @@ void PacingController::ProcessPackets() {
 
     // Fetch the next packet, so long as queue is not empty or budget is not
     // exhausted.
+	// 从队列当中获取rtp数据包进行发送
     std::unique_ptr<RtpPacketToSend> rtp_packet =
         GetPendingPacket(pacing_info, target_send_time, now);
 
     if (rtp_packet == nullptr) {
       // No packet available to send, check if we should send padding.
+		  // 队列为空或者预算耗尽了，停止发送循环
 		webrtc::DataSize padding_to_add = PaddingToAdd(recommended_probe_size, data_sent);
       if (padding_to_add > webrtc::DataSize::Zero()) {
         std::vector<std::unique_ptr<RtpPacketToSend>> padding_packets =
@@ -586,7 +603,7 @@ void PacingController::ProcessPackets() {
       packet_size += webrtc::DataSize::Bytes(rtp_packet->headers_size()) +
                      transport_overhead_per_packet_;
     }
-
+	// 发送rtp_packet到网络
     packet_sender_->SendPacket(std::move(rtp_packet), pacing_info);
     for (auto& packet : packet_sender_->FetchFec()) {
       EnqueuePacket(std::move(packet));
@@ -594,6 +611,7 @@ void PacingController::ProcessPackets() {
     data_sent += packet_size;
 
     // Send done, update send/process time to the target send time.
+	 // 更新预算
     OnPacketSent(packet_type, packet_size, target_send_time);
 
     // If we are currently probing, we need to stop the send loop when we have
@@ -662,6 +680,7 @@ std::unique_ptr<RtpPacketToSend> PacingController::GetPendingPacket(
     const libice::PacedPacketInfo& pacing_info,
 	webrtc::Timestamp target_send_time,
 	webrtc::Timestamp now) {
+	// 如果队列已经为空
   if (packet_queue_.Empty()) {
     return nullptr;
   }
@@ -679,6 +698,7 @@ std::unique_ptr<RtpPacketToSend> PacingController::GetPendingPacket(
     }
 
     if (mode_ == ProcessMode::kPeriodic) {
+		// 如果本轮预算已经耗尽
       if (media_budget_.bytes_remaining() <= 0) {
         // Not enough budget.
         return nullptr;

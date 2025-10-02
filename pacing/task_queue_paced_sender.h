@@ -141,6 +141,7 @@ class TaskQueuePacedSender : public RtpPacketPacer, public RtpPacketSender {
   Stats GetStats() const;
 
   webrtc::Clock* const clock_;
+  // 最小的调度周期
   const webrtc::TimeDelta hold_back_window_;
   PacingController pacing_controller_ RTC_GUARDED_BY(task_queue_);
 
@@ -149,6 +150,7 @@ class TaskQueuePacedSender : public RtpPacketPacer, public RtpPacketSender {
   // delayed task that will call MaybeProcessPackets() with that time
   // as parameter.
   // Timestamp::MinusInfinity() indicates no valid pending task.
+  // 初始值是负的无穷大，表示暂时还没有调度任何任务
   webrtc::Timestamp next_process_time_ RTC_GUARDED_BY(task_queue_);
 
   // Since we don't want to support synchronous calls that wait for a

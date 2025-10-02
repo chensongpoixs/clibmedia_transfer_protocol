@@ -693,7 +693,7 @@ void RTCPReceiver::HandleReportBlock(const rtcp::ReportBlock& report_block,
       report_block.delay_since_last_sr();
   rtcp_report_block.last_sender_report_timestamp = report_block.last_sr();
   report_block_data->SetReportBlock(rtcp_report_block, rtc::TimeUTCMicros());
-
+  // 计算RTT的值
   int64_t rtt_ms = 0;
   uint32_t send_time_ntp = report_block.last_sr();
   // RFC3550, section 6.4.1, LSR field discription states:
@@ -716,6 +716,7 @@ void RTCPReceiver::HandleReportBlock(const rtcp::ReportBlock& report_block,
     // RTT in 1/(2^16) seconds.
     uint32_t rtt_ntp = receive_time_ntp - delay_ntp - send_time_ntp;
     // Convert to 1/1000 seconds (milliseconds).
+	// 需要将rtt_ntp转换成ms
     rtt_ms = webrtc::CompactNtpRttToMs(rtt_ntp);
     report_block_data->AddRoundTripTimeSample(rtt_ms);
     if (report_block.source_ssrc() == main_ssrc_) {

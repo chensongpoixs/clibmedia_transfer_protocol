@@ -266,7 +266,9 @@ class RTCPSender final {
       RTC_GUARDED_BY(mutex_rtcp_sender_);
 
   uint32_t timestamp_offset_ RTC_GUARDED_BY(mutex_rtcp_sender_);
+  // 最后一个rtp的时间戳
   uint32_t last_rtp_timestamp_ RTC_GUARDED_BY(mutex_rtcp_sender_);
+  // 最后一个音频或者视频的采集时间
   absl::optional<webrtc::Timestamp> last_frame_capture_time_
       RTC_GUARDED_BY(mutex_rtcp_sender_);
   // SSRC that we receive on our RTP channel

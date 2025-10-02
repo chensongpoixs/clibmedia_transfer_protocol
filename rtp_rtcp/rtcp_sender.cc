@@ -206,9 +206,11 @@ void RTCPSender::SetRTCPStatus(RtcpMode new_method) {
 	webrtc::MutexLock lock(&mutex_rtcp_sender_);
 
   if (new_method == RtcpMode::kOff) {
+	  // 关闭RTCP功能是禁止的
     next_time_to_send_rtcp_ = absl::nullopt;
   } else if (method_ == RtcpMode::kOff) {
     // When switching on, reschedule the next packet
+	  
     SetNextRtcpSendEvaluationDuration(report_interval_ / 2);
   }
   method_ = new_method;
@@ -465,6 +467,9 @@ void RTCPSender::BuildSR(const RtcpContext& ctx, PacketSender& sender) {
   }
   // Round now_us_ to the closest millisecond, because Ntp time is rounded
   // when converted to milliseconds,
+   // 计算当前时间的rtp_timestamp
+	// last_rtp_timestamp_ -> last_frame_capture_time_
+	//            ?        -> context.now
   uint32_t rtp_timestamp =
       timestamp_offset_ + last_rtp_timestamp_ +
       ((ctx.now_.us() + 500) / 1000 - last_frame_capture_time_->ms()) *
@@ -669,7 +674,9 @@ int32_t RTCPSender::SendRTCP(const FeedbackState& feedback_state,
                              int32_t nack_size,
                              const uint16_t* nack_list) {
   int32_t error_code = -1;
-  auto callback = [&](rtc::ArrayView<const uint8_t> packet) {
+  auto callback = [&](rtc::ArrayView<const uint8_t> packet) 
+  {
+	  // 可以获得打包后的复合包
     if (transport_->SendRtcp(packet.data(), packet.size())) {
       error_code = 0;
       /*if (event_log_) {
@@ -687,6 +694,7 @@ int32_t RTCPSender::SendRTCP(const FeedbackState& feedback_state,
       return *result;
     }
   }
+  // 触发回调
   sender->Send();
 
   return error_code;
@@ -707,17 +715,23 @@ absl::optional<int32_t> RTCPSender::ComputeCompoundRTCPPacket(
   SetFlag(packet_type, true);
 
   // Prevent sending streams to send SR before any media has been sent.
+  // 当没有任何RTP包发送时，需要阻止SR的发送
   const bool can_calculate_rtp_timestamp = last_frame_capture_time_.has_value();
   if (!can_calculate_rtp_timestamp) {
+	  // 此时不能发送SR包
     bool consumed_sr_flag = ConsumeFlag(kRtcpSr);
     bool consumed_report_flag = sending_ && ConsumeFlag(kRtcpReport);
     bool sender_report = consumed_report_flag || consumed_sr_flag;
+	// 如果当前仅仅只需要发送SR包，我们直接return
     if (sender_report && AllVolatileFlagsConsumed()) {
       // This call was for Sender Report and nothing else.
       return 0;
     }
+	// 如果还需要发送其它的RTCP包
     if (sending_ && method_ == RtcpMode::kCompound) {
       // Not allowed to send any RTCP packet without sender report.
+		// 复合包模式下，发送任何RTCP包都必须携带SR包，
+			// 此时又没有发送任何RTP包，不能发送当前的RTCP包
       return -1;
     }
   }
@@ -732,7 +746,7 @@ absl::optional<int32_t> RTCPSender::ComputeCompoundRTCPPacket(
   PrepareReport(feedback_state);
 
   bool create_bye = false;
-
+  // 遍历flag，根据rtcp类型，构造对应的rtcp包
   auto it = report_flags_.begin();
   while (it != report_flags_.end()) {
     uint32_t rtcp_packet_type = it->type;
@@ -749,6 +763,7 @@ absl::optional<int32_t> RTCPSender::ComputeCompoundRTCPPacket(
       create_bye = true;
       continue;
     }
+	// 通过rtcp类型，找到对应的处理函数
     auto builder_it = builders_.find(rtcp_packet_type);
     if (builder_it == builders_.end()) {
       RTC_NOTREACHED() << "Could not find builder for packet type "
@@ -791,6 +806,7 @@ void RTCPSender::PrepareReport(const FeedbackState& feedback_state) {
     SetFlag(kRtcpSdes, true);
 
   if (generate_report) {
+	  // 设置下一次发送报告的时间
     if ((!sending_ && xr_send_receiver_reference_time_enabled_) ||
         !feedback_state.last_xr_rtis.empty() ||
         send_video_bitrate_allocation_) {

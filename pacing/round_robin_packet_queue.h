@@ -170,6 +170,7 @@ class RoundRobinPacketQueue {
   // a multimap instead of a priority_queue since the priority of a stream can
   // change as a new packet is inserted, and a multimap allows us to remove and
   // then reinsert a StreamPrioKey if the priority has increased.
+  // 按照StreamPrioKey从小到到进行排序
   std::multimap<StreamPrioKey, uint32_t> stream_priorities_;
 
   // A map of SSRCs to Streams.

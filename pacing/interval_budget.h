@@ -29,6 +29,7 @@ namespace libmedia_transfer_protocol {
 // over-use budget in ms.
 class IntervalBudget {
  public:
+	 // 初始化 初始码流 * 时间窗口
   explicit IntervalBudget(int initial_target_rate_kbps);
   IntervalBudget(int initial_target_rate_kbps, bool can_build_up_underuse);
   void set_target_rate_kbps(int target_rate_kbps);

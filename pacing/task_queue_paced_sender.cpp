@@ -235,15 +235,17 @@ void TaskQueuePacedSender::MaybeProcessPackets(
   const bool is_scheduled_call = next_process_time_ == scheduled_process_time;
   if (is_scheduled_call) {
     // Indicate no pending scheduled call.
+	   // 当前的任务将被执行，需要重新设定下一次任务执行的时间
     next_process_time_ = webrtc::Timestamp::MinusInfinity();
   }
   if (is_scheduled_call ||
       (now >= next_process_time && (next_process_time_.IsInfinite() ||
                                     next_process_time < next_process_time_))) {
+	  // 执行数据包发送逻辑
     pacing_controller_.ProcessPackets();
     next_process_time = pacing_controller_.NextSendTime();
   }
-
+  // 需要过多长时间之后，再次进行这个调度
   absl::optional<webrtc::TimeDelta> time_to_next_process;
   if (pacing_controller_.IsProbing() &&
       next_process_time != next_process_time_) {
@@ -262,6 +264,7 @@ void TaskQueuePacedSender::MaybeProcessPackets(
     // Schedule a new task since there is none currently scheduled
     // (`next_process_time_` is infinite), or the new process time is at least
     // one holdback window earlier than whatever is currently scheduled.
+	  // 当前还没有设定下一次的调度任务，需要创建一个
     time_to_next_process = std::max(next_process_time - now, hold_back_window_);
   }
 
