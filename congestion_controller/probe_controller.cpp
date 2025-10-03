@@ -277,10 +277,10 @@ std::vector<libice::ProbeClusterConfig> ProbeController::SetEstimatedBitrate(
     int64_t at_time_ms) {
   if (mid_call_probing_waiting_for_result_ &&
       bitrate_bps >= mid_call_probing_succcess_threshold_) {
-    RTC_HISTOGRAM_COUNTS_10000("WebRTC.BWE.MidCallProbing.Success",
+   /* RTC_HISTOGRAM_COUNTS_10000("WebRTC.BWE.MidCallProbing.Success",
                                mid_call_probing_bitrate_bps_ / 1000);
     RTC_HISTOGRAM_COUNTS_10000("WebRTC.BWE.MidCallProbing.ProbedKbps",
-                               bitrate_bps / 1000);
+                               bitrate_bps / 1000);*/
     mid_call_probing_waiting_for_result_ = false;
   }
   std::vector<libice::ProbeClusterConfig> pending_probes;

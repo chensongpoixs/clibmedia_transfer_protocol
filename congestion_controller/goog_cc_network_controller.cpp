@@ -50,6 +50,7 @@ namespace libmtp
 		, min_total_allocated_bitrate_(webrtc::DataRate::Zero())
 		, max_padding_rate_(webrtc::DataRate::Zero())
 		, max_total_allocated_bitrate_(webrtc::DataRate::Zero())
+		, probe_controller_(std::make_unique<ProbeController>())
 	{
 		//设置起始码流
 		delay_based_bwe_->SetStartBitrate(webrtc::DataRate::KilobitsPerSec(300));
@@ -150,48 +151,48 @@ namespace libmtp
   //  stable_target_rate = std::min(stable_target_rate, loss_based_target_rate);
   
 
-  if ((loss_based_target_rate != last_loss_based_bitrate_) ||
-      (fraction_loss != last_estimated_fraction_loss_) ||
-      (round_trip_time != last_estimated_rtt_) //||
-     // (pushback_target_rate != last_pushback_target_rate_) ||
-     // (stable_target_rate != last_stable_target_rate_) 
-	  ) 
-  {
-	  last_loss_based_bitrate_ = loss_based_target_rate;
+	  if ((loss_based_target_rate != last_loss_based_bitrate_) ||
+		  (fraction_loss != last_estimated_fraction_loss_) ||
+		  (round_trip_time != last_estimated_rtt_) //||
+		 // (pushback_target_rate != last_pushback_target_rate_) ||
+		 // (stable_target_rate != last_stable_target_rate_) 
+		  ) 
+	  {
+		  last_loss_based_bitrate_ = loss_based_target_rate;
      
-    last_estimated_fraction_loss_ = fraction_loss;
-	last_estimated_rtt_ = round_trip_time;
+			last_estimated_fraction_loss_ = fraction_loss;
+			last_estimated_rtt_ = round_trip_time;
     
-	alr_detector_->SetEstimatedBitrate(loss_based_target_rate.bps());
-    //alr_detector_->SetEstimatedBitrate(loss_based_target_rate.bps());
+			alr_detector_->SetEstimatedBitrate(loss_based_target_rate.bps());
+			//alr_detector_->SetEstimatedBitrate(loss_based_target_rate.bps());
 
-    //webrtc::TimeDelta bwe_period = delay_based_bwe_->GetExpectedBwePeriod();
+			//webrtc::TimeDelta bwe_period = delay_based_bwe_->GetExpectedBwePeriod();
 
-   libice:: TargetTransferRate target_rate_msg;
-    target_rate_msg.at_time = at_time;
-    //if (rate_control_settings_.UseCongestionWindowDropFrameOnly()) {
-    //  target_rate_msg.target_rate = loss_based_target_rate;
-    //  target_rate_msg.cwnd_reduce_ratio = cwnd_reduce_ratio;
-    //} else {
-      target_rate_msg.target_rate = loss_based_target_rate;
-    //}
- //   target_rate_msg.stable_target_rate = stable_target_rate;
-   //target_rate_msg.network_estimate.at_time = at_time;
-   //target_rate_msg.network_estimate.round_trip_time = round_trip_time;
-   //target_rate_msg.network_estimate.loss_rate_ratio = fraction_loss / 255.0f;
-   //target_rate_msg.network_estimate.bwe_period = bwe_period;
+		   libice:: TargetTransferRate target_rate_msg;
+			target_rate_msg.at_time = at_time;
+			//if (rate_control_settings_.UseCongestionWindowDropFrameOnly()) {
+			//  target_rate_msg.target_rate = loss_based_target_rate;
+			//  target_rate_msg.cwnd_reduce_ratio = cwnd_reduce_ratio;
+			//} else {
+			  target_rate_msg.target_rate = loss_based_target_rate;
+			//}
+		 //   target_rate_msg.stable_target_rate = stable_target_rate;
+		   //target_rate_msg.network_estimate.at_time = at_time;
+		   //target_rate_msg.network_estimate.round_trip_time = round_trip_time;
+		   //target_rate_msg.network_estimate.loss_rate_ratio = fraction_loss / 255.0f;
+		   //target_rate_msg.network_estimate.bwe_period = bwe_period;
 
-    update->target_rate = target_rate_msg;
+			update->target_rate = target_rate_msg;
 
-    //auto probes = probe_controller_->SetEstimatedBitrate(
-       // loss_based_target_rate.bps(), at_time.ms());
-  //  update->probe_cluster_configs.insert(update->probe_cluster_configs.end(),
-                   //                      probes.begin(), probes.end());
-    update->pacer_config = GetPacingRates(at_time);
+			auto probes = probe_controller_->SetEstimatedBitrate(
+				loss_based_target_rate.bps(), at_time.ms());
+			update->probe_cluster_configs.insert(update->probe_cluster_configs.end(),
+												probes.begin(), probes.end());
+			update->pacer_config = GetPacingRates(at_time);
 
-    RTC_LOG(LS_INFO) << "bwe " /*<< at_time.ms()*/ << " pushback_target_bps="
-                        << last_loss_based_bitrate_.bps();
-  }
+			RTC_LOG(LS_INFO) << "bwe " /*<< at_time.ms()*/ << " pushback_target_bps="
+								<< last_loss_based_bitrate_.bps();
+		}
 	}
 	libice::PacerConfig GoogCcNetworkController::GetPacingRates(webrtc::Timestamp at_time) const
 	{

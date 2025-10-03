@@ -165,6 +165,7 @@ namespace libmtp
 				constraints.starting_rate = webrtc::DataRate::KilobitsPerSec(3000);
 				constraints.min_data_rate = webrtc::DataRate::KilobitsPerSec(3000);
 				constraints.max_data_rate = webrtc::DataRate::KilobitsPerSec(100000);
+				constraints.at_time = msg.at_time;// webrtc::Timestamp::Millis(rtc::SystemTimeMillis());
 				controller_->OnTargetRateConstraints(constraints);
 			}
 		});
