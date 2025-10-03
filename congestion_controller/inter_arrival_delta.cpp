@@ -165,7 +165,7 @@ namespace libmtp
 		 // 计算传播延迟
 		webrtc::TimeDelta propagation_delta = arrival_time_delta - send_time_delta;
 		if (propagation_delta < webrtc::TimeDelta::Zero() &&
-			arrival_time_delta <= kBurstDeltaThreshold &&
+			arrival_time_delta <= kBurstDeltaThreshold/*5ms*/ &&
 			arrival_time - current_timestamp_group_.first_arrival < kMaxBurstDuration)
 		{
 			return true;

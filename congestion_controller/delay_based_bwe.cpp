@@ -196,19 +196,20 @@ namespace libmtp
 		 // Currently overusing the bandwidth.
 		if (video_delay_detector_->State() == BandwidthUsage::kBwOverusing) 
 		{
-			
-			//if (has_once_detected_overuse_ && in_alr && alr_limited_backoff_enabled_) {
-			//	if (rate_control_.TimeToReduceFurther(at_time, prev_bitrate_)) {
-			//		result.updated =
-			//			UpdateEstimate(at_time, prev_bitrate_, &result.target_bitrate);
-			//		result.backoff_in_alr = true;
-			//	}
-			//}
+			//是否已经过载了 alr状态
+			if (has_once_detected_overuse_ && in_alr && alr_limited_backoff_enabled_) {
+				
+				if (rate_control_.TimeToReduceFurther(at_time, prev_bitrate_)) {
+					result.updated =
+						UpdateEstimate(at_time, prev_bitrate_, &result.target_bitrate);
+					result.backoff_in_alr = true;
+				}
+			}
 			//else 
 			// 已经知道吞吐量时  码控模块可以进一步降低码流  
 			// 每个200ms 码控制模块需要比较当前码流的是否大于吞吐量acked_bitrate的大小
 			 //   如果大于当前吞吐量大小就需要更新啦
-			if (acked_bitrate &&
+			else if (acked_bitrate &&
 				rate_control_.TimeToReduceFurther(at_time, *acked_bitrate))
 			{
 				 // 当前码流是否更新
@@ -245,23 +246,23 @@ namespace libmtp
 			}
 		}
 		BandwidthUsage detector_state = video_delay_detector_->State();
-		/*if ((result.updated && prev_bitrate_ != result.target_bitrate) ||
+		if ((result.updated && prev_bitrate_ != result.target_bitrate) ||
 			detector_state != prev_state_) {
-			DataRate bitrate = result.updated ? result.target_bitrate : prev_bitrate_;
+			webrtc::DataRate bitrate = result.updated ? result.target_bitrate : prev_bitrate_;
 
-			BWE_TEST_LOGGING_PLOT(1, "target_bitrate_bps", at_time.ms(), bitrate.bps());
+			/*BWE_TEST_LOGGING_PLOT(1, "target_bitrate_bps", at_time.ms(), bitrate.bps());
 
 			if (event_log_) {
 				event_log_->Log(std::make_unique<RtcEventBweUpdateDelayBased>(
 					bitrate.bps(), detector_state));
-			}
+			}*/
 
 			prev_bitrate_ = bitrate;
 			prev_state_ = detector_state;
-		}*/
+		}
 		return result;
 
-		return Result();
+		//return Result();
 	}
 
 	bool DelayBasedBwe::UpdateEstimate(webrtc::Timestamp at_time, absl::optional<webrtc::DataRate> acked_bitrate, webrtc::DataRate * target_rate)

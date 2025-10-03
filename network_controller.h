@@ -71,8 +71,8 @@ namespace libmtp
 		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnRoundTripTimeUpdate(
 		//	RoundTripTimeUpdate) = 0;
 		//// Called when a packet is sent on the network.
-		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnSentPacket(
-		//	SentPacket) = 0;
+		 virtual libice::NetworkControlUpdate OnSentPacket(
+			 libice::SentPacket) = 0;
 		//// Called when a packet is received from the remote client.
 		//ABSL_MUST_USE_RESULT virtual NetworkControlUpdate OnReceivedPacket(
 		//	ReceivedPacket) = 0;

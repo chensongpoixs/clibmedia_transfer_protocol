@@ -95,12 +95,16 @@ void AlrDetector::OnBytesSent(size_t bytes_sent, int64_t send_time_ms) {
   alr_budget_.UseBudget(bytes_sent);
   alr_budget_.IncreaseBudget(delta_time_ms);
   bool state_changed = false;
+
+  // 当前的预算超过 0.85的  设置ALR的状态
   if (alr_budget_.budget_ratio() > conf_.start_budget_level_ratio &&
       !alr_started_time_ms_) {
     alr_started_time_ms_.emplace(rtc::TimeMillis());
     state_changed = true;
-  } else if (alr_budget_.budget_ratio() < conf_.stop_budget_level_ratio &&
-             alr_started_time_ms_) {
+  }
+  else if (alr_budget_.budget_ratio() < conf_.stop_budget_level_ratio &&
+	  alr_started_time_ms_)//预算厨余停止ALR的状态
+  {
     state_changed = true;
     alr_started_time_ms_.reset();
   }
@@ -112,6 +116,7 @@ void AlrDetector::OnBytesSent(size_t bytes_sent, int64_t send_time_ms) {
 
 void AlrDetector::SetEstimatedBitrate(int bitrate_bps) {
   RTC_DCHECK(bitrate_bps);
+  //当前码流 0.85的阈值
   int target_rate_kbps =
       static_cast<double>(bitrate_bps) * conf_.bandwidth_usage_ratio / 1000;
   alr_budget_.set_target_rate_kbps(target_rate_kbps);

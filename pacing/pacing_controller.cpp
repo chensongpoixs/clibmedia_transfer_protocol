@@ -518,6 +518,7 @@ void PacingController::ProcessPackets() {
 
   bool first_packet_in_probe = false;
   libice::PacedPacketInfo pacing_info;
+  // 探测数据包的大小
   webrtc::DataSize recommended_probe_size = webrtc::DataSize::Zero();
   bool is_probing = prober_.is_probing();
   if (is_probing) {

@@ -47,9 +47,9 @@ struct AlrDetectorConfig {
   // below kAlrStartUsageRatio and ends when it raises above
   // kAlrEndUsageRatio. NOTE: This is intentionally conservative at the moment
   // until BW adjustments of application limited region is fine tuned.
-  double bandwidth_usage_ratio = 0.65;
-  double start_budget_level_ratio = 0.80;
-  double stop_budget_level_ratio = 0.50;
+  double bandwidth_usage_ratio = 0.65;   //当前网络带宽使用率
+  double start_budget_level_ratio = 0.80;  // 当前厨余了的多少 进入ALR状态
+  double stop_budget_level_ratio = 0.50; // 解除ALR模式
   std::unique_ptr<webrtc::StructParametersParser> Parser();
 };
 // Application limited region detector is a class that utilizes signals of

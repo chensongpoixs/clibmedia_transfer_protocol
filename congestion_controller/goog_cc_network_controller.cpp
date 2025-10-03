@@ -41,6 +41,7 @@ namespace libmtp
 		: delay_based_bwe_( std::make_unique< DelayBasedBwe>())
 		, acknowledge_bitrate_estimator_(AcknowledgedBitrateEstimatorInterface::Create())
 		, bandwidth_estimation_(std::make_unique<SendSideBandwidthEstimation>())
+		, alr_detector_(std::make_unique<AlrDetector>())
 		, last_loss_based_bitrate_(webrtc::DataRate::Zero())
 		, last_loss_based_target_rate_(webrtc::DataRate::Zero())
 		, last_pushback_target_rate_(webrtc::DataRate::Zero())
@@ -65,7 +66,10 @@ namespace libmtp
 			return libice::NetworkControlUpdate();
 		}
 
+		bool in_alr = alr_detector_->GetApplicationLimitedRegionStartTime().has_value();
 
+		acknowledge_bitrate_estimator_->SetAlr(in_alr);
+		acknowledge_bitrate_estimator_->SetAlrEndedTime(report.feedback_time);
 		//absl::optional<webrtc::DataRate> acked_bitrate = webrtc::DataRate::KilobitsPerSec(50000);
 		//设置当前的吞吐量的大小  对方确认收到的数据
 		acknowledge_bitrate_estimator_->IncomingPacketFeedbackVector(report.SortedByReceiveTime());
@@ -78,11 +82,12 @@ namespace libmtp
 		{
 			RTC_LOG(LS_INFO) << "ack_bitrate : " << webrtc::ToString(*acked_bitrate);
 		}
+		
 		//acked_bitrate.emplace(webrtc::DataRate::KilobitsPerSec(50000));
 			absl::optional<webrtc::DataRate> probe_bitrate;
 			absl::optional<libice::NetworkStateEstimate> network_estimate;
 		DelayBasedBwe::Result result = delay_based_bwe_->IncomingPacketFeedbackVector(
-			report, acked_bitrate, probe_bitrate, network_estimate, false);
+			report, acked_bitrate, probe_bitrate, network_estimate, in_alr);
 		//基于延迟的带宽估计值更新了， 需要设置到基于掉包的带宽估计模块
 		libice::NetworkControlUpdate update;
 		if (result.updated)
@@ -149,7 +154,7 @@ namespace libmtp
       (fraction_loss != last_estimated_fraction_loss_) ||
       (round_trip_time != last_estimated_rtt_) //||
      // (pushback_target_rate != last_pushback_target_rate_) ||
-     // (stable_target_rate != last_stable_target_rate_)
+     // (stable_target_rate != last_stable_target_rate_) 
 	  ) 
   {
 	  last_loss_based_bitrate_ = loss_based_target_rate;
@@ -157,7 +162,7 @@ namespace libmtp
     last_estimated_fraction_loss_ = fraction_loss;
 	last_estimated_rtt_ = round_trip_time;
     
-
+	alr_detector_->SetEstimatedBitrate(loss_based_target_rate.bps());
     //alr_detector_->SetEstimatedBitrate(loss_based_target_rate.bps());
 
     //webrtc::TimeDelta bwe_period = delay_based_bwe_->GetExpectedBwePeriod();
@@ -213,5 +218,10 @@ namespace libmtp
 		libice::NetworkControlUpdate update;
 		MaybeTriggerOnNetworkChanged(&update, msg.at_time);
 		return update;
+	}
+	libice::NetworkControlUpdate GoogCcNetworkController::OnSentPacket(libice::SentPacket msg)
+	{
+		alr_detector_->OnBytesSent(msg.size.bytes(), msg.send_time.ms());
+		return libice::NetworkControlUpdate();
 	}
 }

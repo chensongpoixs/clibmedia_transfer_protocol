@@ -37,6 +37,7 @@
 #include "libmedia_transfer_protocol/congestion_controller/acknowledged_bitrate_estimator.h"
 #include "libmedia_transfer_protocol/congestion_controller/loss_based_bandwidth_estimation.h"
 #include "libmedia_transfer_protocol/congestion_controller/send_side_bandwidth_estimation.h"
+#include "libmedia_transfer_protocol/congestion_controller/alr_detector.h"
 namespace libmtp
 {
 	class GoogCcNetworkController : public NetworkControllerInterface
@@ -61,6 +62,8 @@ namespace libmtp
 		// 定时调用
 		virtual libice::NetworkControlUpdate OnProcessInterval(
 			libice::ProcessInterval) override;
+		virtual libice::NetworkControlUpdate OnSentPacket(
+			libice::SentPacket) override;
 	private:
 		void MaybeTriggerOnNetworkChanged(libice::NetworkControlUpdate* update,
 			webrtc::Timestamp at_time);
@@ -73,7 +76,7 @@ namespace libmtp
 		std::unique_ptr< AcknowledgedBitrateEstimatorInterface>  acknowledge_bitrate_estimator_;
 		std::unique_ptr< SendSideBandwidthEstimation>    bandwidth_estimation_;
 
-
+		std::unique_ptr<AlrDetector>						alr_detector_;
 		webrtc::DataRate                                     last_loss_based_bitrate_;
 
 		uint8_t last_estimated_fraction_loss_ = 0;

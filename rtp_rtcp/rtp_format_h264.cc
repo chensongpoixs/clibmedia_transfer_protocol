@@ -84,7 +84,9 @@ RtpPacketizerH264::RtpPacketizerH264(rtc::ArrayView<const uint8_t> payload,
     // call NextPacket().
     num_packets_left_ = 0;
     while (!packets_.empty()) {
-      packets_.pop();
+		 
+			packets_.pop();
+		 
     }
   }
 }
@@ -99,34 +101,49 @@ bool RtpPacketizerH264::GeneratePackets(
     webrtc::H264PacketizationMode packetization_mode) {
 	// 遍历从buffer当中提取的NALU
   for (size_t i = 0; i < input_fragments_.size();) {
-    switch (packetization_mode) {
-		// 单包 一帧数据编码出来数据打包一个rtp包中
-      case webrtc::H264PacketizationMode::SingleNalUnit:
-        if (!PacketizeSingleNalu(i))
-          return false;
-        ++i;
-        break;
+    switch (packetization_mode) { 
+      case webrtc::H264PacketizationMode::SingleNalUnit:// 单包 一帧数据编码出来数据打包一个rtp包中
+	  {
+		  if (!PacketizeSingleNalu(i))
+		  {
+			  return false;
+		  }
+		  ++i;
+		  break;
+	  }
       case webrtc::H264PacketizationMode::NonInterleaved:// 打包到多一个包中
-        int fragment_len = input_fragments_[i].size();
-		// 首先获取该NALU容纳负载的最大容量
-        int single_packet_capacity = limits_.max_payload_len;
-        if (input_fragments_.size() == 1)
-          single_packet_capacity -= limits_.single_packet_reduction_len;
-        else if (i == 0)// 第一个包
-          single_packet_capacity -= limits_.first_packet_reduction_len;
-        else if (i + 1 == input_fragments_.size())// 最后一个包
-          single_packet_capacity -= limits_.last_packet_reduction_len;
+	  {
+		  int fragment_len = input_fragments_[i].size();
+		  // 首先获取该NALU容纳负载的最大容量
+		  int single_packet_capacity = limits_.max_payload_len;
+		  if (input_fragments_.size() == 1)
+		  {
+			  single_packet_capacity -= limits_.single_packet_reduction_len;
+		  }
+		  else if (i == 0)// 第一个包
+		  {
+			  single_packet_capacity -= limits_.first_packet_reduction_len;
 
-		// 当 nal包太大了  就需要分片发送
-        if (fragment_len > single_packet_capacity) // 分片打包
-		{
-          if (!PacketizeFuA(i))
-            return false;
-          ++i;
-        } else {
-          i = PacketizeStapA(i);
-        }
-        break;
+		  }
+		  else if (i + 1 == input_fragments_.size())// 最后一个包
+		  {
+			  single_packet_capacity -= limits_.last_packet_reduction_len;
+
+		  }
+		  // 当 nal包太大了  就需要分片发送
+		  if (fragment_len > single_packet_capacity) // 分片打包
+		  {
+			  if (!PacketizeFuA(i))
+			  {
+				  return false;
+			  }
+			  ++i;
+		  }
+		  else {
+			  i = PacketizeStapA(i);
+		  }
+		  break;
+	  }
     }
   }
   return true;
@@ -174,7 +191,9 @@ bool RtpPacketizerH264::PacketizeFuA(size_t fragment_index) {
   // 将负载大小分割成大体相同的几个部分
   std::vector<int> payload_sizes = SplitAboutEqually(payload_left, limits);
   if (payload_sizes.empty())
-    return false;
+  {
+	  return false;
+  }
 
   for (size_t i = 0; i < payload_sizes.size(); ++i) {
     int packet_length = payload_sizes[i];
@@ -195,7 +214,9 @@ size_t RtpPacketizerH264::PacketizeStapA(size_t fragment_index) {
   // Aggregate fragments into one packet (STAP-A).
   size_t payload_size_left = limits_.max_payload_len;
   if (input_fragments_.size() == 1)
-    payload_size_left -= limits_.single_packet_reduction_len;
+  {
+	  payload_size_left -= limits_.single_packet_reduction_len;
+  }
   else if (fragment_index == 0)
   {
 	  // 第一个包
@@ -232,15 +253,19 @@ size_t RtpPacketizerH264::PacketizeStapA(size_t fragment_index) {
     // If we are going to try to aggregate more fragments into this packet
     // we need to add the STAP-A NALU header and a length field for the first
     // NALU of this packet.
-    if (aggregated_fragments == 0)
-      fragment_headers_length += kNalHeaderSize + kLengthFieldSize;
+	if (aggregated_fragments == 0)
+	{
+		fragment_headers_length += kNalHeaderSize + kLengthFieldSize;
+	}
     ++aggregated_fragments;
 
     // Next fragment.
 	// 继续聚合下一个包
     ++fragment_index;
-    if (fragment_index == input_fragments_.size())
-      break;
+	if (fragment_index == input_fragments_.size())
+	{
+		break;
+	}
     fragment = input_fragments_[fragment_index];
   }
   RTC_CHECK_GT(aggregated_fragments, 0);
@@ -252,11 +277,17 @@ bool RtpPacketizerH264::PacketizeSingleNalu(size_t fragment_index) {
   // Add a single NALU to the queue, no aggregation.
   size_t payload_size_left = limits_.max_payload_len;
   if (input_fragments_.size() == 1)
-    payload_size_left -= limits_.single_packet_reduction_len;
+  {
+	  payload_size_left -= limits_.single_packet_reduction_len;
+  }
   else if (fragment_index == 0)
-    payload_size_left -= limits_.first_packet_reduction_len;
+  {
+	  payload_size_left -= limits_.first_packet_reduction_len;
+  }
   else if (fragment_index + 1 == input_fragments_.size())
-    payload_size_left -= limits_.last_packet_reduction_len;
+  {
+	  payload_size_left -= limits_.last_packet_reduction_len;
+  }
   rtc::ArrayView<const uint8_t> fragment = input_fragments_[fragment_index];
   if (payload_size_left < fragment.size()) {
     RTC_LOG(LS_ERROR) << "Failed to fit a fragment to packet in SingleNalu "

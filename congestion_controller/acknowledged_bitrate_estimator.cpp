@@ -51,7 +51,9 @@ void AcknowledgedBitrateEstimator::IncomingPacketFeedbackVector(
                             packet_feedback_vector.end(),
                             libice::PacketResult::ReceiveTimeOrder()));
   for (const auto& packet : packet_feedback_vector) {
-    if (alr_ended_time_ && packet.sent_packet.send_time > *alr_ended_time_) {
+    if (alr_ended_time_ && packet.sent_packet.send_time > *alr_ended_time_) 
+	{
+
       bitrate_estimator_->ExpectFastRateChange();
       alr_ended_time_.reset();
     }

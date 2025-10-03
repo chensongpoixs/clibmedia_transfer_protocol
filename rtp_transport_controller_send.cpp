@@ -129,7 +129,11 @@ namespace libmtp
 	void RtpTransportControllerSend::OnSentPacket(const rtc::SentPacket& sent_packet)
 	{
 		task_queue_.PostTask([this, sent_packet]() {
-			transport_feedback_adapter_.ProcessSentPacket(sent_packet);
+			absl::optional<libice::SentPacket>  pakcets =  transport_feedback_adapter_.ProcessSentPacket(sent_packet);
+			if (pakcets.has_value())
+			{
+				controller_->OnSentPacket(pakcets.value());
+			}
 		});
 	}
 	void RtpTransportControllerSend::OnNetworkOk(bool network_ok)
