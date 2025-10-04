@@ -381,6 +381,7 @@ void ProbeController::Reset(int64_t at_time_ms) {
 }
 
 std::vector<libice::ProbeClusterConfig> ProbeController::Process(int64_t at_time_ms) {
+	//处理探测超时状态
   if (at_time_ms - time_last_probing_initiated_ms_ >
       kMaxWaitingTimeForProbingResultMs) {
     mid_call_probing_waiting_for_result_ = false;
@@ -388,13 +389,16 @@ std::vector<libice::ProbeClusterConfig> ProbeController::Process(int64_t at_time
     if (state_ == State::kWaitingForProbingResult) {
       RTC_LOG(LS_INFO) << "kWaitingForProbingResult: timeout";
       state_ = State::kProbingComplete;
+	  // 设置为0时不在探测了
       min_bitrate_to_probe_further_bps_ = kExponentialProbingDisabled;
     }
   }
-
+  // ALR状态， 开启周期性探测的功能
   if (enable_periodic_alr_probing_ && state_ == State::kProbingComplete) {
     // Probe bandwidth periodically when in ALR state.
-    if (alr_start_time_ms_ && estimated_bitrate_bps_ > 0) {
+    if (alr_start_time_ms_ && estimated_bitrate_bps_ > 0) 
+	{
+		//下一次探测时间   探测间隔默认 5s
       int64_t next_probe_time_ms =
           std::max(*alr_start_time_ms_, time_last_probing_initiated_ms_) +
           config_.alr_probing_interval->ms();

@@ -279,6 +279,14 @@ namespace libmtp
 	{
 		bandwidth_estimation_->UpdateEstimate(msg.at_time);
 		libice::NetworkControlUpdate update;
+
+		// ÄÃµ½ALRµÄ×´Ì¬
+		absl::optional<int64_t> alr_start_time = alr_detector_->GetApplicationLimitedRegionStartTime();
+		probe_controller_->SetAlrStartTimeMs(alr_start_time);
+		auto probes = probe_controller_->Process(msg.at_time.ms());
+		update.probe_cluster_configs.insert(
+			update.probe_cluster_configs.end(), 
+			probes.begin(), probes.end());
 		MaybeTriggerOnNetworkChanged(&update, msg.at_time);
 		return update;
 	}
