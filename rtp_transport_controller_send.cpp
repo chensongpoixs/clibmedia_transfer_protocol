@@ -203,6 +203,7 @@ namespace libmtp
 			task_queue_pacer_->SetPacingRates(pacer_config.data_rate(),
 				pacer_config.pad_rate());
 		}
+		// 是否有探测码流数据
 		for (const auto& probe : update.probe_cluster_configs) {
 			task_queue_pacer_->CreateProbeCluster(probe.target_data_rate, probe.id);
 		}

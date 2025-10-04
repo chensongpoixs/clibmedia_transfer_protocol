@@ -50,6 +50,7 @@ struct ProbeControllerConfig {
   // step_size times the new estimate.
   webrtc::FieldTrialParameter<double> first_exponential_probe_scale;
   webrtc::FieldTrialOptional<double> second_exponential_probe_scale;
+  // 进一步探测码流
   webrtc::FieldTrialParameter<double> further_exponential_probe_scale;
   webrtc::FieldTrialParameter<double> further_probe_threshold;
 
@@ -96,7 +97,7 @@ class ProbeController {
 
   void SetAlrStartTimeMs(absl::optional<int64_t> alr_start_time);
   void SetAlrEndedTimeMs(int64_t alr_end_time);
-
+  //主动探测 5s探测一次
   ABSL_MUST_USE_RESULT std::vector<libice::ProbeClusterConfig> RequestProbe(
       int64_t at_time_ms);
 
@@ -135,6 +136,7 @@ class ProbeController {
   int64_t start_bitrate_bps_;
   int64_t max_bitrate_bps_;
   int64_t last_bwe_drop_probing_time_ms_;
+  // 主动探测的开始时间
   absl::optional<int64_t> alr_start_time_ms_;
   absl::optional<int64_t> alr_end_time_ms_;
   bool enable_periodic_alr_probing_;

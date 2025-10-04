@@ -102,7 +102,11 @@ namespace libmtp
 				probe_bitrate = probe_bitrate_estimator_->HandleProbeAndEstimateBitrate(feedback);
 			}
 		}
-
+		probe_bitrate = probe_bitrate_estimator_->FetchAndResetLastEstimatedBitrate();
+		if (probe_bitrate.has_value())
+		{
+			RTC_LOG(LS_INFO) << "probe_bitrate : " << webrtc::ToString(probe_bitrate.value_or(webrtc::DataRate::BitsPerSec(1)));
+		}
 		DelayBasedBwe::Result result = delay_based_bwe_->IncomingPacketFeedbackVector(
 			report, acked_bitrate, probe_bitrate, network_estimate, in_alr);
 		//基于延迟的带宽估计值更新了， 需要设置到基于掉包的带宽估计模块
@@ -117,6 +121,25 @@ namespace libmtp
 			
 		}
 		//RTC_LOG(LS_INFO) << "delay bwe:" << result.ToString();
+
+		if (result.recovered_from_overuse)
+		{
+			//过载中恢复过来  主动探测
+			auto probes = probe_controller_->RequestProbe(report.feedback_time.ms());
+			update.probe_cluster_configs.insert(
+				update.probe_cluster_configs.end(), probes.begin(), probes.end()
+			);
+		}
+		// test probe 探测码流
+		static bool flag = false;
+		if (!flag)
+		{
+			update.probe_cluster_configs = probe_controller_->SetBitrates(
+				300000, 300000, 900000, report.feedback_time.ms());
+			flag = true;
+		}
+
+
 		return update;
 	}
 	libice::NetworkControlUpdate GoogCcNetworkController::OnRttUpdate(int64_t rtt_ms, webrtc::Timestamp at_time)

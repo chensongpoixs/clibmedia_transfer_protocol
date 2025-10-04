@@ -57,6 +57,7 @@ namespace libmtp
 			bool probe; // 
 			//目标码率
 			webrtc::DataRate target_bitrate = webrtc::DataRate::Zero(); // 
+			// 主动探测状态
 			bool  recovered_from_overuse;
 			bool  backoff_in_alr;
 

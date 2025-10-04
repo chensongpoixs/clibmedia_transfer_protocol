@@ -66,6 +66,7 @@ constexpr double kProbeFractionAfterDrop = 0.85;
 // Timeout for probing after leaving ALR. If the bitrate drops significantly,
 // (as determined by the delay based estimator) and we leave ALR, then we will
 // send a probe if we recover within `kLeftAlrTimeoutMs` ms.
+ // 3s  
 constexpr int kAlrEndedTimeoutMs = 3000;
 
 // The expected uncertainty of probe result (as a fraction of the target probe
@@ -301,7 +302,7 @@ std::vector<libice::ProbeClusterConfig> ProbeController::SetEstimatedBitrate(
     }
   }
 
-  if (bitrate_bps < kBitrateDropThreshold * estimated_bitrate_bps_) {
+  if (bitrate_bps < kBitrateDropThreshold/*0.66*/ * estimated_bitrate_bps_) {
     time_of_last_large_drop_ms_ = at_time_ms;
     bitrate_before_last_large_drop_bps_ = estimated_bitrate_bps_;
   }
@@ -333,11 +334,11 @@ std::vector<libice::ProbeClusterConfig> ProbeController::RequestProbe(
   bool in_alr = alr_start_time_ms_.has_value();
   bool alr_ended_recently =
       (alr_end_time_ms_.has_value() &&
-       at_time_ms - alr_end_time_ms_.value() < kAlrEndedTimeoutMs);
+       at_time_ms - alr_end_time_ms_.value() < kAlrEndedTimeoutMs /*3000*/);// 主动结果不时间不长
   if (in_alr || alr_ended_recently || in_rapid_recovery_experiment_) {
     if (state_ == State::kProbingComplete) {
       uint32_t suggested_probe_bps =
-          kProbeFractionAfterDrop * bitrate_before_last_large_drop_bps_;
+          kProbeFractionAfterDrop/*0.85*/ * bitrate_before_last_large_drop_bps_;
       uint32_t min_expected_probe_result_bps =
           (1 - kProbeUncertainty) * suggested_probe_bps;
       int64_t time_since_drop_ms = at_time_ms - time_of_last_large_drop_ms_;
