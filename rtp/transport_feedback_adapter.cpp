@@ -42,8 +42,9 @@ namespace libmedia_transfer_protocol {
 		packet.sent.size = webrtc::DataSize::Bytes(send_info.length + overhead_bytes);
 		packet.sent.audio = (send_info.packet_type == libmedia_transfer_protocol::RtpPacketMediaType::kAudio ||
 			send_info.packet_type == libmedia_transfer_protocol::RtpPacketMediaType::kVideo);
-
-
+		
+		//探测包的数据增加
+		packet.sent.pacing_info = send_info.pacing_info;
 		while (!history_.empty() && creation_time - history_.begin()->second.creation_time >
 			kSendTimeHistoryWindow) {
 			// TODO(sprang): Warn if erasing (too many) old items?

@@ -240,7 +240,7 @@ SendSideBandwidthEstimation::SendSideBandwidthEstimation(
       bitrate_threshold_(kDefaultBitrateThreshold),
       loss_based_bandwidth_estimator_v1_(/*key_value_config*/),
     //  loss_based_bandwidth_estimator_v2_(/*key_value_config*/),
-      disable_receiver_limit_caps_only_("Disabled") 
+      disable_receiver_limit_caps_only_("Disabled", false) 
 {
  // RTC_DCHECK(event_log);
   if (BweLossExperimentIsEnabled()) {
@@ -326,8 +326,10 @@ int SendSideBandwidthEstimation::GetMinBitrate() const {
 
 webrtc::DataRate SendSideBandwidthEstimation::target_rate() const {
 	webrtc::DataRate target = current_target_;
-  if (!disable_receiver_limit_caps_only_)
-    target = std::min(target, receiver_limit_);
+	if (!disable_receiver_limit_caps_only_)
+	{
+		target = std::min(target, receiver_limit_);
+  }
   return std::max(min_bitrate_configured_, target);
 }
 

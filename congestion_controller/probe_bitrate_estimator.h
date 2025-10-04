@@ -13,7 +13,15 @@
 				   Author: chensong
 				   date:  2025-10-04
 
-				   探测包
+				   探测比特率估算器
+
+				   发送速率  = 发送数据大小 / 发送时间
+				   确认接受速率 = 接受数据的大小 / 接受时间
+
+
+
+				   优化： 发送码流 * 系数 <= 网络链路已经负载或者饱和了 探测码流降低一定系数
+
 
  ******************************************************************************/
 
@@ -41,17 +49,26 @@ class ProbeBitrateEstimator {
   absl::optional<webrtc::DataRate> HandleProbeAndEstimateBitrate(
       const libice::PacketResult& packet_feedback);
 
+  // 取完结果 就释放了结果了  只能使用一次结果   探测码流结果
   absl::optional<webrtc::DataRate> FetchAndResetLastEstimatedBitrate();
 
  private:
   struct AggregatedCluster {
+	  //接受端确认山东的探测包的总个数
     int num_probes = 0;
+	//第一次发送探测数据包的时间
     webrtc::Timestamp first_send = webrtc::Timestamp::PlusInfinity();
+	// 最后一次发送探测包的时间
     webrtc::Timestamp last_send = webrtc::Timestamp::MinusInfinity();
+	//第一次接受探测数据包的时间
     webrtc::Timestamp first_receive = webrtc::Timestamp::PlusInfinity();
+	// 最后一次探测数据包的时间
     webrtc::Timestamp last_receive = webrtc::Timestamp::MinusInfinity();
+	// 最后一次发送探测数据包的大小
     webrtc::DataSize size_last_send = webrtc::DataSize::Zero();
+	// 第一次接受端接受到数据包的大小
     webrtc::DataSize size_first_receive = webrtc::DataSize::Zero();
+	// 统计接收端确认接受的探测包的总字节数
     webrtc::DataSize size_total = webrtc::DataSize::Zero();
   };
 
@@ -60,6 +77,8 @@ class ProbeBitrateEstimator {
 
   std::map<int, AggregatedCluster> clusters_;
  /// RtcEventLog* const event_log_;
+
+  // 估计出来的结果码流
   absl::optional<webrtc::DataRate> estimated_data_rate_;
 };
 

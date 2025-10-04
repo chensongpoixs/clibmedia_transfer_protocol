@@ -301,8 +301,10 @@ webrtc::TimeDelta AimdRateControl::GetExpectedBandwidthPeriod() const {
   const webrtc::TimeDelta kMaxPeriod = webrtc::TimeDelta::Seconds(50);
 
   double increase_rate_bps_per_second = GetNearMaxIncreaseRateBpsPerSecond();
-  if (!last_decrease_)
-    return kDefaultPeriod;
+  if (!last_decrease_.has_value())
+  {
+	  return kDefaultPeriod;
+  }
   double time_to_recover_decrease_seconds =
       last_decrease_->bps() / increase_rate_bps_per_second;
   webrtc::TimeDelta period = webrtc::TimeDelta::Seconds(time_to_recover_decrease_seconds);
@@ -315,7 +317,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
   // 更新吞吐量码流
   webrtc::DataRate estimated_throughput =
       input.estimated_throughput.value_or(latest_estimated_throughput_);
-  if (input.estimated_throughput)
+  if (input.estimated_throughput.has_value())
   {
 	  latest_estimated_throughput_ = *input.estimated_throughput;
   }
@@ -380,8 +382,17 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
 					AdditiveRateIncrease(at_time, time_last_bitrate_change_);
 				// 增加码流 = 当前码流+ 增加的码流
 				increased_bitrate = current_bitrate_ + additive_increase;
-				RTC_LOG(LS_INFO) << "++++++++++++++++++++additive_increase: " << webrtc::ToString(additive_increase) << ", increased_bitrate ： " << webrtc::ToString(increased_bitrate);
+				if (additive_increase.IsZero())
+				{
+					RTC_LOG(LS_INFO) << "++++++++++++++++++++additive_increase: " << webrtc::ToString(additive_increase) << ", increased_bitrate ： 0 bps";// << webrtc::ToString(increased_bitrate);
 
+				}
+				else
+				{
+					RTC_LOG(LS_INFO) << "++++++++++++++++++++additive_increase: " << webrtc::ToString(additive_increase) << ", increased_bitrate ： " << webrtc::ToString(increased_bitrate);
+
+				}
+				
 				
 			}
 			else {
@@ -392,7 +403,15 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
 				webrtc::DataRate multiplicative_increase = MultiplicativeRateIncrease(
 					at_time, time_last_bitrate_change_, current_bitrate_);
 				increased_bitrate = current_bitrate_ + multiplicative_increase;
-				RTC_LOG(LS_INFO) << "************************ multiplicative_increase: " << webrtc::ToString(multiplicative_increase) <<", increased_bitrate ： " << webrtc::ToString(increased_bitrate);
+				if (increased_bitrate.IsZero())
+				{
+					RTC_LOG(LS_INFO) << "************************ multiplicative_increase: " << webrtc::ToString(multiplicative_increase) << ", increased_bitrate ： 0 bps  " ;
+				}
+				else
+				{
+					RTC_LOG(LS_INFO) << "************************ multiplicative_increase: " << webrtc::ToString(multiplicative_increase) << ", increased_bitrate ： " << webrtc::ToString(increased_bitrate);
+
+				}
 			}
 			new_bitrate = std::min(increased_bitrate, troughput_based_limit);
 		}
@@ -418,7 +437,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
           decreased_bitrate = beta_ * link_capacity_.estimate();
         }
       }
-      if (estimate_bounded_backoff_ && network_estimate_) {
+      if (estimate_bounded_backoff_ && network_estimate_.has_value()) {
         decreased_bitrate = std::max(
             decreased_bitrate, network_estimate_->link_capacity_lower * beta_);
       }
@@ -430,13 +449,39 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
 
       if (bitrate_is_initialized_ && estimated_throughput < current_bitrate_) {
         if (!new_bitrate.has_value()) {
-          last_decrease_ = webrtc::DataRate::Zero();
+          last_decrease_ = webrtc::DataRate::BitsPerSec(1);
+		//  last_decrease_.reset();
         } else {
           last_decrease_ = current_bitrate_ - *new_bitrate;
         }
       }
-	  RTC_LOG(LS_INFO) << "-------------- decreased_bitrate: " << webrtc::ToString(decreased_bitrate) << ", last_decrease_ ： " << webrtc::ToString(*last_decrease_);
+	  std::stringstream cmd;
+	  cmd << "-------------- decreased_bitrate: ";
+	  if (  decreased_bitrate.IsZero())
+	  {
+		  cmd << " 0 bps";
+		//  last_decrease_.reset();
+	  }
+	  else
+	  {
+		  
+		  cmd << webrtc::ToString(decreased_bitrate);
+	  }
+	  cmd << ", last_decrease_ ：";
+	  if (!last_decrease_.has_value()  )
+	  {
+		  cmd << " 0 bps";
+		  //last_decrease_.reset();
+			  // RTC_LOG(LS_INFO) << "-------------- decreased_bitrate: " << webrtc::ToString(decreased_bitrate) << ", last_decrease_ ： 0 pbs";// << webrtc::ToString(*last_decrease_);
 
+	  }
+	  else if (last_decrease_.has_value())
+	  {
+		  cmd << webrtc::ToString(*last_decrease_);
+		 // RTC_LOG(LS_INFO) << "-------------- decreased_bitrate: " << webrtc::ToString(decreased_bitrate) << ", last_decrease_ ： " << webrtc::ToString(*last_decrease_);
+
+	  }
+	  RTC_LOG(LS_INFO) << cmd.str();
 	  // 吞吐量已经低于 链路容量下限 就从重置链路
       if (estimated_throughput < link_capacity_.LowerBound()) {
         // The current throughput is far from the estimated link capacity. Clear
@@ -457,11 +502,13 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
   }
 
   current_bitrate_ = ClampBitrate(new_bitrate.value_or(current_bitrate_));
+
+  //RTC_LOG(LS_INFO) << "current_bitrate_: " << webrtc::ToString(current_bitrate_);
 }
 
 webrtc::DataRate AimdRateControl::ClampBitrate(webrtc::DataRate new_bitrate) const {
 	// 当前码率限制 最小码流、最大码流  和链路容量大小限制
-  if (estimate_bounded_increase_ && network_estimate_) {
+  if (estimate_bounded_increase_ && network_estimate_.has_value()) {
 	  webrtc::DataRate upper_bound = network_estimate_->link_capacity_upper;
     new_bitrate = std::min(new_bitrate, upper_bound);
   }

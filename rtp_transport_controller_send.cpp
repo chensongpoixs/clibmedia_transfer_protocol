@@ -162,9 +162,9 @@ namespace libmtp
 				MaybeCreateController();
 				//设置掉包起始码流 start , min , max rate 
 				libice::TargetRateConstraints constraints;
-				constraints.starting_rate = webrtc::DataRate::KilobitsPerSec(3000);
-				constraints.min_data_rate = webrtc::DataRate::KilobitsPerSec(3000);
-				constraints.max_data_rate = webrtc::DataRate::KilobitsPerSec(100000);
+				constraints.starting_rate = webrtc::DataRate::KilobitsPerSec(300);
+				constraints.min_data_rate = webrtc::DataRate::KilobitsPerSec(300);
+				constraints.max_data_rate = webrtc::DataRate::KilobitsPerSec(10000);
 				constraints.at_time = msg.at_time;// webrtc::Timestamp::Millis(rtc::SystemTimeMillis());
 				controller_->OnTargetRateConstraints(constraints);
 			}
@@ -195,12 +195,13 @@ namespace libmtp
 
 	void RtpTransportControllerSend::PostUpdates(libice::NetworkControlUpdate update) {
 		if (update.congestion_window) {
-			task_queue_pacer_->SetCongestionWindow(*update.congestion_window);
+			task_queue_pacer_->SetCongestionWindow(update.congestion_window.value_or(webrtc::DataSize::Zero()));
 		}
 		//  将估计的码流值作用到pacer模块中
 		if (update.pacer_config) {
-			task_queue_pacer_->SetPacingRates(update.pacer_config->data_rate(),
-				update.pacer_config->pad_rate());
+			libice::PacerConfig pacer_config =  update.pacer_config.value_or(libice::PacerConfig());
+			task_queue_pacer_->SetPacingRates(pacer_config.data_rate(),
+				pacer_config.pad_rate());
 		}
 		for (const auto& probe : update.probe_cluster_configs) {
 			task_queue_pacer_->CreateProbeCluster(probe.target_data_rate, probe.id);

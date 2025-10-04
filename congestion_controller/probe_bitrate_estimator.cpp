@@ -13,7 +13,7 @@
 				   Author: chensong
 				   date:  2025-10-04
 
-				   探测包
+				   探测比特率估算器
 
  ******************************************************************************/
 
@@ -33,10 +33,12 @@ namespace libmedia_transfer_protocol {
 namespace {
 // The minumum number of probes we need to receive feedback about in percent
 // in order to have a valid estimate.
+	//最小探测数据包比例 
 constexpr double kMinReceivedProbesRatio = .80;
 
 // The minumum number of bytes we need to receive feedback about in percent
 // in order to have a valid estimate.
+// 最小探测数据确认字节数系数
 constexpr double kMinReceivedBytesRatio = .80;
 
 // The maximum |receive rate| / |send rate| ratio for a valid estimate.
@@ -97,23 +99,27 @@ absl::optional<webrtc::DataRate> ProbeBitrateEstimator::HandleProbeAndEstimateBi
       packet_feedback.sent_packet.pacing_info.probe_cluster_min_probes, 0);
   RTC_DCHECK_GT(packet_feedback.sent_packet.pacing_info.probe_cluster_min_bytes,
                 0);
-
+  //最小探测数据包数量
   int min_probes =
       packet_feedback.sent_packet.pacing_info.probe_cluster_min_probes *
-      kMinReceivedProbesRatio;
+	  kMinReceivedProbesRatio/*0.8f*/;
+  //最小接受探测数据字节数
   webrtc::DataSize min_size =
-	  webrtc::DataSize::Bytes(
-          packet_feedback.sent_packet.pacing_info.probe_cluster_min_bytes) *
-      kMinReceivedBytesRatio;
+	  webrtc::DataSize::Bytes(packet_feedback.sent_packet.pacing_info.probe_cluster_min_bytes) * 
+	  kMinReceivedBytesRatio/*0.8f*/;
+  // 统计数据不满足要求就返回
   if (cluster->num_probes < min_probes || cluster->size_total < min_size)
-    return absl::nullopt;
-
+  {
+	  return absl::nullopt;
+  }
+  //发送时间窗口 =  最后一次发送时间 - 第一次发送时间
   webrtc::TimeDelta send_interval = cluster->last_send - cluster->first_send;
+  // 接受时间窗口 
   webrtc::TimeDelta receive_interval = cluster->last_receive - cluster->first_receive;
 
-  if (send_interval <= webrtc::TimeDelta::Zero() || send_interval > kMaxProbeInterval ||
+  if (send_interval <= webrtc::TimeDelta::Zero() || send_interval > kMaxProbeInterval/*1s*/ ||
       receive_interval <= webrtc::TimeDelta::Zero() ||
-      receive_interval > kMaxProbeInterval) {
+      receive_interval > kMaxProbeInterval/*1s*/) {
     RTC_LOG(LS_INFO) << "Probing unsuccessful, invalid send/receive interval"
                         " [cluster id: "
                      << cluster_id
@@ -131,6 +137,7 @@ absl::optional<webrtc::DataRate> ProbeBitrateEstimator::HandleProbeAndEstimateBi
   // send the last packet the size of the last sent packet should not be
   // included when calculating the send bitrate.
   RTC_DCHECK_GT(cluster->size_total, cluster->size_last_send);
+  // 发送数据大小和速率
   webrtc::DataSize send_size = cluster->size_total - cluster->size_last_send;
   webrtc::DataRate send_rate = send_size / send_interval;
 
@@ -138,11 +145,12 @@ absl::optional<webrtc::DataRate> ProbeBitrateEstimator::HandleProbeAndEstimateBi
   // actually receive the first packet the size of the first received packet
   // should not be included when calculating the receive bitrate.
   RTC_DCHECK_GT(cluster->size_total, cluster->size_first_receive);
+  // 接受确认数据大小和速率
   webrtc::DataSize receive_size = cluster->size_total - cluster->size_first_receive;
   webrtc::DataRate receive_rate = receive_size / receive_interval;
-
+  //探测失败比例
   double ratio = receive_rate / send_rate;
-  if (ratio > kMaxValidRatio) {
+  if (ratio > kMaxValidRatio/*2.0f*/) {
     RTC_LOG(LS_INFO) << "Probing unsuccessful, receive/send ratio too high"
                         " [cluster id: "
                      << cluster_id << "] [send: " << ToString(send_size)
@@ -178,9 +186,10 @@ absl::optional<webrtc::DataRate> ProbeBitrateEstimator::HandleProbeAndEstimateBi
   // If we're receiving at significantly lower bitrate than we were sending at,
   // it suggests that we've found the true capacity of the link. In this case,
   // set the target bitrate slightly lower to not immediately overuse.
-  if (receive_rate < kMinRatioForUnsaturatedLink * send_rate) {
+  // 判定当前网络是否负载或者饱和了 需要调整一定的接受速率比例的系统
+  if (receive_rate < kMinRatioForUnsaturatedLink/*0.9*/ * send_rate) {
     RTC_DCHECK_GT(send_rate, receive_rate);
-    res = kTargetUtilizationFraction * receive_rate;
+    res = kTargetUtilizationFraction/*0.95f*/ * receive_rate;
   }
  /* if (event_log_) {
     event_log_->Log(
@@ -199,7 +208,7 @@ ProbeBitrateEstimator::FetchAndResetLastEstimatedBitrate() {
 
 void ProbeBitrateEstimator::EraseOldClusters(webrtc::Timestamp timestamp) {
   for (auto it = clusters_.begin(); it != clusters_.end();) {
-    if (it->second.last_receive + kMaxClusterHistory < timestamp) {
+    if (it->second.last_receive + kMaxClusterHistory/*1s*/ < timestamp) {
       it = clusters_.erase(it);
     } else {
       ++it;

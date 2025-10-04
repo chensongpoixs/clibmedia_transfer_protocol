@@ -39,6 +39,7 @@
 #include "libmedia_transfer_protocol/congestion_controller/send_side_bandwidth_estimation.h"
 #include "libmedia_transfer_protocol/congestion_controller/alr_detector.h"
 #include "libmedia_transfer_protocol/congestion_controller/probe_controller.h"
+#include "libmedia_transfer_protocol/congestion_controller/probe_bitrate_estimator.h"
 namespace libmtp
 {
 	class GoogCcNetworkController : public NetworkControllerInterface
@@ -79,6 +80,8 @@ namespace libmtp
 
 		std::unique_ptr<AlrDetector>						alr_detector_;
 		std::unique_ptr<ProbeController>					probe_controller_;
+		//Ì½²âÂëÁ÷¹À¼ÆÆ÷
+		std::unique_ptr< ProbeBitrateEstimator>             probe_bitrate_estimator_;
 		webrtc::DataRate                                     last_loss_based_bitrate_;
 
 		uint8_t last_estimated_fraction_loss_ = 0;

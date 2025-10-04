@@ -51,6 +51,7 @@ namespace libmtp
 		, max_padding_rate_(webrtc::DataRate::Zero())
 		, max_total_allocated_bitrate_(webrtc::DataRate::Zero())
 		, probe_controller_(std::make_unique<ProbeController>())
+		, probe_bitrate_estimator_(std::make_unique<ProbeBitrateEstimator>())
 	{
 		//设置起始码流
 		delay_based_bwe_->SetStartBitrate(webrtc::DataRate::KilobitsPerSec(300));
@@ -62,6 +63,7 @@ namespace libmtp
 	libice::NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
 		const libice::TransportPacketsFeedback & report)
 	{
+
 		if (report.packet_feedbacks.empty())
 		{
 			return libice::NetworkControlUpdate();
@@ -83,19 +85,36 @@ namespace libmtp
 		{
 			RTC_LOG(LS_INFO) << "ack_bitrate : " << webrtc::ToString(*acked_bitrate);
 		}
+		else
+		{
+			RTC_LOG(LS_INFO) << "ack_bitrate : 0 kbps ";
+		}
 		
 		//acked_bitrate.emplace(webrtc::DataRate::KilobitsPerSec(50000));
 			absl::optional<webrtc::DataRate> probe_bitrate;
 			absl::optional<libice::NetworkStateEstimate> network_estimate;
+	
+		for (const auto & feedback : report.SortedByReceiveTime())
+		{
+			if (feedback.sent_packet.pacing_info.probe_cluster_id != libice::PacedPacketInfo::kNotAProbe)
+			{
+				//收这个包是探测包  所以需要统计
+				probe_bitrate = probe_bitrate_estimator_->HandleProbeAndEstimateBitrate(feedback);
+			}
+		}
+
 		DelayBasedBwe::Result result = delay_based_bwe_->IncomingPacketFeedbackVector(
 			report, acked_bitrate, probe_bitrate, network_estimate, in_alr);
 		//基于延迟的带宽估计值更新了， 需要设置到基于掉包的带宽估计模块
 		libice::NetworkControlUpdate update;
+		//return libice::NetworkControlUpdate();
 		if (result.updated)
 		{
+			// webrtc::ToString(result.target_bitrate);
 			 bandwidth_estimation_->UpdateDelayBasedEstimate(report.feedback_time, result.target_bitrate);
-		
+			// return libice::NetworkControlUpdate();
 			MaybeTriggerOnNetworkChanged(&update, report.feedback_time);
+			
 		}
 		//RTC_LOG(LS_INFO) << "delay bwe:" << result.ToString();
 		return update;
@@ -116,7 +135,14 @@ namespace libmtp
 
 
 		webrtc::DataRate lost_rate = bandwidth_estimation_->target_rate();
-		RTC_LOG(LS_INFO) << "lost rate: " << webrtc::ToString(lost_rate);
+		if (lost_rate.IsZero())
+		{
+			RTC_LOG(LS_INFO) << "lost rate: 0";// << webrtc::ToString(lost_rate);
+		}
+		else
+		{
+			RTC_LOG(LS_INFO) << "lost rate: " << webrtc::ToString(lost_rate);
+		}
 		return libice::NetworkControlUpdate();
 	}
 	libice::NetworkControlUpdate GoogCcNetworkController::OnTargetRateConstraints(
@@ -175,6 +201,7 @@ namespace libmtp
 			//  target_rate_msg.cwnd_reduce_ratio = cwnd_reduce_ratio;
 			//} else {
 			  target_rate_msg.target_rate = loss_based_target_rate;
+
 			//}
 		 //   target_rate_msg.stable_target_rate = stable_target_rate;
 		   //target_rate_msg.network_estimate.at_time = at_time;
@@ -183,15 +210,27 @@ namespace libmtp
 		   //target_rate_msg.network_estimate.bwe_period = bwe_period;
 
 			update->target_rate = target_rate_msg;
-
+#if 1
 			auto probes = probe_controller_->SetEstimatedBitrate(
 				loss_based_target_rate.bps(), at_time.ms());
 			update->probe_cluster_configs.insert(update->probe_cluster_configs.end(),
 												probes.begin(), probes.end());
+#endif 
 			update->pacer_config = GetPacingRates(at_time);
 
-			RTC_LOG(LS_INFO) << "bwe " /*<< at_time.ms()*/ << " pushback_target_bps="
-								<< last_loss_based_bitrate_.bps();
+			if (last_loss_based_bitrate_.IsZero())
+			{
+				RTC_LOG(LS_INFO) << "bwe " /*<< at_time.ms()*/ << " last_loss_based_bitrate="
+					<< " 0 kbps " <<
+					",target_rate:" <<webrtc::ToString(target_rate_msg.target_rate);// last_loss_based_bitrate_.bps();
+			}
+			else
+			{
+				RTC_LOG(LS_INFO) << "bwe " /*<< at_time.ms()*/ << " last_loss_based_bitrate="
+					<< webrtc::ToString(last_loss_based_bitrate_) <<
+					",target_rate:" << webrtc::ToString(target_rate_msg.target_rate);
+			}
+			RTC_LOG(LS_INFO) << "NetworkControlUpdate:" << update->ToString();
 		}
 	}
 	libice::PacerConfig GoogCcNetworkController::GetPacingRates(webrtc::Timestamp at_time) const
