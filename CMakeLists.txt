@@ -87,6 +87,8 @@ rtp_rtcp/rtp_header_extension_map.cpp
 	 remote_bitrate_estimator/*.cc 
 	 remote_bitrate_estimator/*.cpp 
 	 
+	 librtsp/*.h
+	 librtsp/*.cpp 
 	 
 ) 
 

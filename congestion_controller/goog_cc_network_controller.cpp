@@ -173,7 +173,7 @@ namespace libmtp
 	{
 		webrtc::DataRate starting_rate =  constraints.starting_rate.has_value() ? constraints.starting_rate.value(): webrtc::DataRate::Zero();
 		webrtc::DataRate min_data_rate = constraints.min_data_rate.has_value() ? constraints.min_data_rate.value() : webrtc::DataRate::Zero();
-		webrtc::DataRate max_data_rate = constraints.max_data_rate.has_value() ? constraints.max_data_rate.value() : webrtc::DataRate::Zero();
+		webrtc::DataRate max_data_rate = constraints.max_data_rate.has_value() ? constraints.max_data_rate.value() : webrtc::DataRate::PlusInfinity();
 		 
 
 		bandwidth_estimation_->SetBitrates( starting_rate,  min_data_rate,
