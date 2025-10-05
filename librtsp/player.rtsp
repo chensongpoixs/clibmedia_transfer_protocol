@@ -1,0 +1,103 @@
+OPTIONS rtsp://192.168.1.64:554/streaming/channels/101 RTSP/1.0
+CSeq: 1
+User-Agent: Lavf60.20.100
+
+
+RTSP/1.0 200 OK
+CSeq: 1
+Public: OPTIONS, DESCRIBE, GET_PARAMETER, PAUSE, PLAY, SETUP, SET_PARAMETER, TEARDOWN
+Date:  Sun, Oct 05 2025 21:24:01 GMT
+
+
+DESCRIBE rtsp://192.168.1.64:554/streaming/channels/101 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: Lavf60.20.100
+
+
+RTSP/1.0 401 Unauthorized
+CSeq: 2
+WWW-Authenticate: Digest realm="IP Camera(FB997)", nonce="b2f25195ee36d5175aa7eab458689cf9", stale="FALSE"
+Date:  Sun, Oct 05 2025 21:24:01 GMT
+
+
+DESCRIBE rtsp://192.168.1.64:554/streaming/channels/101 RTSP/1.0
+Accept: application/sdp
+CSeq: 3
+User-Agent: Lavf60.20.100
+Authorization: Digest username="admin", realm="IP Camera(FB997)", nonce="b2f25195ee36d5175aa7eab458689cf9", uri="rtsp://192.168.1.64:554/streaming/channels/101", response="86fb441ba131e7f0e35d9b370a2e32e9"
+
+
+RTSP/1.0 200 OK
+CSeq: 3
+Content-Type: application/sdp
+Content-Base: rtsp://192.168.1.64:554/streaming/channels/101/
+Content-Length: 902
+
+v=0
+o=- 1759699441860405 1759699441860405 IN IP4 192.168.1.64
+s=Media Presentation
+e=NONE
+b=AS:5100
+t=0 0
+a=control:rtsp://192.168.1.64:554/streaming/channels/101/
+m=video 0 RTP/AVP 96
+c=IN IP4 0.0.0.0
+b=AS:5000
+a=recvonly
+a=x-dimensions:1280,720
+a=control:rtsp://192.168.1.64:554/streaming/channels/101/trackID=1
+a=rtpmap:96 H264/90000
+a=fmtp:96 profile-level-id=420029; packetization-mode=1; sprop-parameter-sets=Z2QAH60AGxqAUAW6bgICAoAAA4QAAK/IAg==,aO44sA==
+m=audio 0 RTP/AVP 104
+c=IN IP4 0.0.0.0
+b=AS:50
+a=recvonly
+a=control:rtsp://192.168.1.64:554/streaming/channels/101/trackID=2
+a=rtpmap:104 mpeg4-generic/16000/1
+a=fmtp:104 profile-level-id=15; streamtype=5; mode=AAC-hbr; config=1408;SizeLength=13; IndexLength=3; IndexDeltaLength=3; Profile=1;
+a=Media_header:MEDIAINFO=494D4B48010300000400000101200110803E0000007D000000000000000000000000000000000000;
+a=appversion:1.0
+
+SETUP rtsp://192.168.1.64:554/streaming/channels/101/trackID=1 RTSP/1.0
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1
+CSeq: 4
+User-Agent: Lavf60.20.100
+Authorization: Digest username="admin", realm="IP Camera(FB997)", nonce="b2f25195ee36d5175aa7eab458689cf9", uri="rtsp://192.168.1.64:554/streaming/channels/101/trackID=1", response="08853f94b6bd19579bf7f81784470de2"
+
+
+RTSP/1.0 200 OK
+CSeq: 4
+Session:       1225743327;timeout=60
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;ssrc=7e827465;mode="play"
+Date:  Sun, Oct 05 2025 21:24:01 GMT
+
+
+SETUP rtsp://192.168.1.64:554/streaming/channels/101/trackID=2 RTSP/1.0
+Transport: RTP/AVP/TCP;unicast;interleaved=2-3
+CSeq: 5
+User-Agent: Lavf60.20.100
+Session: 1225743327
+Authorization: Digest username="admin", realm="IP Camera(FB997)", nonce="b2f25195ee36d5175aa7eab458689cf9", uri="rtsp://192.168.1.64:554/streaming/channels/101/trackID=2", response="8b5ec4b1377df490a694b60924a03ae3"
+
+
+RTSP/1.0 200 OK
+CSeq: 5
+Session:       1225743327;timeout=60
+Transport: RTP/AVP/TCP;unicast;interleaved=2-3;ssrc=3575fade;mode="play"
+Date:  Sun, Oct 05 2025 21:24:01 GMT
+
+
+PLAY rtsp://192.168.1.64:554/streaming/channels/101/ RTSP/1.0
+Range: npt=0.000-
+CSeq: 6
+User-Agent: Lavf60.20.100
+Session: 1225743327
+Authorization: Digest username="admin", realm="IP Camera(FB997)", nonce="b2f25195ee36d5175aa7eab458689cf9", uri="rtsp://192.168.1.64:554/streaming/channels/101/", response="94f862d521c98750bbb4d0f50975e95b"
+
+
+RTSP/1.0 200 OK
+CSeq: 6
+Session:       1225743327
+RTP-Info: url=rtsp://192.168.1.64:554/streaming/channels/101/trackID=1;seq=26121;rtptime=3258904860,url=rtsp://192.168.1.64:554/streaming/channels/101/trackID=2;seq=44140;rtptime=579359952
+Date:  Sun, Oct 05 2025 21:24:01 GMT
