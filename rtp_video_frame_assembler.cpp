@@ -39,7 +39,7 @@
 #include "libmedia_transfer_protocol/rtp_rtcp/video_rtp_depacketizer_vp9.h"
 #include "libmedia_codec/frame_object.h"
 #include "libmedia_transfer_protocol/packet_buffer.h"
-#include "modules/video_coding/rtp_frame_reference_finder.h"
+#include "libmedia_transfer_protocol/rtp_frame_reference_finder.h"
 #include "rtc_base/logging.h"
 
 namespace libmedia_transfer_protocol {
@@ -74,7 +74,7 @@ class RtpVideoFrameAssembler::Impl {
 
  private:
   using RtpFrameVector =
-      absl::InlinedVector<std::unique_ptr<webrtc::RtpFrameObject>, 3>;
+      absl::InlinedVector<std::unique_ptr<libmedia_codec::RtpFrameObject>, 3>;
 
   RtpFrameVector AssembleFrames(
       video_coding::PacketBuffer::InsertResult insert_result);
@@ -91,7 +91,7 @@ class RtpVideoFrameAssembler::Impl {
   absl::optional<int64_t> video_structure_frame_id_;
   std::unique_ptr<VideoRtpDepacketizer> depacketizer_;
   video_coding::PacketBuffer packet_buffer_;
-  webrtc::RtpFrameReferenceFinder reference_finder_;
+   RtpFrameReferenceFinder reference_finder_;
 };
 
 RtpVideoFrameAssembler::Impl::Impl(
@@ -217,7 +217,7 @@ RtpVideoFrameAssembler::Impl::UpdateWithPadding(uint16_t seq_num) {
 bool RtpVideoFrameAssembler::Impl::ParseDependenciesDescriptorExtension(
     const RtpPacketReceived& rtp_packet,
     RTPVideoHeader& video_header) {
-  webrtc::DependencyDescriptor dependency_descriptor;
+ DependencyDescriptor dependency_descriptor;
 
   if (!rtp_packet.GetExtension<RtpDependencyDescriptorExtension>(
           video_structure_.get(), &dependency_descriptor)) {
