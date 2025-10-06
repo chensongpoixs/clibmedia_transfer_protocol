@@ -32,6 +32,13 @@
 #endif
 #include "libp2p_peerconnection/csession_description.h"
 #include "libmedia_transfer_protocol/rtp_video_frame_assembler.h"
+#include "libmedia_codec/video_codecs/h264_decoder.h"
+
+////////////////////
+#include "libcross_platform_collection_render/video_render/cvideo_render_factory.h"
+#include "libcross_platform_collection_render/video_render/cvideo_render.h"
+#include "libcross_platform_collection_render/track_capture/ctrack_capture.h"
+
 namespace libmedia_transfer_protocol
 {
 	namespace librtsp {
@@ -72,6 +79,13 @@ namespace libmedia_transfer_protocol
 				return network_thread_.get() ;
 			}
 
+
+			void RegisterDecodeCompleteCallback(libcross_platform_collection_render::cvideo_renderer * callback)
+			{
+				callback_ = callback;
+
+				h264_decoder_.RegisterDecodeCompleteCallback(callback);
+			}
 		public:
 
 			// rtsp 协议
@@ -147,6 +161,11 @@ namespace libmedia_transfer_protocol
 			std::map<std::string,   void (RtspSession::*)(rtc::Socket* socket , std::vector<std::string>)>        callback_map_;
 		
 			RtpVideoFrameAssembler                  rtp_video_frame_assembler_;
+			libmedia_codec::H264Decoder              h264_decoder_;
+
+
+			// callback image 
+			libcross_platform_collection_render::cvideo_renderer * callback_ = nullptr;;
 		};
 
 	}
