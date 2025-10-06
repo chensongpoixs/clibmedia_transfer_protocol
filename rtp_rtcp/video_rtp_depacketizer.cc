@@ -35,7 +35,9 @@ namespace libmedia_transfer_protocol {
 rtc::scoped_refptr<libmedia_codec::EncodedImageBuffer> VideoRtpDepacketizer::AssembleFrame(
     rtc::ArrayView<const rtc::ArrayView<const uint8_t>> rtp_payloads) {
   size_t frame_size = 0;
+  static const uint8_t start_code[4] = {0x00, 0x00, 0x00, 0x01};
   for (rtc::ArrayView<const uint8_t> payload : rtp_payloads) {
+	  frame_size += 4;
     frame_size += payload.size();
   }
 
@@ -44,6 +46,8 @@ rtc::scoped_refptr<libmedia_codec::EncodedImageBuffer> VideoRtpDepacketizer::Ass
 
   uint8_t* write_at = bitstream->data();
   for (rtc::ArrayView<const uint8_t> payload : rtp_payloads) {
+	  memcpy(write_at, &start_code[0], sizeof(start_code));
+	  write_at += 4;
     memcpy(write_at, payload.data(), payload.size());
     write_at += payload.size();
   }

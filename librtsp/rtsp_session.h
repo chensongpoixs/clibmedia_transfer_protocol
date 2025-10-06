@@ -31,6 +31,7 @@
 #include "rtc_base/win32_socket_server.h"
 #endif
 #include "libp2p_peerconnection/csession_description.h"
+#include "libmedia_transfer_protocol/rtp_video_frame_assembler.h"
 namespace libmedia_transfer_protocol
 {
 	namespace librtsp {
@@ -144,6 +145,8 @@ namespace libmedia_transfer_protocol
 			std::list<std::string>					track_control_;
 
 			std::map<std::string,   void (RtspSession::*)(rtc::Socket* socket , std::vector<std::string>)>        callback_map_;
+		
+			RtpVideoFrameAssembler                  rtp_video_frame_assembler_;
 		};
 
 	}

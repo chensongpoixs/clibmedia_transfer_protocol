@@ -75,6 +75,7 @@ namespace libmedia_transfer_protocol
 		RtspSession::RtspSession()
 			:network_thread_(new rtc::Thread(rtc::CreateDefaultSocketServer()))
 			, recv_buffer_(1024*1024)
+			, rtp_video_frame_assembler_(RtpVideoFrameAssembler::kH264)
 			//, physical_socket_server_(std::make_unique<rtc::PhysicalSocketServer>())
 		{
 			network_thread_->SetName("rtsp_session_socket", nullptr);
@@ -100,6 +101,11 @@ namespace libmedia_transfer_protocol
 			size = rtc::ComputeDigest(rtc::DIGEST_MD5, input,
 				&digest);
 			RTC_LOG(LS_INFO) << "digest:" << digest;
+			// profile-level-id=420029; packetization-mode=1; sprop-parameter-sets=Z2QAH60AGxqAUAW6bgICAoAAA4QAAK/IAg==,aO44sA==
+
+			std::string sprop_parameter= "Z2QAH60AGxqAUAW6bgICAoAAA4QAAK/IAg==";
+			std::string  desc = rtc::Base64::Decode(sprop_parameter, rtc::Base64::DO_LAX);
+			RTC_LOG(LS_INFO)<< "sprop_parameter :" << desc;
 
 			callback_map_["Content-Type"] = &RtspSession::HandlerContentType;
 			callback_map_["Session"] = &RtspSession::HandlerSession;
@@ -419,6 +425,10 @@ namespace libmedia_transfer_protocol
 							trank_name += "=" + splited[2];
 							track_control_.push_back(trank_name);
 						}
+						else if (a_split[0] == "fmtp")
+						{
+
+						}
 					}
 					// a=x-dimensions:1280,720
 					//a=control:rtsp://192.168.1.64:554/streaming/channels/101/trackID=1
@@ -444,11 +454,11 @@ namespace libmedia_transfer_protocol
 			std::vector<std::string> session_split;
 			rtc::split(s_split[1], ';', &session_split);
 			session_id_ = session_split[0];
-			if (track_control_.empty())
+			if (track_control_.empty() && cseq_ < 7)
 			{
 				SendPlay(socket);
 			}
-			else 
+			else if (track_control_.size() > 0)
 			{
 				SendSetup(socket);
 			}
@@ -546,8 +556,13 @@ namespace libmedia_transfer_protocol
 					//  RTP 中  padding 
 					if (libmedia_transfer_protocol::IsRtpPacket(rtc::ArrayView<uint8_t>(buffer.begin() + paser_size, rtsp_magic.length_)))
 					{
-						libmedia_transfer_protocol::RtpPacket  rtp_packet;
-						bool ret = rtp_packet.Parse(buffer.begin() + paser_size, rtsp_magic.length_/*read_bytes - paser_size*/);
+
+
+						RtpPacketReceived  rtp_packet_received;
+						
+						//libmedia_transfer_protocol::RtpPacket  rtp_packet;
+						//bool ret = rtp_packet.Parse(buffer.begin() + paser_size, rtsp_magic.length_/*read_bytes - paser_size*/);
+						bool ret = rtp_packet_received.Parse(buffer.begin() + paser_size, rtsp_magic.length_);
 						if (!ret)
 						{
 
@@ -555,9 +570,38 @@ namespace libmedia_transfer_protocol
 						}
 						else
 						{
+							RTC_LOG(LS_INFO) << "rtp info :" << rtp_packet_received.ToString();
+							if (rtp_packet_received.PayloadType() == 96)
+							{
+#if 0
+								std::string rtp_hex = rtc::hex_encode((const char*)rtp_packet_received.PayloadBuffer().cdata(), rtp_packet_received.PayloadBuffer().size());
+
+								RTC_LOG(LS_INFO) << "seq:" << rtp_packet_received.SequenceNumber() << ", hex:" << rtp_hex;
+#endif 
+								RtpVideoFrameAssembler::FrameVector  frame_vector = rtp_video_frame_assembler_.InsertPacket(std::move(rtp_packet_received));
+								if (frame_vector.size() > 0)
+								{
+									//RTC_LOG(LS_INFO) << "frame vector info size : " << frame_vector.size();
+
+									static FILE* out_file_ptr = fopen("test.h264", "wb+");
+
+									for (size_t fv = 0; fv < frame_vector.size(); ++fv)
+									{
+										//uint8_t start_code[4] = {0x00, 0x00, 0x00, 0x01};
+										//fwrite(&start_code[0], 1, sizeof(start_code), out_file_ptr);
+										fwrite(frame_vector[fv]->data(), 1, frame_vector[fv]->size(), out_file_ptr);
+										fflush(out_file_ptr);
+										RTC_LOG(LS_INFO) << " frame vector info : " << frame_vector[fv]->ToString();
+										std::string bitstream_hex = rtc::hex_encode((const char*)frame_vector[fv]->data(), frame_vector[fv]->size());
+
+										RTC_LOG(LS_INFO) << "qp_:" << frame_vector[fv]->qp_ << ", bitstream_hex:" << bitstream_hex;
+									}
+								}
+							}
+							
 							// RTSP IntrerleaveFrame   length 
 							paser_size += rtsp_magic.length_;
-							RTC_LOG(LS_INFO) << "rtp info :" << rtp_packet.ToString();
+							
 						}
 					}
 					else if (libmedia_transfer_protocol::IsRtpPacket(rtc::ArrayView<uint8_t>(buffer.begin() + paser_size, rtsp_magic.length_/*read_bytes - paser_size*/)))
@@ -608,6 +652,7 @@ namespace libmedia_transfer_protocol
 
 					// 解析rtsp返回的格式数据
 					std::string data((char *)buffer.begin() + paser_size, read_bytes - paser_size);
+					RTC_LOG(LS_INFO) << data;
 					std::vector<std::string>  fileds;
 					rtc::tokenize(data, '\n', &fileds);
 					// 第一行   RTSP/1.0 401 Unauthorized
