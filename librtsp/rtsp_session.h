@@ -45,7 +45,7 @@ extern "C" {
 }
 
 
-#include "libmedia_codec/video_codecs/h264_nal_decoder.h"
+#include "libmedia_codec/video_codecs/nal_parse_factory.h"
 namespace libmedia_transfer_protocol
 {
 	namespace librtsp {
@@ -174,7 +174,7 @@ namespace libmedia_transfer_protocol
 			// callback image 
 			libcross_platform_collection_render::cvideo_renderer * callback_ = nullptr;;
 
-			libmedia_codec::H264NalDecoder             h264_nal_decoder_;
+			std::unique_ptr<libmedia_codec::NalParseInterface>             nal_parse_;
 		};
 
 	}

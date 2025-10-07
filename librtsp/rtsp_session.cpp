@@ -595,9 +595,21 @@ namespace libmedia_transfer_protocol
 							// a=x-dimensions:1280,720
 							std::vector<std::string>  width_height_split;
 							rtc::split(a_split[1], ',', &width_height_split);
-							h264_decoder_.Configure(libmedia_codec::VideoCodecType::kVideoCodecH264, 
+							h264_decoder_.Configure(libmedia_codec::VideoCodecType::kVideoCodecHevc,
 								std::atoi(width_height_split[0].c_str()),
 								std::atoi(width_height_split[1].c_str()));
+						}
+						else if (a_split[0] == "rtpmap")
+						{
+							size_t index = a_split[1].find("H264");
+							if (index >= a_split[1].size())
+							{
+								nal_parse_ = libmedia_codec::NalParseFactory::Create(libmedia_codec::ENalHEVCPrase);
+							}
+							else
+							{
+								nal_parse_ = libmedia_codec::NalParseFactory::Create(libmedia_codec::ENalHEVCPrase);
+							}
 						}
 					}
 					
@@ -813,7 +825,7 @@ namespace libmedia_transfer_protocol
 								}
 
 #else 
-								h264_nal_decoder_.parse_packet(rtp_packet_received.payload().data(), rtp_packet_received.payload_size());
+								nal_parse_->parse_packet(rtp_packet_received.payload().data(), rtp_packet_received.payload_size());
 
 								static int32_t rtp_count  = 0;
 								++rtp_count;
@@ -822,8 +834,8 @@ namespace libmedia_transfer_protocol
 									libmedia_codec::EncodedImage encode_image;
 									encode_image.SetEncodedData(
 										libmedia_codec::EncodedImageBuffer::Create( 
-											h264_nal_decoder_.buffer_stream_,
-											h264_nal_decoder_.buffer_index_
+											nal_parse_->buffer_stream_,
+											nal_parse_->buffer_index_
 										));
 									h264_decoder_.Decode(encode_image, true, 1);
 #if 0
@@ -831,7 +843,7 @@ namespace libmedia_transfer_protocol
 									fwrite(h264_nal_decoder_.buffer_stream_, 1, h264_nal_decoder_.buffer_index_, out_file_ptr);
 									fflush(out_file_ptr);
 #endif 
-									h264_nal_decoder_.buffer_index_ = 0;
+									nal_parse_->buffer_index_ = 0;
 									//h264_nal_decoder_.bit_stream_.clear();
 								}
 
