@@ -38,7 +38,14 @@
 #include "libcross_platform_collection_render/video_render/cvideo_render_factory.h"
 #include "libcross_platform_collection_render/video_render/cvideo_render.h"
 #include "libcross_platform_collection_render/track_capture/ctrack_capture.h"
+extern "C" {
 
+
+#include "libavutil/error.h"
+}
+
+
+#include "libmedia_codec/video_codecs/h264_nal_decoder.h"
 namespace libmedia_transfer_protocol
 {
 	namespace librtsp {
@@ -166,6 +173,8 @@ namespace libmedia_transfer_protocol
 
 			// callback image 
 			libcross_platform_collection_render::cvideo_renderer * callback_ = nullptr;;
+
+			libmedia_codec::H264NalDecoder             h264_nal_decoder_;
 		};
 
 	}

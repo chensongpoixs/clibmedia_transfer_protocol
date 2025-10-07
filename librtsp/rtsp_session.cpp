@@ -35,6 +35,36 @@
 #include "libmedia_transfer_protocol/rtp_rtcp/rtcp_packet/common_header.h"
 #include "rtc_base/string_encode.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/byte_io.h"
+
+#include <thread>
+#include <chrono>
+#include <thread>
+#include <chrono>
+
+extern "C" {
+#include "libavformat/avformat.h"
+#include "libavutil/mathematics.h"
+#include "libavutil/time.h"
+
+#include <libavutil/frame.h>
+#include <libavutil/avutil.h>
+	//#include <libavutil/avutil.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/display.h>
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavutil/opt.h>
+#include <libavutil/imgutils.h>
+#include <libavfilter/avfilter.h>
+#include <libavfilter/buffersink.h>
+#include <libavformat/avio.h>
+#include <libavformat/avformat.h>
+#include <libavcodec/bsf.h>
+
+}
+
 namespace libmedia_transfer_protocol
 {
 	namespace librtsp
@@ -124,6 +154,131 @@ namespace libmedia_transfer_protocol
 		}
 		bool RtspSession::Play(const std::string & url)
 		{
+
+
+#if 0
+
+
+
+			{
+				static std::list< std::shared_ptr<libmedia_codec::EncodedImage> >  encode_images;
+				static std::mutex  encode_image_lock;
+				{
+				
+					
+					std::thread([this]() {
+						while (true)
+						{
+							std::shared_ptr<libmedia_codec::EncodedImage>   cur_image = nullptr;
+							{
+								std::lock_guard<std::mutex> lock(encode_image_lock);
+								if (!encode_images.empty())
+								{
+									cur_image = std::move(encode_images.front());
+									encode_images.pop_front();
+								}
+							}
+							if (cur_image)
+							{
+								h264_decoder_.Decode(*cur_image.get(), true, 1);
+							}
+							else
+							{
+								std::this_thread::sleep_for(std::chrono::milliseconds(100));
+							}
+							cur_image.reset();
+							cur_image = nullptr;
+						}
+					}
+					).detach();
+				
+
+				}
+
+				avformat_network_init();
+				AVFormatContext* ictx = NULL;
+				AVDictionary* options = NULL;
+				av_dict_set(&options, "rtsp_transport", "tcp", 0);
+				//	av_dict_set(&options, "flush_packets", "0", 0);
+				av_dict_set(&options, "rtsp_flags", "prefer_tcp", 0);
+				int ret = avformat_open_input(&ictx, url.c_str(), 0, &options);
+				if (ret < 0)
+				{
+					printf("[%s][%d]\n", __FUNCTION__, __LINE__);
+					return  -1;
+					//return avError(ret);
+				}
+				ret = avformat_find_stream_info(ictx, nullptr);
+				const AVBitStreamFilter* bsf = av_bsf_get_by_name("h264_mp4toannexb");
+				AVBSFContext* bsf_ctx = nullptr;
+				av_bsf_alloc(bsf, &bsf_ctx);
+				av_bsf_init(bsf_ctx);
+				AVPacket avPacket;
+				h264_decoder_.Configure(libmedia_codec::kVideoCodecH264, 1280, 720);
+				while (true)
+				{
+					ret = av_read_frame(ictx, &avPacket);
+					if (ret < 0)
+					{
+						std::this_thread::sleep_for(std::chrono::milliseconds(200));
+						printf("----->>>>\n");
+						continue;
+					}
+					//::Sleep(1);
+					
+					//std::this_thread::sleep_for(std::chrono::second(500));
+					if (avPacket.stream_index == AVMEDIA_TYPE_VIDEO) {
+						/*AVRational tb = ictx->streams[avPacket.stream_index]->time_base;
+						long long now = av_gettime() - startTime;
+						long long dts = avPacket.dts * (1000 * 1000 * av_q2d(tb));
+						if (dts > now) av_usleep(dts - now);*/
+
+						printf("send\n");
+						//docoder.push_packet(avPacket.data, avPacket.size, avPacket.pts, avPacket.dts);
+						if (av_bsf_send_packet(bsf_ctx, &avPacket) == 0)
+						{
+							// 接收过滤后的 packet
+							if (av_bsf_receive_packet(bsf_ctx, &avPacket) == 0)
+							{
+
+								static FILE*out_file_ptr = fopen("ffmpegtest.h264", "wb+");
+								if (out_file_ptr)
+								{
+									fwrite(avPacket.data, 1, avPacket.size, out_file_ptr);
+									fflush(out_file_ptr);
+								}
+
+								// 此时 packet.data 包含了带有起始码的 H.264 数据
+								// 写入其他帧数据（带有起始码的 NAL 单元）
+								//docoder.push_packet(avPacket.data, avPacket.size, avPacket.pts, avPacket.dts);
+								//pusher.OnH264Data(avPacket.data, avPacket.size, avPacket.pts / 9);
+								//pusher.push_frame(&avPacket);
+								//avPacket.data
+								std::shared_ptr< libmedia_codec::EncodedImage>  encode_image = std::make_shared<libmedia_codec::EncodedImage>();
+								 
+								encode_image->SetEncodedData(libmedia_codec::EncodedImageBuffer::Create(avPacket.data, avPacket.size));
+								
+								{
+									std::lock_guard<std::mutex> lock(encode_image_lock);
+									encode_images.push_back(encode_image);
+
+								}
+								av_packet_unref(&avPacket);
+
+								//if (avPacket) av_packet_unref(avPacket);//释放packet内存
+							}
+
+
+						}
+					}
+					else
+					{
+						av_packet_unref(&avPacket);
+					}
+					std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				}
+			}
+#endif //
 			//rtsp://admin:Cs@563519@192.168.1.64/streaming/channels/101
 			std::vector<std::string> fields;
 			rtc::split(url, '/', &fields);
@@ -593,6 +748,46 @@ namespace libmedia_transfer_protocol
 
 								RTC_LOG(LS_INFO) << "seq:" << rtp_packet_received.SequenceNumber() << ", hex:" << rtp_hex;
 #endif 
+
+#if 0
+								static AVBSFContext* bsf_ctx = nullptr;
+								if (!bsf_ctx)
+								{
+									const AVBitStreamFilter* bsf = av_bsf_get_by_name("h264_mp4toannexb");
+									av_bsf_alloc(bsf, &bsf_ctx);
+									av_bsf_init(bsf_ctx);
+								}
+								RtpVideoFrameAssembler::FrameVector  frame_vector = rtp_video_frame_assembler_.InsertPacket(std::move(rtp_packet_received));
+								if (frame_vector.size() > 0)
+								{
+									for (size_t fv = 0; fv < frame_vector.size(); ++fv)
+									{
+										static AVPacket avPacket;
+										avPacket.data = (uint8_t *)frame_vector[fv]->data();
+										avPacket.size = frame_vector[fv]->size();
+
+										if (av_bsf_send_packet(bsf_ctx, &avPacket) == 0)
+										{
+											// 接收过滤后的 packet
+											if (av_bsf_receive_packet(bsf_ctx, &avPacket) == 0)
+											{
+												// 此时 packet.data 包含了带有起始码的 H.264 数据
+												// 写入其他帧数据（带有起始码的 NAL 单元） 
+												libmedia_codec::EncodedImage encode_image;
+												encode_image.SetEncodedData(libmedia_codec::EncodedImageBuffer::Create(avPacket.data, avPacket.size));
+												h264_decoder_.Decode(encode_image, true, avPacket.pts);
+
+												av_packet_unref(&avPacket);
+
+												//if (avPacket) av_packet_unref(avPacket);//释放packet内存
+											}
+
+
+										}
+									}
+								}
+#elseif 0
+ 
 								RtpVideoFrameAssembler::FrameVector  frame_vector = rtp_video_frame_assembler_.InsertPacket(std::move(rtp_packet_received));
 								if (frame_vector.size() > 0)
 								{
@@ -616,8 +811,34 @@ namespace libmedia_transfer_protocol
 										//RTC_LOG(LS_INFO) << "qp_:" << frame_vector[fv]->qp_ << ", bitstream_hex:" << bitstream_hex;
 									}
 								}
+
+#else 
+								h264_nal_decoder_.parse_packet(rtp_packet_received.payload().data(), rtp_packet_received.payload_size());
+
+								static int32_t rtp_count  = 0;
+								++rtp_count;
+								if (rtp_packet_received.Marker() && rtp_count> 100)
+								{
+									libmedia_codec::EncodedImage encode_image;
+									encode_image.SetEncodedData(
+										libmedia_codec::EncodedImageBuffer::Create( 
+											h264_nal_decoder_.buffer_stream_,
+											h264_nal_decoder_.buffer_index_
+										));
+									h264_decoder_.Decode(encode_image, true, 1);
+#if 0
+									static FILE* out_file_ptr = fopen("00000test.h264", "wb+");
+									fwrite(h264_nal_decoder_.buffer_stream_, 1, h264_nal_decoder_.buffer_index_, out_file_ptr);
+									fflush(out_file_ptr);
+#endif 
+									h264_nal_decoder_.buffer_index_ = 0;
+									//h264_nal_decoder_.bit_stream_.clear();
+								}
+
+								
+#endif 
 							}
-							
+
 							// RTSP IntrerleaveFrame   length 
 							paser_size += rtsp_magic.length_;
 							
@@ -668,9 +889,17 @@ namespace libmedia_transfer_protocol
 				}
 				else
 				{
-
+#if 1
+					uint8_t *ptrdd =  buffer.begin()+paser_size;
+					if (ptrdd[0] == 0x80 && ptrdd[1] == 0xc8 && ptrdd[2] == 0x00 && ptrdd[3] == 0x06)
+					{
+						paser_size += 72;
+						continue;
+					}
+#endif // 
 					// 解析rtsp返回的格式数据
 					std::string data((char *)buffer.begin() + paser_size, read_bytes - paser_size);
+					
 					RTC_LOG(LS_INFO) << data;
 					std::vector<std::string>  fileds;
 					rtc::tokenize(data, '\n', &fileds);

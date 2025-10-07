@@ -137,6 +137,7 @@ RtpVideoFrameAssembler::FrameVector RtpVideoFrameAssembler::Impl::InsertPacket(
 }
 
 void RtpVideoFrameAssembler::Impl::ClearOldData(uint16_t incoming_seq_num) {
+	//return;
   constexpr uint16_t kOldSeqNumThreshold = 2000;
   uint16_t old_seq_num = incoming_seq_num - kOldSeqNumThreshold;
   packet_buffer_.ClearTo(old_seq_num);
