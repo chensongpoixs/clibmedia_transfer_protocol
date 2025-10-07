@@ -72,7 +72,7 @@ namespace libmedia_transfer_protocol
 		{
 		public:
 			
-			RtspSession();
+			explicit RtspSession(rtc::Thread* network_thread, rtc::Thread* work_thread);
 			virtual ~RtspSession();
 
 		public:
@@ -82,17 +82,21 @@ namespace libmedia_transfer_protocol
 			bool Push(const std::string & url);
 
 
-			rtc::Thread* network_thread() const {
-				return network_thread_.get() ;
-			}
+			//rtc::Thread* network_thread() const {
+			//	return network_thread_.get() ;
+			//}
 
 
-			void RegisterDecodeCompleteCallback(libcross_platform_collection_render::cvideo_renderer * callback)
-			{
-				callback_ = callback;
+			//void RegisterDecodeCompleteCallback(libcross_platform_collection_render::cvideo_renderer * callback)
+			//{
+			//	callback_ = callback;
+			//
+			//	h264_decoder_.RegisterDecodeCompleteCallback(callback);
+			//}
 
-				h264_decoder_.RegisterDecodeCompleteCallback(callback);
-			}
+
+			sigslot::signal4<libmedia_codec::VideoCodecType  ,int32_t ,  int32_t  , int32_t  > SignalInitDeocder;
+			sigslot::signal1<const libmedia_transfer_protocol::RtpPacketReceived&   > SignalRtpPacket;
 		public:
 
 			// rtsp 协议
@@ -134,6 +138,8 @@ namespace libmedia_transfer_protocol
 
 			std::string BuildAuthorization(const std::string & method);
 		private:
+			rtc::Thread *        network_thread_;
+			rtc::Thread *    work_thread_;
 
 			std::string			      protocol_name_;
 			std::string				  user_name_;//用户名（如"admin"），需与设备配置一致
@@ -158,23 +164,22 @@ namespace libmedia_transfer_protocol
 			//std::unique_ptr< rtc::PhysicalSocketServer> physical_socket_server_;
 			State				state_ = NOT_CONNECTED;
 
-			std::unique_ptr<rtc::Thread>         network_thread_;
-			
-
+		
 			libp2p_peerconnection::SessionDescription   session_description_;
 
 			std::list<std::string>					track_control_;
 
 			std::map<std::string,   void (RtspSession::*)(rtc::Socket* socket , std::vector<std::string>)>        callback_map_;
 		
-			RtpVideoFrameAssembler                  rtp_video_frame_assembler_;
-			libmedia_codec::H264Decoder              h264_decoder_;
+			bool									decoder_init_ = false;
+		//	RtpVideoFrameAssembler                  rtp_video_frame_assembler_;
+			//libmedia_codec::H264Decoder              h264_decoder_;
 
 
 			// callback image 
-			libcross_platform_collection_render::cvideo_renderer * callback_ = nullptr;;
+			//libcross_platform_collection_render::cvideo_renderer * callback_ = nullptr;;
 
-			std::unique_ptr<libmedia_codec::NalParseInterface>             nal_parse_;
+		//	std::unique_ptr<libmedia_codec::NalParseInterface>             nal_parse_;
 		};
 
 	}

@@ -102,41 +102,42 @@ namespace libmedia_transfer_protocol
 #endif
 			}
 		}
-		RtspSession::RtspSession()
-			:network_thread_(new rtc::Thread(rtc::CreateDefaultSocketServer()))
-			, recv_buffer_(1024*1024)
-			, rtp_video_frame_assembler_(RtpVideoFrameAssembler::kH264)
-			, h264_decoder_()
+		RtspSession::RtspSession(rtc::Thread* network_thread, rtc::Thread* work_thread)
+			:network_thread_(network_thread)
+			, work_thread_(work_thread)
+			 , recv_buffer_(1024*1024)
+			//, rtp_video_frame_assembler_(RtpVideoFrameAssembler::kH264)
+			//, h264_decoder_()
 			//, physical_socket_server_(std::make_unique<rtc::PhysicalSocketServer>())
 		{
-			network_thread_->SetName("rtsp_session_socket", nullptr);
-			network_thread_->Start();
+		//	network_thread_->SetName("rtsp_session_socket", nullptr);
+		//	network_thread_->Start();
 
 
-			std::string ha1_digest;
-			std::string ha1 = "admin:IP Camera(FB997):Cs@563519" ;
-			bool size = rtc::ComputeDigest(rtc::DIGEST_MD5, ha1,
-				&ha1_digest);
-
-			// 10dbbfd5d656ee6e113a0a1eb95dca94
-			//std::string hash_d = rtc::hex_encode(ha1_digest);
-
-			std::string ha2_digest;
-			std::string ha2 = "DESCRIBE" + std::string(":") + "rtsp://192.168.1.64:554/streaming/channels/101";
-			size = rtc::ComputeDigest(rtc::DIGEST_MD5, ha2,
-				&ha2_digest);
-
-
-			std::string  digest;
-			std::string input = ha1_digest + std::string(":") + "83be737756675f8f99c8e74e8e7df845" + std::string(":") + ha2_digest;
-			size = rtc::ComputeDigest(rtc::DIGEST_MD5, input,
-				&digest);
-			RTC_LOG(LS_INFO) << "digest:" << digest;
-			// profile-level-id=420029; packetization-mode=1; sprop-parameter-sets=Z2QAH60AGxqAUAW6bgICAoAAA4QAAK/IAg==,aO44sA==
-
-			std::string sprop_parameter= "Z2QAH60AGxqAUAW6bgICAoAAA4QAAK/IAg==";
-			std::string  desc = rtc::Base64::Decode(sprop_parameter, rtc::Base64::DO_LAX);
-			RTC_LOG(LS_INFO)<< "sprop_parameter :" << desc;
+			//std::string ha1_digest;
+			//std::string ha1 = "admin:IP Camera(FB997):Cs@563519" ;
+			//bool size = rtc::ComputeDigest(rtc::DIGEST_MD5, ha1,
+			//	&ha1_digest);
+			//
+			//// 10dbbfd5d656ee6e113a0a1eb95dca94
+			////std::string hash_d = rtc::hex_encode(ha1_digest);
+			//
+			//std::string ha2_digest;
+			//std::string ha2 = "DESCRIBE" + std::string(":") + "rtsp://192.168.1.64:554/streaming/channels/101";
+			//size = rtc::ComputeDigest(rtc::DIGEST_MD5, ha2,
+			//	&ha2_digest);
+			//
+			//
+			//std::string  digest;
+			//std::string input = ha1_digest + std::string(":") + "83be737756675f8f99c8e74e8e7df845" + std::string(":") + ha2_digest;
+			//size = rtc::ComputeDigest(rtc::DIGEST_MD5, input,
+			//	&digest);
+			//RTC_LOG(LS_INFO) << "digest:" << digest;
+			//// profile-level-id=420029; packetization-mode=1; sprop-parameter-sets=Z2QAH60AGxqAUAW6bgICAoAAA4QAAK/IAg==,aO44sA==
+			//
+			//std::string sprop_parameter= "Z2QAH60AGxqAUAW6bgICAoAAA4QAAK/IAg==";
+			//std::string  desc = rtc::Base64::Decode(sprop_parameter, rtc::Base64::DO_LAX);
+			//RTC_LOG(LS_INFO)<< "sprop_parameter :" << desc;
 
 			callback_map_["Content-Type"] = &RtspSession::HandlerContentType;
 			callback_map_["Session"] = &RtspSession::HandlerSession;
@@ -146,11 +147,11 @@ namespace libmedia_transfer_protocol
 		}
 		RtspSession::~RtspSession()
 		{
-			network_thread_->Invoke<void>(RTC_FROM_HERE, [this](){
-				Close();
-			});
-			network_thread_->Stop();
-			network_thread_.reset();
+			//network_thread_->Invoke<void>(RTC_FROM_HERE, [this](){
+			//	Close();
+			//});
+			//network_thread_->Stop();
+			//network_thread_.reset();
 		}
 		bool RtspSession::Play(const std::string & url)
 		{
@@ -595,21 +596,21 @@ namespace libmedia_transfer_protocol
 							// a=x-dimensions:1280,720
 							std::vector<std::string>  width_height_split;
 							rtc::split(a_split[1], ',', &width_height_split);
-							h264_decoder_.Configure(libmedia_codec::VideoCodecType::kVideoCodecHevc,
-								std::atoi(width_height_split[0].c_str()),
-								std::atoi(width_height_split[1].c_str()));
+							//h264_decoder_.Configure(libmedia_codec::VideoCodecType::kVideoCodecHevc,
+							//	std::atoi(width_height_split[0].c_str()),
+							//	std::atoi(width_height_split[1].c_str()));
 						}
 						else if (a_split[0] == "rtpmap")
 						{
 							size_t index = a_split[1].find("H264");
-							if (index >= a_split[1].size())
-							{
-								nal_parse_ = libmedia_codec::NalParseFactory::Create(libmedia_codec::ENalHEVCPrase);
-							}
-							else
-							{
-								nal_parse_ = libmedia_codec::NalParseFactory::Create(libmedia_codec::ENalHEVCPrase);
-							}
+							//if (index >= a_split[1].size())
+							//{
+							//	nal_parse_ = libmedia_codec::NalParseFactory::Create(libmedia_codec::ENalHEVCPrase);
+							//}
+							//else
+							//{
+							//	nal_parse_ = libmedia_codec::NalParseFactory::Create(libmedia_codec::ENalHEVCPrase);
+							//}
 						}
 					}
 					
@@ -755,6 +756,14 @@ namespace libmedia_transfer_protocol
 							//RTC_LOG(LS_INFO) << "rtp info :" << rtp_packet_received.ToString();
 							if (rtp_packet_received.PayloadType() == 96)
 							{
+								if (!decoder_init_)
+								{
+									SignalInitDeocder(libmedia_codec::kVideoCodecHevc, rtp_packet_received.Ssrc()
+										, 1280, 720);
+									decoder_init_ = true;
+								}
+								SignalRtpPacket(std::move(rtp_packet_received));
+								
 #if 0
 								std::string rtp_hex = rtc::hex_encode((const char*)rtp_packet_received.PayloadBuffer().cdata(), rtp_packet_received.PayloadBuffer().size());
 
@@ -825,27 +834,27 @@ namespace libmedia_transfer_protocol
 								}
 
 #else 
-								nal_parse_->parse_packet(rtp_packet_received.payload().data(), rtp_packet_received.payload_size());
+								//nal_parse_->parse_packet(rtp_packet_received.payload().data(), rtp_packet_received.payload_size());
 
-								static int32_t rtp_count  = 0;
-								++rtp_count;
-								if (rtp_packet_received.Marker() && rtp_count> 100)
-								{
-									libmedia_codec::EncodedImage encode_image;
-									encode_image.SetEncodedData(
-										libmedia_codec::EncodedImageBuffer::Create( 
-											nal_parse_->buffer_stream_,
-											nal_parse_->buffer_index_
-										));
-									h264_decoder_.Decode(encode_image, true, 1);
-#if 0
-									static FILE* out_file_ptr = fopen("00000test.h264", "wb+");
-									fwrite(h264_nal_decoder_.buffer_stream_, 1, h264_nal_decoder_.buffer_index_, out_file_ptr);
-									fflush(out_file_ptr);
-#endif 
-									nal_parse_->buffer_index_ = 0;
-									//h264_nal_decoder_.bit_stream_.clear();
-								}
+								//static int32_t rtp_count  = 0;
+								//++rtp_count;
+//								if (rtp_packet_received.Marker()  )
+//								{
+//									libmedia_codec::EncodedImage encode_image;
+//									encode_image.SetEncodedData(
+//										libmedia_codec::EncodedImageBuffer::Create( 
+//											nal_parse_->buffer_stream_,
+//											nal_parse_->buffer_index_
+//										));
+//									h264_decoder_.Decode(encode_image, true, 1);
+//#if 0
+//									static FILE* out_file_ptr = fopen("00000test.h264", "wb+");
+//									fwrite(h264_nal_decoder_.buffer_stream_, 1, h264_nal_decoder_.buffer_index_, out_file_ptr);
+//									fflush(out_file_ptr);
+//#endif 
+//									nal_parse_->buffer_index_ = 0;
+//									//h264_nal_decoder_.bit_stream_.clear();
+//								}
 
 								
 #endif 

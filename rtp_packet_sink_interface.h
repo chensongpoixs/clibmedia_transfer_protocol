@@ -20,10 +20,13 @@
 
 #ifndef _C_CALL_RTP_PACKET_SINK_INTERFACE_H_
 #define _C_CALL_RTP_PACKET_SINK_INTERFACE_H_
+#include "libmedia_transfer_protocol/rtp_rtcp/rtp_packet_to_send.h"
+#include "libmedia_transfer_protocol/rtp_rtcp/rtp_packet_received.h"
+
 
 namespace libmedia_transfer_protocol {
 
-class RtpPacketReceived;
+//class RtpPacketReceived;
 
 // This class represents a receiver of already parsed RTP packets.
 class RtpPacketSinkInterface {
