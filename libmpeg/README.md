@@ -1,9 +1,5 @@
 ﻿# libmpeg
 
-![TS、PS、PES、ES数据流关系图](ps_ts_pes_es.png)
-
-![PSI、PAT、PMT、CAT、NIT节目关系](psi_pat_pmt_cat_nit.png)
-
 # 一、数字信号实际传送的是数据流，一般数据流包括以下三种：
 
 1. ES流：也叫基本码流（elementarystream）或裸码流，包含视频、音频或数据的连续码流。
@@ -12,9 +8,15 @@
 
 
 
-# 二、 TS 
+![TS、PS、PES、ES数据流关系图](ps_ts_pes_es.png)
 
-                            PSI 
+#  二、PSI 节目专用信息
+
+![PSI、PAT、PMT、CAT、NIT节目关系](psi_pat_pmt_cat_nit.png)
+
+# 三、 TS 
+
+```                           PSI 
 // PSI
 // -----------------
 //     0                   1                   2                   3
@@ -203,3 +205,4 @@
 // 用于同步声音ES和视频ES的内容。STC是MPEG-2系统里校时的基准。例如，表示时间戳（Presentation timestamp，PTS）的值即是以PCR值为基准的偏移量。
 
 //  2.PCR包括一个33比特的低精度部分（90kHz）和一个9比特的高精度部分（27MHz，取值为0-299）。PCR容许的最大抖动为+/-500ns。
+```
