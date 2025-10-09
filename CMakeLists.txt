@@ -88,6 +88,7 @@ rtp_rtcp/rtp_header_extension_map.cpp
 	 librtsp/*.cpp 
 	 libgb28181/*.h 
 	 libgb28181/*.cpp 
+	 libmpeg/README.md
 	 
 ) 
 
