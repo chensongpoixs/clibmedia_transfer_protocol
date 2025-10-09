@@ -117,13 +117,16 @@ namespace libmedia_transfer_protocol
 						RTC_LOG(LS_INFO) << "rtp info :" << rtp_packet_received.ToString();
 						if (rtp_packet_received.PayloadType() == 96)
 						{
-							//if (!decoder_init_)
-							//{
-							//	SignalInitDeocder(libmedia_codec::kVideoCodecHevc, rtp_packet_received.Ssrc()
-							//		, 1280, 720);
-							//	decoder_init_ = true;
-							//}
-							//SignalRtpPacket(std::move(rtp_packet_received));
+							
+
+							static FILE *out_file_ptr = fopen("test_ps.ts", "wb+");
+							if (out_file_ptr)
+							{
+								fwrite(rtp_packet_received.payload().data(), 1, rtp_packet_received.payload_size(), out_file_ptr);
+							
+								fflush(out_file_ptr);
+							}
+
 							if (!video_receive_stream_)
 							{
 								work_thread_->PostTask(RTC_FROM_HERE, [this, ssrc = rtp_packet_received.Ssrc()]() {
