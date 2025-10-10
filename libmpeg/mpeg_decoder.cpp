@@ -112,6 +112,7 @@ namespace libmedia_transfer_protocol {
 				{
 					RTC_LOG(LS_WARNING) << " size : " << size << ", len : " << len << ", read_byte_: " << read_byte_;;
 				}
+#if 0
 				if (read_byte_ == 0)
 				{
 					if (callback_)
@@ -126,6 +127,7 @@ namespace libmedia_transfer_protocol {
 					}
 					stream_len_ = 0;
 				}
+#endif // 
 			 RTC_LOG(LS_INFO)<< ", size : " << size << ", len : " << len << ", read_byte_: " << read_byte_;;
 			}
 			while  ((size - len) > 4)
@@ -194,6 +196,9 @@ namespace libmedia_transfer_protocol {
 						}
 						case 0XE0/*'\e0'*/:// PES（Packetized Elementary Stream）
 						{
+
+
+
 							// VIdeo
 							program_stream_e* PSEPack = (program_stream_e*)ps;
 							if (size - len < 9)
@@ -214,7 +219,24 @@ namespace libmedia_transfer_protocol {
 								const uint8_t *payload = ps +  sizeof(program_stream_e) + PSEPack->stuffing_length;
 
 								
-
+#if 1
+								// 判断当前是否nal一个包了
+								if (stream_len_ > 4 &&payload[0] == 0x00 && payload[1] == 0X00/*'\00'*/ &&
+									payload[2] == 0X00/*'\00'*/ &&
+									payload[3] == 0X01/*'\01'*/ && callback_
+									) 
+								{
+									libmedia_codec::EncodedImage encode_image;
+									encode_image.SetEncodedData(
+										libmedia_codec::EncodedImageBuffer::Create(
+											h264_stream_,
+											stream_len_
+										));
+									callback_->onFrame(encode_image);
+									stream_len_ = 0;
+								}
+								
+#endif // 
 								
 								// 一帧数据大于 mtu的大小  rtp hreader 12  , rtp payload 1400  就会多个包传输 
 								
@@ -240,19 +262,7 @@ namespace libmedia_transfer_protocol {
 								memcpy(h264_stream_ + stream_len_, payload, payload_size);
 								stream_len_ += payload_size;
 
-#if 0
-								if(callback_)
-								{
-									libmedia_codec::EncodedImage encode_image;
-									encode_image.SetEncodedData(
-										libmedia_codec::EncodedImageBuffer::Create(
-											h264_stream_,
-											stream_len_
-										));
-									callback_->onFrame(encode_image);
-								}
-								stream_len_ = 0;
-#endif // 
+
 #if 0
 								memcpy(h264_stream_ + stream_len_, payload, payload_size);
 								stream_len_ += payload_size;
