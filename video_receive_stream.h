@@ -48,6 +48,7 @@
 #include "libmedia_codec/video_codec_type.h"
 #include "libmedia_codec/video_codecs/h264_decoder.h"
 #include "libmedia_codec/video_codecs/nal_parse_factory.h"
+#include "libmedia_transfer_protocol/libmpeg/mpeg_decoder.h"
 namespace libmedia_transfer_protocol {
 
 
@@ -66,10 +67,13 @@ namespace libmedia_transfer_protocol {
 
 			//h264_decoder_.RegisterDecodeCompleteCallback(callback);
 		}
+
+		void onFrame(libmedia_codec::EncodedImage  image );
 		virtual void OnRtpPacket(const RtpPacketReceived& packet) override;
 	private:
 		std::unique_ptr<libmedia_codec::H264Decoder>        decoder_;
 		std::unique_ptr<libmedia_codec::NalParseInterface>  nal_parse_;
+		std::unique_ptr<libmedia_transfer_protocol::libmpeg::MpegDecoder>    mpeg_decoder_;
 		// callback image 
 		libcross_platform_collection_render::cvideo_renderer * callback_ = nullptr;;
 	};

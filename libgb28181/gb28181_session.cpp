@@ -41,8 +41,13 @@ namespace libmedia_transfer_protocol
 			, rtp_stream_receive_controller_(nullptr)
 			, recv_buffer_(1024 * 1024 * 8)
 			, recv_buffer_size_(0)
+			, mpeg_decoder_()
 		{
 			InitSocketSignals();
+			work_thread_->PostTask(RTC_FROM_HERE, [this]() { 
+				rtp_stream_receive_controller_ = std::make_unique<libmedia_transfer_protocol::RtpStreamReceiverController>();
+				
+			});
 		}
 		Gb28181Session::~Gb28181Session()
 		{
@@ -64,7 +69,7 @@ namespace libmedia_transfer_protocol
 		}
 		void Gb28181Session::OnRead(rtc::Socket* socket)
 		{
-			RTC_LOG_F(LS_INFO) << "";
+		//	RTC_LOG_F(LS_INFO) << "";
 
 			rtc::Buffer buffer(1024 * 1024 *8 );
 
@@ -82,21 +87,49 @@ namespace libmedia_transfer_protocol
 				if (bytes <= 0)
 					break;
 				read_bytes += bytes;
-				if (read_bytes > (buffer.capacity() / 2))
+				if (read_bytes >= (buffer.capacity() ))
 				{
 					break;
 				}
 			} while (true);
+			/*{
+				static FILE *out_file_ptr = fopen("test_ps.rtp", "wb+");
+				if (out_file_ptr)
+				{
+					fwrite(buffer.begin(), 1, read_bytes, out_file_ptr);
 
+					fflush(out_file_ptr);
+				}
+			}*/
+			//return;
 			int32_t   parse_size = 0;
 			while (read_bytes - parse_size > 2) 
 			{
 				//ntohs(*(int16_t*)(buffer.begin()[parse_size]));//ntohs(*(int16_t*)(ptroc)); 
-				//uint8_t  * ptroc = buffer.begin() + parse_size;
-				int16_t  payload_size =   libmedia_transfer_protocol::ByteReader<int16_t>::ReadBigEndian((&buffer.begin()[parse_size]));
+				// uint8_t  * ptroc = buffer.begin() + parse_size;
+				int16_t  payload_size = libmedia_transfer_protocol::ByteReader<int16_t>::ReadBigEndian((&buffer.begin()[parse_size]));
+				/*static FILE * out_file_payload_ptr = fopen("payload_size.log", "wb+");
+				if (out_file_payload_ptr)
+				{
+					static int32_t count = 0;
+					fprintf(out_file_payload_ptr, "[count = %u][payload_size:%u\n", ++count, payload_size);
+					fflush(out_file_payload_ptr);
+				}*/
+				/*int16_t payload_size = 0;
+				int8_t   one = buffer.begin()[parse_size];
+				if (one > 0)
+				{
+					payload_size = one * 16 * 16;
+				}*/
+				//payload_size += buffer.begin()[parse_size+1];
+				if ((read_bytes - parse_size) < (payload_size+2))
+				{
+					RTC_LOG(LS_INFO) << "tcp tail small !!!  (read_bytes -parse_size:"<< (read_bytes - parse_size) <<") payload_size:" << payload_size;
+					break;
+				}
 				parse_size += 2;
 				//parse_size += payload_size;
-				RTC_LOG(LS_INFO) << "payload_size: " << payload_size;
+				//RTC_LOG(LS_INFO) << "payload_size: " << payload_size;
 				//printf("payload_size:%u\n",   payload_size);
 
 #if 1
@@ -114,26 +147,40 @@ namespace libmedia_transfer_protocol
 					}
 					else
 					{
-						RTC_LOG(LS_INFO) << "rtp info :" << rtp_packet_received.ToString();
+						//RTC_LOG(LS_INFO) << "rtp info :" << rtp_packet_received.ToString();
 						if (rtp_packet_received.PayloadType() == 96)
 						{
-							
+#if 0							
+							work_thread_->PostTask(RTC_FROM_HERE, [this, packet = std::move(rtp_packet_received)]() {
 
-							static FILE *out_file_ptr = fopen("test_ps.ts", "wb+");
-							if (out_file_ptr)
-							{
-								fwrite(rtp_packet_received.payload().data(), 1, rtp_packet_received.payload_size(), out_file_ptr);
-							
-								fflush(out_file_ptr);
-							}
+								static int32_t count = 0;
 
+								++count;
+								std::string file = "./ps/ps_" + std::to_string(count) + ".ps";
+
+								FILE *out_file_ptr = fopen(file.c_str(), "wb+");
+								if (out_file_ptr)
+								{
+									fwrite(packet.payload().data(), 1, packet.payload_size(), out_file_ptr);
+
+									fflush(out_file_ptr);
+									fclose(out_file_ptr);
+									out_file_ptr = NULL;
+								}
+
+								mpeg_decoder_.parse(packet.payload().begin(), packet.payload_size());
+								 
+							});
+#endif 							
+#if 1
+							
 							if (!video_receive_stream_)
 							{
 								work_thread_->PostTask(RTC_FROM_HERE, [this, ssrc = rtp_packet_received.Ssrc()]() {
 									video_receive_stream_ = std::make_unique<VideoReceiveStream>();
 									video_receive_stream_->RegisterDecodeCompleteCallback(callback_);
-									video_receive_stream_->init(libmedia_codec::VideoCodecType::kVideoCodecH264, 1280, 720);
-									rtp_stream_receive_controller_ = std::make_unique<libmedia_transfer_protocol::RtpStreamReceiverController>();
+									video_receive_stream_->init(libmedia_codec::VideoCodecType::kVideoCodecGb28181, 1280, 720);
+									//rtp_stream_receive_controller_ = std::make_unique<libmedia_transfer_protocol::RtpStreamReceiverController>();
 									//;
 									rtp_stream_receive_controller_->AddSink(ssrc, video_receive_stream_.get());
 								});
@@ -141,9 +188,9 @@ namespace libmedia_transfer_protocol
 							work_thread_->PostTask(RTC_FROM_HERE, [this,  packet = std::move(rtp_packet_received)]() {
 								rtp_stream_receive_controller_->OnRtpPacket(packet);
 							});
-
+#endif 
 						}
-						parse_size += payload_size;
+						//parse_size += payload_size;
 					}
 				}
 				else if (libmedia_transfer_protocol::IsRtpPacket(rtc::ArrayView<uint8_t>(buffer.begin() + parse_size, payload_size/*read_bytes - paser_size*/)))
@@ -154,19 +201,21 @@ namespace libmedia_transfer_protocol
 					{
 						RTC_LOG(LS_WARNING) << "rtcp parse failed !!!";
 					}
-					else
+					//else
 					{
-						parse_size += payload_size;
+						//parse_size += payload_size;
 						//	RTC_LOG(LS_INFO) << "rtcp info :" << rtcp_block.ToString();
 					}
 				}
 				else
 				{
 					RTC_LOG(LS_ERROR) << " not know type --> : payload_size: " << payload_size;
-					parse_size += payload_size;
+					//parse_size += payload_size;
 				}
+				parse_size += payload_size;
 #endif 
 			}
+			RTC_LOG(LS_INFO) << "read_bytes:" << read_bytes << ", parse_size:" << parse_size;
 			if (read_bytes - parse_size > 0)
 			{
 				memcpy((char *)recv_buffer_.begin(), buffer.begin() + parse_size, (read_bytes - parse_size));
@@ -174,10 +223,11 @@ namespace libmedia_transfer_protocol
 			}
 			else
 			{
+				parse_size = 0;
 				//memcpy((char *)recv_buffer_.begin(), buffer.begin() + parse_size, (read_bytes - parse_size));
 				//recv_buffer_size_ = read_bytes - parse_size;
 			}
-			return;
+		//	return;
 		}
 		void Gb28181Session::OnWrite(rtc::Socket* socket)
 		{

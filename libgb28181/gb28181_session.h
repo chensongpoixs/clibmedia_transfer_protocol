@@ -37,6 +37,7 @@
 #include "libmedia_transfer_protocol/librtsp/rtsp_session.h"
 #include "libmedia_transfer_protocol/video_receive_stream.h"
 #include "libp2p_peerconnection/connection_context.h"
+#include "libmedia_transfer_protocol/libmpeg/mpeg_decoder.h"
 namespace  libmedia_transfer_protocol {
 	namespace libgb28181
 	{
@@ -73,6 +74,7 @@ namespace  libmedia_transfer_protocol {
 			 std::unique_ptr<libmedia_transfer_protocol::RtpStreamReceiverController>       rtp_stream_receive_controller_;
 			 rtc::Buffer  recv_buffer_;
 			 int32_t  recv_buffer_size_ = 0;
+			 libmedia_transfer_protocol::libmpeg::MpegDecoder									mpeg_decoder_;
 		};
 	}
 

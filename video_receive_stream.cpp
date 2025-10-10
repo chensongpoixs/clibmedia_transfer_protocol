@@ -31,32 +31,63 @@ namespace libmedia_transfer_protocol {
 
 		decoder_ = std::make_unique<libmedia_codec::H264Decoder>();
 
-		decoder_->Configure(codec_type, width, height);
+		decoder_->Configure(codec_type == libmedia_codec::kVideoCodecGb28181 ? libmedia_codec::kVideoCodecH264 : codec_type, width, height);
 		decoder_->RegisterDecodeCompleteCallback(callback_);
-		nal_parse_ = libmedia_codec::NalParseFactory::Create(
-			codec_type == libmedia_codec::VideoCodecType::kVideoCodecH264 ?
-			libmedia_codec::ENalParseType::ENalH264Prase : 
-			libmedia_codec::ENalParseType::ENalHEVCPrase);;
+		if (codec_type != libmedia_codec::kVideoCodecGb28181)
+		{
+			nal_parse_ = libmedia_codec::NalParseFactory::Create(
+				codec_type == libmedia_codec::VideoCodecType::kVideoCodecH264 ?
+				libmedia_codec::ENalParseType::ENalH264Prase :
+				libmedia_codec::ENalParseType::ENalHEVCPrase);;
+		}
+		else
+		{
+			mpeg_decoder_ = std::make_unique<libmedia_transfer_protocol::libmpeg::MpegDecoder>();
+			mpeg_decoder_->RegisterDecodeCompleteCallback(this);
+		}
 		return true;
 
 
 		return false;
 	}
-
+	void VideoReceiveStream::onFrame(libmedia_codec::EncodedImage  image)
+	{
+		decoder_->Decode(image, true, 1);
+	}
 	void VideoReceiveStream::OnRtpPacket(const RtpPacketReceived & packet)
 	{
-		nal_parse_->parse_packet(packet.payload().data(), packet.payload_size());
-		if (packet.Marker())
+		if (mpeg_decoder_)
 		{
-			libmedia_codec::EncodedImage encode_image;
+			mpeg_decoder_->parse(packet.payload().data(), packet.payload_size());
+#if 0
+			if (mpeg_decoder_->stream_len_ > 0 && mpeg_decoder_->read_byte_ == 0)
+			{
+
+			}libmedia_codec::EncodedImage encode_image;
 			encode_image.SetEncodedData(
 				libmedia_codec::EncodedImageBuffer::Create(
-					nal_parse_->buffer_stream_,
-					nal_parse_->buffer_index_
+					mpeg_decoder_->h264_stream_,
+					mpeg_decoder_->stream_len_
 				));
 			decoder_->Decode(encode_image, true, 1);
-			nal_parse_->buffer_index_ = 0;
-			//decoder_->Decode();
+			mpeg_decoder_->stream_len_ = 0;
+#endif // 
+		}
+		else if (nal_parse_)
+		{
+			nal_parse_->parse_packet(packet.payload().data(), packet.payload_size());
+			if (packet.Marker())
+			{
+				libmedia_codec::EncodedImage encode_image;
+				encode_image.SetEncodedData(
+					libmedia_codec::EncodedImageBuffer::Create(
+						nal_parse_->buffer_stream_,
+						nal_parse_->buffer_index_
+					));
+				decoder_->Decode(encode_image, true, 1);
+				nal_parse_->buffer_index_ = 0;
+				//decoder_->Decode();
+			}
 		}
 	}
 
