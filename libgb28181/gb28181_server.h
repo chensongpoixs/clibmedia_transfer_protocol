@@ -36,6 +36,7 @@
 #include "libmedia_transfer_protocol/librtsp/rtsp_session.h"
 #include "libmedia_transfer_protocol/video_receive_stream.h"
 #include "libp2p_peerconnection/connection_context.h"
+#include "libcross_platform_collection_render/audio_capture/audio_capture.h"
 #include "libmedia_transfer_protocol/libgb28181/gb28181_session.h"
 namespace  libmedia_transfer_protocol {
 	namespace libgb28181
@@ -81,7 +82,7 @@ namespace  libmedia_transfer_protocol {
 
 			std::map<rtc::Socket*, std::unique_ptr<libgb28181::Gb28181Session>>						gb28181_sessions_;
 
-
+			//std::unique_ptr<libcross_platform_collection_render::AudioCapture>						audio_play_;
 			libcross_platform_collection_render::cvideo_renderer * callback_ = nullptr;;
 
 		};

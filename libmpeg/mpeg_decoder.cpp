@@ -21,6 +21,16 @@
 #include "libmedia_codec/encoded_frame.h"
 #include "libmedia_codec/encoded_image.h"
 #include "libmedia_transfer_protocol/video_receive_stream.h"
+#include "libmedia_codec/audio_codec/audio_decoder.h"
+extern "C" {
+	//#include "lib"
+	//#include "libavcodec/avcodec.h"
+	//#include "libavutil/imgutils.h"
+#include "libavcodec/adts_parser.h"
+#include "libavcodec/adts_parser.h"
+#include "libavcodec/avcodec.h"
+#include "libavutil/imgutils.h"
+}  // extern "C"
 namespace libmedia_transfer_protocol {
 	namespace libmpeg
 	{
@@ -232,7 +242,7 @@ namespace libmedia_transfer_protocol {
 											h264_stream_,
 											stream_len_
 										));
-									callback_->onFrame(encode_image);
+									callback_->OnVideoFrame(encode_image);
 									stream_len_ = 0;
 								}
 								
@@ -293,6 +303,32 @@ namespace libmedia_transfer_protocol {
 							size_t playload_size = pse_length.length - 2 - 1 - PSEPack->stuffing_length;
 							if (playload_size > 0)
 							{
+								const uint8_t *payload = ps + sizeof(program_stream_e) + PSEPack->stuffing_length;
+
+								if (callback_)
+								{
+									rtc::Buffer frame(payload, playload_size);
+									callback_->OnAudioFrame(std::move(frame));
+								}
+
+#if 0
+								static std::unique_ptr< libmedia_codec::AudioDecoder>  audio_codec;
+								if (!audio_codec)
+								{
+									audio_codec = std::make_unique<libmedia_codec::AudioDecoder>();
+									audio_codec->Configure();
+								}
+								// 解析adts 头获取aaac的es的数据
+								//av_adts_header_parse(payload, playload_size);
+
+								
+								static FILE * out_file_ptr = fopen("test_ps.aac", "wb+");
+								if (out_file_ptr)
+								{
+									fwrite(payload, 1, playload_size, out_file_ptr);
+									fflush(out_file_ptr);
+								}
+#endif // 
 								//ps += sizeof(program_stream_e) + PSEPack->stuffing_length;
 							}
 

@@ -42,9 +42,12 @@ namespace libmedia_transfer_protocol
 			, recv_buffer_(1024 * 1024 * 8)
 			, recv_buffer_size_(0)
 			, mpeg_decoder_()
+			, audio_play_(nullptr)
 		{
 			InitSocketSignals();
 			work_thread_->PostTask(RTC_FROM_HERE, [this]() { 
+				audio_play_ = std::make_unique<libcross_platform_collection_render::AudioCapture>(work_thread_);
+				audio_play_->StartPlayout("");
 				rtp_stream_receive_controller_ = std::make_unique<libmedia_transfer_protocol::RtpStreamReceiverController>();
 				
 			});
@@ -176,17 +179,26 @@ namespace libmedia_transfer_protocol
 							
 							if (!video_receive_stream_)
 							{
-								work_thread_->PostTask(RTC_FROM_HERE, [this, ssrc = rtp_packet_received.Ssrc()]() {
-									video_receive_stream_ = std::make_unique<VideoReceiveStream>();
-									video_receive_stream_->RegisterDecodeCompleteCallback(callback_);
-									video_receive_stream_->init(libmedia_codec::VideoCodecType::kVideoCodecGb28181, 1280, 720);
-									//rtp_stream_receive_controller_ = std::make_unique<libmedia_transfer_protocol::RtpStreamReceiverController>();
-									//;
-									rtp_stream_receive_controller_->AddSink(ssrc, video_receive_stream_.get());
-								});
+								 
+								{
+									work_thread_->PostTask(RTC_FROM_HERE, [this, ssrc = rtp_packet_received.Ssrc()]() {
+										if (video_receive_stream_)
+										{
+											return;
+										}
+										video_receive_stream_ = std::make_unique<VideoReceiveStream>();
+										video_receive_stream_->RegisterDecodeCompleteCallback(callback_);
+										video_receive_stream_->RegisterAudioPlayCallback(audio_play_.get());
+										video_receive_stream_->init(libmedia_codec::VideoCodecType::kVideoCodecGb28181, 1280, 720);
+										//rtp_stream_receive_controller_ = std::make_unique<libmedia_transfer_protocol::RtpStreamReceiverController>();
+										//;
+										rtp_stream_receive_controller_->AddSink(ssrc, video_receive_stream_.get());
+									});
+								}
 							}
 							work_thread_->PostTask(RTC_FROM_HERE, [this,  packet = std::move(rtp_packet_received)]() {
 								rtp_stream_receive_controller_->OnRtpPacket(packet);
+								//packet.Clear();
 							});
 #endif 
 						}

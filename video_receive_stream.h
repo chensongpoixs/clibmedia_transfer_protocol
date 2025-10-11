@@ -49,6 +49,8 @@
 #include "libmedia_codec/video_codecs/h264_decoder.h"
 #include "libmedia_codec/video_codecs/nal_parse_factory.h"
 #include "libmedia_transfer_protocol/libmpeg/mpeg_decoder.h"
+#include "libcross_platform_collection_render/audio_capture/audio_capture.h"
+#include "libmedia_codec/audio_codec/audio_decoder.h"
 namespace libmedia_transfer_protocol {
 
 
@@ -61,21 +63,36 @@ namespace libmedia_transfer_protocol {
 		virtual ~VideoReceiveStream();
 	public:
 		bool init(libmedia_codec::VideoCodecType  codec_type, int32_t width, int32_t height);
+		
 		void RegisterDecodeCompleteCallback(libcross_platform_collection_render::cvideo_renderer * callback)
 		{
 			callback_ = callback;
 
 			//h264_decoder_.RegisterDecodeCompleteCallback(callback);
 		}
+		void RegisterAudioPlayCallback(libcross_platform_collection_render::AudioCapture* callback)
+		{
+			audio_play_ = callback;
+			if (!audio_decder_)
+			{
+				audio_decder_ = std::make_unique<libmedia_codec::AudioDecoder>();
+				audio_decder_->Configure();
+				audio_decder_->RegisterDecodeCompleteCallback(audio_play_);
+			}
+		}
 
-		void onFrame(libmedia_codec::EncodedImage  image );
+		void OnVideoFrame(libmedia_codec::EncodedImage  image );
+
+		void OnAudioFrame(rtc::Buffer frame);
 		virtual void OnRtpPacket(const RtpPacketReceived& packet) override;
 	private:
 		std::unique_ptr<libmedia_codec::H264Decoder>        decoder_;
+		std::unique_ptr<libmedia_codec::AudioDecoder>      audio_decder_;
 		std::unique_ptr<libmedia_codec::NalParseInterface>  nal_parse_;
 		std::unique_ptr<libmedia_transfer_protocol::libmpeg::MpegDecoder>    mpeg_decoder_;
 		// callback image 
 		libcross_platform_collection_render::cvideo_renderer * callback_ = nullptr;;
+		libcross_platform_collection_render::AudioCapture *    audio_play_ = nullptr;
 	};
 
 //class RtpPacketSinkInterface;

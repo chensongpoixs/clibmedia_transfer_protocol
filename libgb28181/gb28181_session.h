@@ -38,6 +38,7 @@
 #include "libmedia_transfer_protocol/video_receive_stream.h"
 #include "libp2p_peerconnection/connection_context.h"
 #include "libmedia_transfer_protocol/libmpeg/mpeg_decoder.h"
+#include "libcross_platform_collection_render/audio_capture/audio_capture.h"
 namespace  libmedia_transfer_protocol {
 	namespace libgb28181
 	{
@@ -75,6 +76,8 @@ namespace  libmedia_transfer_protocol {
 			 rtc::Buffer  recv_buffer_;
 			 int32_t  recv_buffer_size_ = 0;
 			 libmedia_transfer_protocol::libmpeg::MpegDecoder									mpeg_decoder_;
+			// libcross_platform_collection_render::cvideo_renderer * callback_ = nullptr;;
+			 std::unique_ptr<libcross_platform_collection_render::AudioCapture>						audio_play_;
 		};
 	}
 

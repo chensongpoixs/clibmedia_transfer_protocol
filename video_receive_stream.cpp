@@ -30,9 +30,12 @@ namespace libmedia_transfer_protocol {
 
 
 		decoder_ = std::make_unique<libmedia_codec::H264Decoder>();
-
+		
 		decoder_->Configure(codec_type == libmedia_codec::kVideoCodecGb28181 ? libmedia_codec::kVideoCodecH264 : codec_type, width, height);
 		decoder_->RegisterDecodeCompleteCallback(callback_);
+
+		
+
 		if (codec_type != libmedia_codec::kVideoCodecGb28181)
 		{
 			nal_parse_ = libmedia_codec::NalParseFactory::Create(
@@ -44,15 +47,56 @@ namespace libmedia_transfer_protocol {
 		{
 			mpeg_decoder_ = std::make_unique<libmedia_transfer_protocol::libmpeg::MpegDecoder>();
 			mpeg_decoder_->RegisterDecodeCompleteCallback(this);
+
+			
 		}
 		return true;
 
 
 		return false;
 	}
-	void VideoReceiveStream::onFrame(libmedia_codec::EncodedImage  image)
+	void VideoReceiveStream::OnVideoFrame(libmedia_codec::EncodedImage  image)
 	{
 		decoder_->Decode(image, true, 1);
+	}
+	void VideoReceiveStream::OnAudioFrame(rtc::Buffer frame)
+	{
+		//·ÖÀë adts 
+#if 0
+
+		uint8_t  pdata[7] = {
+	0xff, /*1111 1111*/
+	0xf1, /*1111 0001*/
+	0x60, /*0110 0000*/
+	0x40, /*0100 0000*/
+	0x1f, /*0001 1111*/
+	0x7f, /*011-1 1111*/
+	0xfc  /*1111 1100*/
+		};
+		uint8_t *data = pdata;
+		uint8_t p = data[3];
+		int32_t   frame_length = (p & 0x03);
+		frame_length <<= 8;
+		int32_t p2 = data[4];
+		frame_length |= p2;
+		frame_length <<= 3;
+		int32_t p3 = data[5];
+		int32_t  ff = ((p3 >> 5));
+		frame_length |= ff;
+
+#endif // 
+		uint8_t *data = frame.begin();
+		uint8_t p = data[3];
+		int32_t   frame_length = (p & 0x03);
+		frame_length <<= 8;
+		int32_t p2 = data[4];
+		frame_length |= p2;
+		frame_length <<= 3;
+		int32_t p3 = data[5];
+		int32_t  ff = ((p3 >> 5));
+		frame_length |= ff;
+		rtc::Buffer  new_aac_data(frame.begin() + 7, frame_length);
+		audio_decder_->Decode(std::move(new_aac_data), 1);
 	}
 	void VideoReceiveStream::OnRtpPacket(const RtpPacketReceived & packet)
 	{

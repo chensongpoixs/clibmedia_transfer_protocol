@@ -27,7 +27,12 @@ namespace  libmedia_transfer_protocol {
 		Gb28181Server::Gb28181Server()
 			: context_(libp2p_peerconnection::ConnectionContext::Create())
 			, gb28181_sessions_()
+			//, audio_play_(nullptr)
 		{
+
+			//context_->worker_thread()->PostTask([this]() {
+			//	audio_play_ = std::make_unique<libcross_platform_collection_render::AudioCapture>(context_->worker_thread());
+			//});
 		}
 
 		Gb28181Server::~Gb28181Server()
