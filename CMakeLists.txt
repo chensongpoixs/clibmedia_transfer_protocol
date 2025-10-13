@@ -91,6 +91,9 @@ rtp_rtcp/rtp_header_extension_map.cpp
 	 libmpeg/README.md
 	 libmpeg/*.cpp 
 	 libmpeg/*.h 
+	# libsip/*.sip
+	# libsip/*.h 
+	# libsip/*.cpp 
 	 
 ) 
 
