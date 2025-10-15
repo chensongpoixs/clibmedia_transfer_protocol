@@ -30,28 +30,33 @@ namespace libmedia_transfer_protocol {
 		 {
 			 if (network_->IsCurrent())
 			 {
+#if 1
 				 //udp_control_socket_->SignalCloseEvent.disconnect(this);
 				 //udp_control_socket_->SignalConnectEvent.disconnect(this);
-				// udp_control_socket_->SignalReadyToSend.disconnect(this);
-				// udp_control_socket_->SignalReadPacket.disconnect(this);
-
-
+				 udp_control_socket_->SignalReadyToSend.disconnect(this);
+				 udp_control_socket_->SignalReadPacket.disconnect(this);
+#else 
 				 control_socket_->SignalCloseEvent.disconnect(this);
 				 control_socket_->SignalConnectEvent.disconnect(this);
 				 control_socket_->SignalReadEvent.disconnect(this);
 				 control_socket_->SignalWriteEvent.disconnect(this);
+#endif // 
 			 }
 			 else
 			 {
-				 network_->PostTask(RTC_FROM_HERE, [this/*, socket = std::move(udp_control_socket_)*/]() {
-					 //socket->SignalReadPacket.disconnect(this);
-					// socket->SignalReadyToSend.disconnect(this);
+				 network_->PostTask(RTC_FROM_HERE, [ this,  socket = std::move(udp_control_socket_) ]() {
+					
+#if 0
 					 control_socket_->SignalCloseEvent.disconnect(this);
 					 control_socket_->SignalConnectEvent.disconnect(this);
 					 control_socket_->SignalReadEvent.disconnect(this);
 					 control_socket_->SignalWriteEvent.disconnect(this);
+#else 
+					 socket->SignalReadPacket.disconnect(this);
+				     socket->SignalReadyToSend.disconnect(this);
 					//socket->SignalReadEvent.disconnect(this);
 					//socket->SignalWriteEvent.disconnect(this);
+#endif // 
 				 });
 			 }
 
@@ -65,15 +70,15 @@ namespace libmedia_transfer_protocol {
 			 {
 
 
-				 // udp_control_socket_.reset(  rtc::AsyncUDPSocket::Create(network_->socketserver(), server_address_));
-				 control_socket_.reset(network_->socketserver()->CreateSocket(server_address_.ipaddr().family(), SOCK_DGRAM));
-				 if (!control_socket_)
+				  udp_control_socket_.reset(  rtc::AsyncUDPSocket::Create(network_->socketserver(), server_address_));
+				 //control_socket_.reset(network_->socketserver()->CreateSocket(server_address_.ipaddr().family(), SOCK_DGRAM));
+				 if (!udp_control_socket_)
 				 {
 					 LIBRTC_LOG_T_F(LS_WARNING) << "create rtc udp server  socket failed !!! " << server_address_.ToString();
 					 return;
 				 }
 				 InitSocketSignals();
-				 int32_t ret = control_socket_->Bind(server_address_);
+				 /*int32_t ret = control_socket_->Bind(server_address_);
 				 if (ret != 0)
 				 {
 					 LIBRTC_LOG(LS_WARNING) << "bind socket failed !!! " << server_address_.ToString();
@@ -85,21 +90,21 @@ namespace libmedia_transfer_protocol {
 				 {
 					 LIBRTC_LOG(LS_WARNING) << "Listen socket failed !!! " << server_address_.ToString();
 					 return;
-				 }
+				 }*/
 				 LIBRTC_LOG(LS_INFO) << " start rtc udp server port:" << server_address_.port() << ", start OK!!!";
 			 }
 			 else
 			 {
 				 network_->Invoke<void>(RTC_FROM_HERE, [this]() {
-					 // udp_control_socket_.reset(  rtc::AsyncUDPSocket::Create(network_->socketserver(), server_address_));
-					 control_socket_.reset(network_->socketserver()->CreateSocket(server_address_.ipaddr().family(), SOCK_DGRAM));
-					 if (!control_socket_)
+					  udp_control_socket_.reset(  rtc::AsyncUDPSocket::Create(network_->socketserver(), server_address_));
+					// control_socket_.reset(network_->socketserver()->CreateSocket(server_address_.ipaddr().family(), SOCK_DGRAM));
+					 if (!udp_control_socket_)
 					 {
 						 LIBRTC_LOG_T_F(LS_WARNING) << "create rtc udp server  socket failed !!! " << server_address_.ToString();
 						 return;
 					 }
 					 InitSocketSignals();
-					 int32_t ret = control_socket_->Bind(server_address_);
+					/* int32_t ret = control_socket_->Bind(server_address_);
 					 if (ret != 0)
 					 {
 						 LIBRTC_LOG(LS_WARNING) << "bind socket failed !!! " << server_address_.ToString();
@@ -111,7 +116,7 @@ namespace libmedia_transfer_protocol {
 					 {
 						 LIBRTC_LOG(LS_WARNING) << "Listen socket failed !!! " << server_address_.ToString();
 						 return;
-					 }
+					 }*/
 					 LIBRTC_LOG(LS_INFO) << " start rtc udp server port:" << server_address_.port() << ", start OK!!!";
 				 });
 			 }
@@ -166,14 +171,18 @@ namespace libmedia_transfer_protocol {
 		 }
 		 void RtcServer::InitSocketSignals()
 		 {
-			// udp_control_socket_->SignalReadPacket.connect(this, &RtcServer::OnRecvPacket);
-               ///udp_control_socket_->SignalReadyToSend.connect(this, &RtcServer::OnSend);
+			
 
+#if 1
+			 udp_control_socket_->SignalReadPacket.connect(this, &RtcServer::OnRecvPacket);
+			 udp_control_socket_->SignalReadyToSend.connect(this, &RtcServer::OnSend);
+#else 
 
 			  control_socket_->SignalCloseEvent.connect(this, &RtcServer::OnClose);
 			  control_socket_->SignalConnectEvent.connect(this, &RtcServer::OnConnect);
 			  control_socket_->SignalReadEvent.connect(this, &RtcServer::OnRead);
 			  control_socket_->SignalWriteEvent.connect(this, &RtcServer::OnWrite);
+#endif 
 			// udp_control_socket_->SignalReadEvent.connect(this, &RtcServer::OnRead);
 			// udp_control_socket_->SignalWriteEvent.connect(this, &RtcServer::OnWrite);
 		 }

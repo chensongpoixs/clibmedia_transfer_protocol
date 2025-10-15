@@ -159,9 +159,11 @@ namespace libmedia_transfer_protocol {
 			rtc::Thread*   network_;
 
 			rtc::SocketAddress               server_address_;
+#if 1
 			std::unique_ptr<rtc::AsyncPacketSocket>      udp_control_socket_;
+#else 
 			std::unique_ptr<rtc::Socket>       control_socket_;
-
+#endif 
 		};
 
 	}
