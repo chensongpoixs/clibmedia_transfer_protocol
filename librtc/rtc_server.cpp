@@ -61,29 +61,60 @@ namespace libmedia_transfer_protocol {
 		 {
 			 server_address_.SetIP(ip);
 			 server_address_.SetPort(port);
+			 if (network_->IsCurrent())
+			 {
 
-			// udp_control_socket_.reset(  rtc::AsyncUDPSocket::Create(network_->socketserver(), server_address_));
-			 control_socket_.reset(network_->socketserver()->CreateSocket(server_address_.ipaddr().family(), SOCK_DGRAM));
-			 if (!control_socket_)
-			 {
-				 LIBRTC_LOG_T_F(LS_WARNING) << "create rtc udp server  socket failed !!! " << server_address_.ToString();
-				 return  ;
-			 }
-			 InitSocketSignals();
-			 int32_t ret = control_socket_->Bind(server_address_);
-			 if (ret != 0)
-			 {
-				 LIBRTC_LOG(LS_WARNING) << "bind socket failed !!! " << server_address_.ToString();
-				 return  ;
-			 }
 
-			 ret = control_socket_->Listen(5);
-			 if (ret != 0)
-			 {
-				 LIBRTC_LOG(LS_WARNING) << "Listen socket failed !!! " << server_address_.ToString();
-				 return  ;
+				 // udp_control_socket_.reset(  rtc::AsyncUDPSocket::Create(network_->socketserver(), server_address_));
+				 control_socket_.reset(network_->socketserver()->CreateSocket(server_address_.ipaddr().family(), SOCK_DGRAM));
+				 if (!control_socket_)
+				 {
+					 LIBRTC_LOG_T_F(LS_WARNING) << "create rtc udp server  socket failed !!! " << server_address_.ToString();
+					 return;
+				 }
+				 InitSocketSignals();
+				 int32_t ret = control_socket_->Bind(server_address_);
+				 if (ret != 0)
+				 {
+					 LIBRTC_LOG(LS_WARNING) << "bind socket failed !!! " << server_address_.ToString();
+					 return;
+				 }
+
+				 ret = control_socket_->Listen(5);
+				 if (ret != 0)
+				 {
+					 LIBRTC_LOG(LS_WARNING) << "Listen socket failed !!! " << server_address_.ToString();
+					 return;
+				 }
+				 LIBRTC_LOG(LS_INFO) << " start rtc udp server port:" << server_address_.port() << ", start OK!!!";
 			 }
-			 LIBRTC_LOG(LS_INFO) << " start rtc udp server port:" << server_address_.port() << ", start OK!!!";
+			 else
+			 {
+				 network_->Invoke<void>(RTC_FROM_HERE, [this]() {
+					 // udp_control_socket_.reset(  rtc::AsyncUDPSocket::Create(network_->socketserver(), server_address_));
+					 control_socket_.reset(network_->socketserver()->CreateSocket(server_address_.ipaddr().family(), SOCK_DGRAM));
+					 if (!control_socket_)
+					 {
+						 LIBRTC_LOG_T_F(LS_WARNING) << "create rtc udp server  socket failed !!! " << server_address_.ToString();
+						 return;
+					 }
+					 InitSocketSignals();
+					 int32_t ret = control_socket_->Bind(server_address_);
+					 if (ret != 0)
+					 {
+						 LIBRTC_LOG(LS_WARNING) << "bind socket failed !!! " << server_address_.ToString();
+						 return;
+					 }
+
+					 ret = control_socket_->Listen(5);
+					 if (ret != 0)
+					 {
+						 LIBRTC_LOG(LS_WARNING) << "Listen socket failed !!! " << server_address_.ToString();
+						 return;
+					 }
+					 LIBRTC_LOG(LS_INFO) << " start rtc udp server port:" << server_address_.port() << ", start OK!!!";
+				 });
+			 }
 			 return  ;
 		 }
 		 void RtcServer::OnRecvPacket(rtc::AsyncPacketSocket * socket, const char * data, size_t len, const rtc::SocketAddress & addr, const int64_t & ms)
@@ -169,15 +200,15 @@ namespace libmedia_transfer_protocol {
 		 void RtcServer::OnConnect(rtc::Socket* socket)
 		 {
 
-			 RTC_LOG_F(LS_INFO) << "";
+			 LIBRTC_LOG_T_F(LS_INFO) << "";
 		 }
 		 void RtcServer::OnClose(rtc::Socket* socket, int ret)
 		 {
-			 RTC_LOG_F(LS_INFO) << "";
+			 LIBRTC_LOG_T_F(LS_INFO) << "";
 		 }
 		 void RtcServer::OnRead(rtc::Socket* socket)
 		 {
-			 RTC_LOG_F(LS_INFO) << "";
+			 LIBRTC_LOG_T_F(LS_INFO) << "";
 			 // UDP // mtu 1500
 			 rtc::Buffer buffer(2000);
 			 buffer.SetSize(0);
@@ -222,7 +253,7 @@ namespace libmedia_transfer_protocol {
 		 }
 		 void RtcServer::OnWrite(rtc::Socket* socket)
 		 {
-			 RTC_LOG_F(LS_INFO) << "";
+			 LIBRTC_LOG_T_F(LS_INFO) << "";
 		 }
 
 	}
