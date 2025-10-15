@@ -29,6 +29,7 @@
 #include "rtc_base/third_party/sigslot/sigslot.h"
 #ifdef WIN32
 #include "rtc_base/win32_socket_server.h"
+#include <vcruntime.h>
 #endif
 #include "libp2p_peerconnection/csession_description.h"
 #include "libmedia_transfer_protocol/rtp_video_frame_assembler.h"
@@ -38,6 +39,7 @@
 #include "libcross_platform_collection_render/video_render/cvideo_render_factory.h"
 #include "libcross_platform_collection_render/video_render/cvideo_render.h"
 #include "libcross_platform_collection_render/track_capture/ctrack_capture.h"
+#include <cstdint>
 extern "C" {
 
 

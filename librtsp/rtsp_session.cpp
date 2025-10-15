@@ -19,6 +19,13 @@
 #include "libmedia_transfer_protocol/librtsp/rtsp_session.h"
 #ifdef WIN32
 #include "rtc_base/win32_socket_server.h"
+ 
+#include "rtc_base/win32_socket_server.h"
+#include <vcruntime.h>
+#include <cstdint>
+#include<cstdalign>
+#include <cstdbool>
+#include <cstdlib>
 #endif
 #include "rtc_base/string_encode.h"
 #include "rtc_base/thread.h"
@@ -115,7 +122,7 @@ namespace libmedia_transfer_protocol
 
 
 			//std::string ha1_digest;
-			//std::string ha1 = "admin:IP Camera(FB997):Cs@563519" ;
+			//std::string ha1 = "admin:IP Camera(FB997):hik@12345" ;
 			//bool size = rtc::ComputeDigest(rtc::DIGEST_MD5, ha1,
 			//	&ha1_digest);
 			//
@@ -280,7 +287,7 @@ namespace libmedia_transfer_protocol
 				}
 			}
 #endif //
-			//rtsp://admin:Cs@563519@192.168.1.64/streaming/channels/101
+			//rtsp://admin:hik@12345@192.168.1.64/streaming/channels/101
 			std::vector<std::string> fields;
 			rtc::split(url, '/', &fields);
 			if (fields.size() < 2) 
@@ -308,7 +315,7 @@ namespace libmedia_transfer_protocol
 			{
 				//说明有用户名和密码
 				//拿出用户名和密码
-				// admin:Cs@563519
+				// admin:hik@12345
 				std::string temp_user_info   ;
 				temp_user_info = url_fields[0];
 				for (size_t i = 1; i < url_fields.size()-1; ++i)
@@ -375,7 +382,7 @@ namespace libmedia_transfer_protocol
 			cmd << kRtspEnd;
 			// send 
 			RTC_LOG(LS_INFO) << cmd.str();
-			size_t sent = socket->Send(cmd.str().c_str(), cmd.str().length());
+			int32_t  sent = socket->Send(cmd.str().c_str(), cmd.str().length());
 			RTC_DCHECK(sent == cmd.str().length());
 		}
 		void RtspSession::SendDescribe(rtc::Socket * socket)
@@ -420,7 +427,7 @@ namespace libmedia_transfer_protocol
 			cmd << kRtspEnd;
 			RTC_LOG(LS_INFO) << cmd.str();
 			// send 
-			size_t sent = socket->Send(cmd.str().c_str(), cmd.str().length());
+			int32_t sent = socket->Send(cmd.str().c_str(), cmd.str().length());
 			RTC_DCHECK(sent == cmd.str().length());
 		}
 		void RtspSession::SendSetup(rtc::Socket * socket)
@@ -475,7 +482,7 @@ namespace libmedia_transfer_protocol
 			cmd << kRtspEnd;
 			RTC_LOG(LS_INFO) << cmd.str();
 			// send 
-			size_t sent = socket->Send(cmd.str().c_str(), cmd.str().length());
+			int32_t sent = socket->Send(cmd.str().c_str(), cmd.str().length());
 			RTC_DCHECK(sent == cmd.str().length());
 
 		}
@@ -508,7 +515,7 @@ namespace libmedia_transfer_protocol
 			cmd << kRtspEnd;
 			RTC_LOG(LS_INFO) << cmd.str();
 			// send 
-			size_t sent = socket->Send(cmd.str().c_str(), cmd.str().length());
+			int32_t sent = socket->Send(cmd.str().c_str(), cmd.str().length());
 			RTC_DCHECK(sent == cmd.str().length());
 		}
 		void RtspSession::HandlerContentType(rtc::Socket * socket, std::vector<std::string> data)
@@ -520,7 +527,7 @@ namespace libmedia_transfer_protocol
 				return;
 			}
 			libp2p_peerconnection::ContentInfo * content_info = nullptr;
-			for (size_t i = 4; i < data.size(); ++i)
+			for (int32_t i = 4; i < data.size(); ++i)
 			{
 				std::vector<std::string>  splited;
 				rtc::split(data[i], '=', &splited);
@@ -737,6 +744,9 @@ namespace libmedia_transfer_protocol
 					}
 					paser_size += sizeof(RtspMagic);
 					//  RTP 中  padding 
+					// 1. 长度至少12字节
+					// 2. 第一个字节为[128,191]
+					// 3. payload_type不在[63, 96]的范围内
 					if (libmedia_transfer_protocol::IsRtpPacket(rtc::ArrayView<uint8_t>(buffer.begin() + paser_size, rtsp_magic.length_)))
 					{
 
@@ -865,8 +875,9 @@ namespace libmedia_transfer_protocol
 							
 						}
 					}
-					else if (libmedia_transfer_protocol::IsRtpPacket(rtc::ArrayView<uint8_t>(buffer.begin() + paser_size, rtsp_magic.length_/*read_bytes - paser_size*/)))
+					else if (libmedia_transfer_protocol::IsRtcpPacket(rtc::ArrayView<uint8_t>(buffer.begin() + paser_size, rtsp_magic.length_/*read_bytes - paser_size*/)))
 					{
+					// rtcp payload_type  在[63, 96)范围内
 						libmedia_transfer_protocol::rtcp::CommonHeader rtcp_block;  //rtcp_packet;
 						bool ret = rtcp_block.Parse(buffer.begin() + paser_size, rtsp_magic.length_/* read_bytes - paser_size*/);
 						if (!ret)
@@ -894,7 +905,7 @@ namespace libmedia_transfer_protocol
 						RTC_LOG(LS_INFO) << "rtp info :" << rtp_packet.ToString();
 					}
 				}
-				else if (libmedia_transfer_protocol::IsRtpPacket(rtc::ArrayView<uint8_t>(buffer.begin() + paser_size, read_bytes - paser_size)))
+				else if (libmedia_transfer_protocol::IsRtcpPacket(rtc::ArrayView<uint8_t>(buffer.begin() + paser_size, read_bytes - paser_size)))
 				{
 					libmedia_transfer_protocol::rtcp::CommonHeader rtcp_block;  //rtcp_packet;
 					bool ret = rtcp_block.Parse(buffer.begin() + paser_size, read_bytes - paser_size);

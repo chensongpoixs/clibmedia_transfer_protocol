@@ -91,10 +91,18 @@ rtp_rtcp/rtp_header_extension_map.cpp
 	 libmpeg/README.md
 	 libmpeg/*.cpp 
 	 libmpeg/*.h 
-	# libsip/*.sip
-	# libsip/*.h 
-	# libsip/*.cpp 
-	 
+	 libsip/*.sip
+	 libsip/*.h 
+	 libsip/*.cpp 
+	#user/*.h 
+	#user/*.cpp 
+	#push/*.h
+	#push/*.cpp 
+	#play/*.h 
+	#play/*.cpp 
+	 librtc/*.h 
+	 librtc/*.cpp 
+
 ) 
 
 
@@ -128,3 +136,13 @@ endforeach()
 #set_property(TARGET ${PROJECT_NAME}  				PROPERTY FOLDER libice) 
 
 #file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+
+
+# STUN  
+# 1. 大于20字节  第一个字节大于0小于3
+# DTLS
+# 1. 大于13字节  第一字节大于20小于63 
+#//  RTP 中  padding 
+# 1. 长度至少12字节
+# 2. 第一个字节为[128,191]
+# 3. payload_type不在[63, 96]的范围内
