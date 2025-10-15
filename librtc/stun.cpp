@@ -96,54 +96,72 @@ namespace libmedia_transfer_protocol {
 			//PacketPtr packet = Packet::NewPacket(512);
 			uint8_t *data = packet.begin();//packet->Data();
 
-			/*data +=*/ ByteWriter<uint16_t>::WriteBigEndian(data, (uint16_t)type_);
-			data += 2;
-			/*data +=*/ ByteWriter<uint16_t>::WriteBigEndian(data, (uint16_t)0);
-			data += 2;
-			/*data +=*/ ByteWriter<uint32_t>::WriteBigEndian(data, (uint32_t)kStunMagicCookie);
-			data += 2;
-			std::memcpy(data, transcation_id_.c_str(), transcation_id_.size());
-			data += 12;
-			stun_length += 12;
+			/*data +=*/ ByteWriter<uint16_t>::WriteBigEndian(data + stun_length, (uint16_t)type_);
+			//data += 2;
+			stun_length += 2;
+			/*data +=*/ ByteWriter<uint16_t>::WriteBigEndian(data + stun_length, (uint16_t)0);
+			stun_length += 2;
+			//data += 2;
+			/*data +=*/ ByteWriter<uint32_t>::WriteBigEndian(data + stun_length, (uint32_t)kStunMagicCookie);
+			stun_length += 4;
+			//data += 4;
+			//stun_length += 6;
+			std::memcpy(data + stun_length, transcation_id_.c_str(), transcation_id_.size());
+			//data += 12;
+			stun_length += transcation_id_.size();
 			//packet.SetSize(12);
-			int32_t padding_bytes = (4 - user_name_.size() % 4) % 4;
-			ByteWriter<uint16_t>::WriteBigEndian(data, (uint16_t)kStunAttrUsername);
-			ByteWriter<uint16_t>::WriteBigEndian(data + 2, (uint16_t)user_name_.size());
-			std::memcpy(data + 4, user_name_.c_str(), user_name_.size());
+			int32_t padding_bytes = (4- user_name_.size() % 4) % 4;
+			ByteWriter<uint16_t>::WriteBigEndian(data + stun_length, (uint16_t)kStunAttrUsername);
+			stun_length += 2;
+			ByteWriter<uint16_t>::WriteBigEndian(data + stun_length, (uint16_t)user_name_.size());
+			stun_length += 2;
+			std::memcpy(data+ stun_length, user_name_.c_str(), user_name_.size());
+			stun_length += user_name_.size();
 			if (padding_bytes != 0)
 			{
-				std::memset(data + 4 + user_name_.size(), 0, padding_bytes);
+				std::memset(data + stun_length , 0, padding_bytes);
+				stun_length +=   padding_bytes;
 			}
-			data += (4 + user_name_.size() + padding_bytes);
-			stun_length += (4 + user_name_.size() + (uint16_t)padding_bytes);
-			ByteWriter<uint16_t>::WriteBigEndian(data, (uint16_t)kStunAttrXorMappedAddress);
-			ByteWriter<uint16_t>::WriteBigEndian(data + 2, (uint16_t)8);       //属性长度
-			ByteWriter<uint8_t>::WriteBigEndian(data + 4, (uint8_t)0);
-			ByteWriter<uint8_t>::WriteBigEndian(data + 5, (uint8_t)0x01);
-			ByteWriter<uint16_t>::WriteBigEndian(data + 6, (uint16_t)mapped_port_ ^ (kStunMagicCookie >> 16));
-			ByteWriter<uint32_t>::WriteBigEndian(data + 8, (uint32_t)(mapped_addr_ ^ kStunMagicCookie));
-			data += (4 + 8);
-			stun_length += (4 + 8);
+			
+			//stun_length += (4 + user_name_.size() + (uint16_t)padding_bytes);
+			ByteWriter<uint16_t>::WriteBigEndian(data + stun_length, (uint16_t)kStunAttrXorMappedAddress);
+			stun_length += 2;
+			ByteWriter<uint16_t>::WriteBigEndian(data + stun_length, (uint16_t)8);       //属性长度
+			stun_length += 2;
+			ByteWriter<uint8_t>::WriteBigEndian(data + stun_length, (uint8_t)0);
+			stun_length += 1;
+			ByteWriter<uint8_t>::WriteBigEndian(data + stun_length, (uint8_t)0x01);
+			stun_length += 1;
+			ByteWriter<uint16_t>::WriteBigEndian(data + stun_length, (uint16_t)mapped_port_ ^ (kStunMagicCookie >> 16));
+			stun_length += 2;
+			ByteWriter<uint32_t>::WriteBigEndian(data + stun_length, (uint32_t)(mapped_addr_ ^ kStunMagicCookie));
+			stun_length += 4;
+			//data += (4 + 8);
+			//stun_length += (4 + 8);
 			uint8_t    *data_begin = packet.begin();
-			size_t  data_bytes = data - data_begin - 20;
-			size_t  paylod_len = data_bytes + (4 + 20);
+			size_t  data_bytes = stun_length - 20;
+			size_t  paylod_len = data_bytes + ( 4+20);
 			ByteWriter<uint16_t>::WriteBigEndian(data_begin + 2, (uint16_t)paylod_len);
-			ByteWriter<uint16_t>::WriteBigEndian(data, (uint16_t)kStunAttrMessageIntegrity);
-			ByteWriter<uint16_t>::WriteBigEndian(data + 2, (uint16_t)20);
-			CalcHmac((char*)data + 4, (char*)data_begin, data_bytes + 20);
+			ByteWriter<uint16_t>::WriteBigEndian(data + stun_length, (uint16_t)kStunAttrMessageIntegrity);
+			stun_length += 2;
+			ByteWriter<uint16_t>::WriteBigEndian(data + stun_length, (uint16_t)20);
+			stun_length += 2;
+			CalcHmac((char*)data + stun_length, (char*)data_begin, data_bytes + 20);
 			// 计算完成后，恢复实际长度
-			paylod_len = data_bytes + (4 + 20) + (4 + 4);
+			paylod_len = data_bytes + (20+4) + (4 + 4);
 			ByteWriter<uint16_t>::WriteBigEndian(data_begin + 2, paylod_len);
-			data += (4 + 20);
-			stun_length += (4 +20);
-			ByteWriter<uint16_t>::WriteBigEndian(data, (uint16_t)kStunAttrFingerprint);
-			ByteWriter<uint16_t>::WriteBigEndian(data + 2, (uint16_t)4);
+			//data += (4 + 20);
+			stun_length += (20);
+			ByteWriter<uint16_t>::WriteBigEndian(data+ stun_length, (uint16_t)kStunAttrFingerprint);
+			stun_length += 2;
+			ByteWriter<uint16_t>::WriteBigEndian(data + stun_length, (uint16_t)4);
+			stun_length += 2;
+			uint32_t crc32 = rtc::ComputeCrc32(data, stun_length-4) ^ 0x5354554e;
 			 
-			uint32_t crc32 = rtc::ComputeCrc32(packet.data(), data - packet.data()) ^ 0x5354554e;
-			 
-			ByteWriter<uint16_t>::WriteBigEndian(data + 4, crc32);
-			data += (4 + 4);
-			stun_length += (4 + 4);
+			ByteWriter<uint32_t>::WriteBigEndian(data + stun_length, crc32);
+			stun_length += 4;
+		//	data += (4 + 4);
+		//	stun_length += (4 + 4);
 			//packet->SetPacketSize(paylod_len + 20);
 			packet.SetSize(stun_length);
 			return std::move(packet);
