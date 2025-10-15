@@ -43,6 +43,7 @@
 #include <vcruntime.h>
 #endif
 #include "rtc_base/async_udp_socket.h"
+#include "libmedia_transfer_protocol/transport.h"
 namespace libmedia_transfer_protocol {
 	namespace librtc {
 		
@@ -58,8 +59,11 @@ namespace libmedia_transfer_protocol {
 			
 			void Start(const char * ip, uint16_t port);
 
-
-
+			  int SendPacket(const rtc::Buffer& packet, const rtc::PacketOptions& options)  ;
+			  int SendPacketTo(const rtc::Buffer& packet,
+				  const rtc::SocketAddress& addr,
+				  const rtc::PacketOptions& options);
+			//void SendPacket();
 		public:
 			//void OnConnect(rtc::Socket*socket);
 			//void OnRead(rtc::Socket* socket);

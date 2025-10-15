@@ -19,6 +19,8 @@
 #include "libmedia_transfer_protocol/librtc/rtc_server.h"
 #include "rtc_base/logging.h"
 #include "rtc_base/async_udp_socket.h"
+#include "rtc_base/buffer.h"
+#include "rtc_base/byte_buffer.h"
 
 namespace libmedia_transfer_protocol {
 	namespace librtc {
@@ -121,6 +123,41 @@ namespace libmedia_transfer_protocol {
 				 });
 			 }
 			 return  ;
+		 }
+
+
+		 int RtcServer::SendPacket(const rtc::Buffer& packet, const rtc::PacketOptions& options)
+		 {
+			 if (!network_->IsCurrent())
+			 {
+				 rtc::Buffer p(packet.data(), packet.size());
+				 p.SetSize(packet.size());
+				 network_->PostTask(RTC_FROM_HERE, [this,   f = std::move(p), o = std::move(options)]() {
+					 udp_control_socket_->Send(f.data(), f.size(), o);
+				 });
+				 return 0 ;
+			 }
+		
+			 return udp_control_socket_->Send(packet.data(), packet.size(), options);
+			 
+			 
+		 }
+		 int RtcServer::SendPacketTo(const rtc::Buffer& packet,
+			 const rtc::SocketAddress& addr,
+			 const rtc::PacketOptions& options)
+		 {
+			 if (!network_->IsCurrent())
+			 {
+				 rtc::Buffer p(packet.data(), packet.size());
+				 p.SetSize(packet.size());
+				 network_->PostTask(RTC_FROM_HERE, [this, f = std::move(p), a = std::move(addr), o = std::move(options)]() {
+					    udp_control_socket_->SendTo(f.data(), f.size(), a, o);
+				 });
+				 return 0;
+			 }
+
+			// return udp_control_socket_->Send(packet.data(), packet.size(), options);
+			return  udp_control_socket_->SendTo(packet.data(), packet.size(), addr, options);
 		 }
 		 void RtcServer::OnRecvPacket(rtc::AsyncPacketSocket * socket, const char * data, size_t len, const rtc::SocketAddress & addr, const int64_t & ms)
 		 {
