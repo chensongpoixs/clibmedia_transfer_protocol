@@ -159,6 +159,57 @@ namespace libmedia_transfer_protocol {
 			// return udp_control_socket_->Send(packet.data(), packet.size(), options);
 			return  udp_control_socket_->SendTo(packet.data(), packet.size(), addr, options);
 		 }
+		 int RtcServer::SendRtpPacketTo(rtc::CopyOnWriteBuffer packet, const rtc::SocketAddress & addr, const rtc::PacketOptions & options)
+		 {
+			 if (!network_->IsCurrent())
+			 {
+				 
+				 network_->PostTask(RTC_FROM_HERE, [this, f = std::move(packet), a = std::move(addr), o = std::move(options)]() {
+					 udp_control_socket_->SendTo(f.data(), f.size(), a, o);
+				 });
+				 return 0;
+			 }
+
+			 // return udp_control_socket_->Send(packet.data(), packet.size(), options);
+			 return  udp_control_socket_->SendTo(packet.data(), packet.size(), addr, options);
+		 }
+		 int32_t RtcServer::SendRtpPacketTo(std::vector< std::unique_ptr<libmedia_transfer_protocol::RtpPacketToSend>>  packets,
+			 const rtc::SocketAddress& addr, const rtc::PacketOptions& options)
+		 {
+			 if (!network_->IsCurrent())
+			 {
+
+				 network_->PostTask(RTC_FROM_HERE, [this, 
+					 send_packets = std::move(packets), a = std::move(addr), o = std::move(options)]() {
+					 for (const std::unique_ptr<libmedia_transfer_protocol::RtpPacketToSend>& s : send_packets)
+					 {
+						 udp_control_socket_->SendTo(s->data(), s->size(), a, o);
+					 }
+				 });
+				 return 0;
+			 }
+			 for (std::unique_ptr<libmedia_transfer_protocol::RtpPacketToSend>& s : packets)
+			 {
+				 udp_control_socket_->SendTo(s->data(), s->size(), addr, options);
+			 }
+			 return 0;
+			 // return udp_control_socket_->Send(packet.data(), packet.size(), options);
+			// return  udp_control_socket_->SendTo(packet.data(), packet.size(), addr, options);
+		 }
+		 int RtcServer::SendRtcpPacketTo(rtc::CopyOnWriteBuffer packet, const rtc::SocketAddress & addr, const rtc::PacketOptions & options)
+		 {
+			 if (!network_->IsCurrent())
+			 {
+
+				 network_->PostTask(RTC_FROM_HERE, [this, f = std::move(packet), a = std::move(addr), o = std::move(options)]() {
+					 udp_control_socket_->SendTo(f.data(), f.size(), a, o);
+				 });
+				 return 0;
+			 }
+
+			 // return udp_control_socket_->Send(packet.data(), packet.size(), options);
+			 return  udp_control_socket_->SendTo(packet.data(), packet.size(), addr, options);
+		 }
 		 void RtcServer::OnRecvPacket(rtc::AsyncPacketSocket * socket, const char * data, size_t len, const rtc::SocketAddress & addr, const int64_t & ms)
 		 {
 			// LIBRTC_LOG_T_F(LS_INFO) << "";

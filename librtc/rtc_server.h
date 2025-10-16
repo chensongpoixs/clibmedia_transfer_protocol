@@ -44,6 +44,8 @@
 #endif
 #include "rtc_base/async_udp_socket.h"
 #include "libmedia_transfer_protocol/transport.h"
+#include "rtc_base/copy_on_write_buffer.h"
+#include "libmedia_transfer_protocol/rtp_rtcp/rtp_packet_to_send.h"
 namespace libmedia_transfer_protocol {
 	namespace librtc {
 		
@@ -63,6 +65,14 @@ namespace libmedia_transfer_protocol {
 			  int SendPacketTo(const rtc::Buffer& packet,
 				  const rtc::SocketAddress& addr,
 				  const rtc::PacketOptions& options);
+
+
+			  // rtp 
+			  int SendRtpPacketTo(rtc::CopyOnWriteBuffer packet, const rtc::SocketAddress& addr, const rtc::PacketOptions& options);
+			  int32_t SendRtpPacketTo(std::vector< std::unique_ptr<libmedia_transfer_protocol::RtpPacketToSend>>  packets, 
+				  const rtc::SocketAddress& addr, const rtc::PacketOptions& options);
+			  // rtcp 
+			  int SendRtcpPacketTo(rtc::CopyOnWriteBuffer packet, const rtc::SocketAddress& addr, const rtc::PacketOptions& options);
 			//void SendPacket();
 		public:
 			//void OnConnect(rtc::Socket*socket);

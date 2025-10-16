@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *  Copyright (c) 2025 The CRTC project authors . All Rights Reserved.
  *
  *  Please visit https://chensongpoixs.github.io for detail
@@ -64,6 +64,21 @@ constexpr size_t kDefaultPacketSize = 1500;
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // |               padding         | Padding size  |
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+/*
+V：2位，RTP协议的版本号，当前协议版本号为2
+P：1位，填充标志，如果P=1，则在该报文的尾部填充一个或多个额外的八位组，它们不是有效载荷的一部分
+X：1位，扩展标志，如果X=1，则在RTP报头后跟有一个扩展报头
+CC：CSRC计数器，占4位，指示CSRC标识符个数
+M：1位，maker标志，不同的有效载荷有不同的含义，对于视频，标记一帧的结束；对于音频，标记会话的开始。
+PT（payload type）：7位，有效荷载类型，用于说明RTP报文中有效载荷的类型，如GSM音频、JPEM图像等，在流媒体中大部分是用来区分音频流和视频流，这样便于客户端进行解析。
+序列号：16位，用于标识发送者所发送的RTP报文的序列号，每发送一个报文，序列号增1。这个字段当下层的承载协议用UDP的时候，网络状况不好的时候可以用来检查丢包。当出现网络抖动的情况可以用来对数据进行重新排序。序列号的初始值是随机或者0。音频包和视频包的sequence是分别计数的。
+时戳（Timestamp）：32位，数据包的时间戳。时间戳反映了该RTP报文的第一个八位组的采样时刻。接受者使用时戳来计算延迟和延迟抖动，并进行同步控制。可以根据RTP包的时间戳来获得数据包的时序。
+同步信源（SSRC）标识符：32位，用于标识同步信源。同步信源是指产生媒体流的信源，他通过RTP报头中的一个32为数字SSRC标识符来标识，而不依赖网络地址，接收者将根据SSRC标识符来区分不同的信源，进行RTP报文的分组。
+提供信源（CSRC）标识符：每个CSRC标识符占32位，可以有0~15个CSRC。每个CSRC标识了包含在RTP报文有效载荷中的所有提供信源。
+
+
+*/
+
 RtpPacket::RtpPacket() : RtpPacket(nullptr, kDefaultPacketSize) {}
 
 RtpPacket::RtpPacket(const ExtensionManager* extensions)
@@ -249,45 +264,45 @@ rtc::ArrayView<uint8_t> RtpPacket::AllocateRawExtension(int id, size_t length) {
                       << ". received " << length;
     return nullptr;
   }
-  // ���RTP�ĸ����Ѿ����ã� �������������µ�ͷ����չ
+  // 如果RTP的负载已经设置， 不允许在添加新的头部扩展
   if (payload_size_ > 0) {
     RTC_LOG(LS_ERROR) << "Can't add new extension id " << id
                       << " after payload was set.";
     return nullptr;
   }
-  // ���RTP��Padding�Ѿ����ã� �������������µ�ͷ����չ
+  // 如果RTP的Padding已经设置， 不允许在添加新的头部扩展
   if (padding_size_ > 0) {
     RTC_LOG(LS_ERROR) << "Can't add new extension id " << id
                       << " after padding was set.";
     return nullptr;
   }
-  //  ��ȡ��չ��RTP��ͷ����ƫ����
+  //  获取扩展在RTP包头部中偏移量
   const size_t num_csrc = data()[0] & 0x0F;
   const size_t extensions_offset = kFixedHeaderSize + (num_csrc * 4) + 4;
   // Determine if two-byte header is required for the extension based on id and
   // length. Please note that a length of 0 also requires two-byte header
   // extension. See RFC8285 Section 4.2-4.3.
-  //   �жϽ�Ҫ���ӵ���չ�� ��ʹ��һ���ֽڻ��������ֽ� (�����Ǹ��� id ��length�ĳ����Ƿ����һ���ֽ���չ�̶����� 14��16)
+  //   判断将要添加的扩展的 是使用一个字节还是两个字节 (依据是根据 id 和length的长度是否大于一个字节扩展固定长度 14和16)
   const bool two_byte_header_required =
       id > RtpExtension::kOneByteHeaderExtensionMaxId ||
       length > RtpExtension::kOneByteHeaderExtensionMaxValueSize || length == 0;
   RTC_CHECK(!two_byte_header_required || extensions_.ExtmapAllowMixed());
 
   uint16_t profile_id;
-  //  ֮ǰ�Ѿ����Ӹ���չ
+  //  之前已经添加个扩展
   if (extensions_size_ > 0) {
     profile_id =
         ByteReader<uint16_t>::ReadBigEndian(data() + extensions_offset - 4);
-	// �ж��Ƿ�Ҫ��1�ֽ�����Ϊ2�ֽ�ͷ��
+	// 判断是否要将1字节升级为2字节头部
     if (profile_id == kOneByteExtensionProfileId && two_byte_header_required) {
       // Is buffer size big enough to fit promotion and new data field?
       // The header extension will grow with one byte per already allocated
       // extension + the size of the extension that is about to be allocated.
-	  // ԭʼ�������ӵ���չ����1�ֽ�ͷ�� ���������ӵ���չ��Ҫ���ֽ�ͷ
-	  // ��ˣ� ��Ҫ����չͷ����Ϊ2�ֽ�ͷ
-	   // ������֮ǰ�� ��Ҫ�ж������㷨�㹻
-		// ����֮�����չͷ���� = ԭ������չͷ����
-		// + �Ѿ����ڵ���չͷ���� * 1�ֽ� + ��ǰ����չ��ͷ�� + ��ǰ����չ�����ݵĳ���
+	  // 原始的已添加的扩展都是1字节头， 但是新添加的扩展需要二字节头
+	  // 因此， 需要将扩展头提升为2字节头
+	   // 在升级之前， 需要判断容量算法足够
+		// 升级之后的扩展头长度 = 原来的扩展头长度
+		// + 已经存在的扩展头个数 * 1字节 + 当前新扩展的头部 + 当前新扩展的数据的长度
       size_t expected_new_extensions_size =
           extensions_size_ + extension_entries_.size() +
           kTwoByteExtensionHeaderLength + length;
@@ -305,7 +320,7 @@ rtc::ArrayView<uint8_t> RtpPacket::AllocateRawExtension(int id, size_t length) {
   } else {
     // Profile specific ID, set to OneByteExtensionHeader unless
     // TwoByteExtensionHeader is required.
-	 //��һ������ͷ����չ 
+	 //第一次添加头部扩展 
     profile_id = two_byte_header_required ? kTwoByteExtensionProfileId
                                           : kOneByteExtensionProfileId;
   }
@@ -322,10 +337,10 @@ rtc::ArrayView<uint8_t> RtpPacket::AllocateRawExtension(int id, size_t length) {
   }
 
   // All checks passed, write down the extension headers.
-  // ��һ��д����չ ��ҪҪд profile_id
+  // 第一次写入扩展 需要要写 profile_id
   if (extensions_size_ == 0) {
     RTC_DCHECK_EQ(payload_offset_, kFixedHeaderSize + (num_csrc * 4));
-	 //  rtp ����'X'�ı��Ϊ 1
+	 //  rtp 包中'X'的标记为 1
     WriteAt(0, data()[0] | 0x10);  // Set extension bit.
     ByteWriter<uint16_t>::WriteBigEndian(WriteAt(extensions_offset - 4),
                                          profile_id);
@@ -349,7 +364,7 @@ rtc::ArrayView<uint8_t> RtpPacket::AllocateRawExtension(int id, size_t length) {
   extension_entries_.emplace_back(id, extension_info_length,
                                   extension_info_offset);
 
-   // ������չ���ܳ���
+   // 更新扩展的总长度
   extensions_size_ = new_extensions_size;
 
   uint16_t extensions_size_padded =
@@ -361,10 +376,10 @@ rtc::ArrayView<uint8_t> RtpPacket::AllocateRawExtension(int id, size_t length) {
 }
 
 void RtpPacket::PromoteToTwoByteHeaderExtension() {
-	// ���ȣ� ��ȡ��ǰ��չ��ƫ����
-  size_t num_csrc = data()[0] & 0x0F; // ��Դ����
+	// 首先， 获取当前扩展的偏移量
+  size_t num_csrc = data()[0] & 0x0F; // 共源个数
 
-   //  ƫ����������������ͷ�� 
+   //  偏移量不包含自身的头部 
   size_t extensions_offset = kFixedHeaderSize + (num_csrc * 4) + 4;
 
   RTC_CHECK_GT(extension_entries_.size(), 0);
@@ -378,18 +393,18 @@ void RtpPacket::PromoteToTwoByteHeaderExtension() {
   for (auto extension_entry = extension_entries_.rbegin();
        extension_entry != extension_entries_.rend(); ++extension_entry) {
     size_t read_index = extension_entry->offset;
-	 // �ƶ�֮�����չƫ����
+	 // 移动之后的扩展偏移量
     size_t write_index = read_index + write_read_delta;
     // Update offset.
     extension_entry->offset = rtc::dchecked_cast<uint16_t>(write_index);
     // Copy data. Use memmove since read/write regions may overlap.
-	// ��ԭʼ��չ���� �ƶ����µ�λ��
+	// 将原始扩展数据 移动到新的位置
     memmove(WriteAt(write_index), data() + read_index, extension_entry->length);
     // Rewrite id and length.
-	// ����д���µ���չͷ������
-	// �����ֽ�ͷ��д�볤��Length��Ϣ
+	// 重新写入新的扩展头部数据
+	// 向两字节头部写入长度Length信息
     WriteAt(--write_index, extension_entry->length);
-	// �����ֽ�ͷ��д��ID��Ϣ
+	// 向两字节头部写入ID信息
     WriteAt(--write_index, extension_entry->id);
     --write_read_delta;
   }

@@ -1,4 +1,4 @@
-/******************************************************************************
+ï»¿/******************************************************************************
  *  Copyright (c) 2025 The CRTC project authors . All Rights Reserved.
  *
  *  Please visit https://chensongpoixs.github.io for detail
@@ -169,9 +169,9 @@ class RtpPacket {
     explicit ExtensionInfo(uint8_t id) : ExtensionInfo(id, 0, 0) {}
     ExtensionInfo(uint8_t id, uint8_t length, uint16_t offset)
         : id(id), length(length), offset(offset) {}
-    uint8_t id; //  À©Õ¹µÄid 
-    uint8_t length; // À©Õ¹µÄ³¤¶È
-    uint16_t offset; // À©Õ¹ÔÚ rtpÍ·²¿ÖĞÆ«ÒÆÁ¿£¬ ²»°üº¬À©Õ¹Í·²¿µÄ×Ö½Ú
+    uint8_t id; //  æ‰©å±•çš„id 
+    uint8_t length; // æ‰©å±•çš„é•¿åº¦
+    uint16_t offset; // æ‰©å±•åœ¨ rtpå¤´éƒ¨ä¸­åç§»é‡ï¼Œ ä¸åŒ…å«æ‰©å±•å¤´éƒ¨çš„å­—èŠ‚
   };
 
   // Helper function for Parse. Fill header fields using data in given buffer,
@@ -213,9 +213,9 @@ class RtpPacket {
   size_t payload_size_;
 
   ExtensionManager extensions_;
-  // ÒÑ¾­Ìí¼Ó¹ıÀ©Õ¹ĞÅÏ¢
+  // å·²ç»æ·»åŠ è¿‡æ‰©å±•ä¿¡æ¯
   std::vector<ExtensionInfo> extension_entries_;
-  // Ìí¼ÓÀ©Õ¹×Ü³¤¶È 
+  // æ·»åŠ æ‰©å±•æ€»é•¿åº¦ 
   size_t extensions_size_ = 0;  // Unaligned.
   rtc::CopyOnWriteBuffer buffer_;
 };
