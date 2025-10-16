@@ -18,8 +18,8 @@
  ******************************************************************************/
 
 
-#ifndef _C_LIBRTC_SRTP__H_
-#define _C_LIBRTC_SRTP__H_
+#ifndef _C_LIBRTC_SRTP_SESSION__H_
+#define _C_LIBRTC_SRTP_SESSION__H_
 
 #include <cstddef>
 
@@ -46,11 +46,11 @@ namespace libmedia_transfer_protocol {
 	{
 
 		const int32_t kSrtpMaxBufferSize = 65535;
-		class Srtp
+		class SrtpSession
 		{
 		public:
-			Srtp() = default;
-			~Srtp() = default;
+			SrtpSession() = default;
+			~SrtpSession() = default;
 
 			static bool InitSrtpLibrary();
 			bool Init(const std::string &recv_key, const std::string &send_key);
@@ -71,4 +71,4 @@ namespace libmedia_transfer_protocol {
 	}
 }
 
-#endif // _C_LIBRTC_SRTP__H_
+#endif // _C_LIBRTC_SRTP_SESSION__H_

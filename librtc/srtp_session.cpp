@@ -16,7 +16,7 @@
 
 
  ******************************************************************************/
-#include "libmedia_transfer_protocol/librtc/srtp.h"
+#include "libmedia_transfer_protocol/librtc/srtp_session.h"
 #include "rtc_base/logging.h"
 #include "srtp.h"
 #include "srtp.h"
@@ -32,7 +32,7 @@ namespace libmedia_transfer_protocol
 		{
 			static rtc::Buffer null_packet(0);
 		}
-		bool Srtp::InitSrtpLibrary()
+		bool SrtpSession::InitSrtpLibrary()
 		{
 			LIBRTC_LOG(LS_INFO) << "srtp library version:" << srtp_get_version();
 			auto ret = srtp_init();
@@ -41,10 +41,10 @@ namespace libmedia_transfer_protocol
 				LIBRTC_LOG_F(LS_WARNING) << "srtp init failed.";
 				return false;
 			}
-			ret = srtp_install_event_handler(Srtp::OnSrtpEvent);
+			ret = srtp_install_event_handler(SrtpSession::OnSrtpEvent);
 			return true;
 		}
-		bool Srtp::Init(const std::string &recv_key, const std::string &send_key)
+		bool SrtpSession::Init(const std::string &recv_key, const std::string &send_key)
 		{
 			srtp_policy_t srtp_policy;
 			memset(&srtp_policy, 0, sizeof(srtp_policy_t));
@@ -76,7 +76,7 @@ namespace libmedia_transfer_protocol
 			}
 			return true;
 		}
-		rtc::Buffer Srtp::RtpProtect(rtc::Buffer &pkt)
+		rtc::Buffer SrtpSession::RtpProtect(rtc::Buffer &pkt)
 		{
 			int32_t bytes =  pkt.size();// pkt->PacketSize();
 
@@ -99,7 +99,7 @@ namespace libmedia_transfer_protocol
 			npkt.SetSize(bytes);
 			return npkt;
 		}
-		rtc::Buffer Srtp::RtcpProtect(rtc::Buffer &pkt)
+		rtc::Buffer SrtpSession::RtcpProtect(rtc::Buffer &pkt)
 		{
 			int32_t bytes = pkt.size();
 
@@ -122,7 +122,7 @@ namespace libmedia_transfer_protocol
 			npkt.SetSize(bytes);
 			return npkt;
 		}
-		rtc::Buffer Srtp::SrtpUnprotect(rtc::Buffer &pkt)
+		rtc::Buffer SrtpSession::SrtpUnprotect(rtc::Buffer &pkt)
 		{
 			int32_t bytes = pkt.size();
 
@@ -145,7 +145,7 @@ namespace libmedia_transfer_protocol
 			npkt.SetSize(bytes);
 			return npkt;
 		}
-		rtc::Buffer Srtp::SrtcpUnprotect(const char *buf, size_t size)
+		rtc::Buffer SrtpSession::SrtcpUnprotect(const char *buf, size_t size)
 		{
 			int32_t bytes = size;
 
@@ -168,7 +168,7 @@ namespace libmedia_transfer_protocol
 			npkt.SetSize(bytes);
 			return npkt;
 		}
-		rtc::Buffer Srtp::SrtcpUnprotect(rtc::Buffer &pkt)
+		rtc::Buffer SrtpSession::SrtcpUnprotect(rtc::Buffer &pkt)
 		{
 			int32_t bytes = pkt.size();
 
@@ -191,7 +191,7 @@ namespace libmedia_transfer_protocol
 			npkt.SetSize(bytes);
 			return npkt;
 		}
-		void Srtp::OnSrtpEvent(srtp_event_data_t* data)
+		void SrtpSession::OnSrtpEvent(srtp_event_data_t* data)
 		{
 
 		}
