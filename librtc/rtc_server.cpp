@@ -181,6 +181,7 @@ namespace libmedia_transfer_protocol {
 				 //return 0 ;
 				 network_->PostTask(RTC_FROM_HERE, [this, 
 					 send_packets = std::move(packets), a = std::move(addr), o = std::move(options)]() {
+					// LIBRTC_LOG(LS_INFO) << "send remote:" << a.ToString();
 					 for (const std::unique_ptr<libmedia_transfer_protocol::RtpPacketToSend>& s : send_packets)
 					 {
 						 udp_control_socket_->SendTo(s->data(), s->size(), a, o);

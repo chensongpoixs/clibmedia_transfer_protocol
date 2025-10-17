@@ -67,15 +67,138 @@ namespace libmedia_transfer_protocol {
 			SSL_do_handshake(ssl_);
 
 			NeedPost();
-
-			if (is_done_)
+ 
+			
+			//if (is_done_)
+			//{
+			//	GetSrtpKey();
+			//	 
+			//	SignalDtlsHandshakeDone(this);
+			//	return;
+			//}
+ 
+			int32_t read = SSL_read(ssl_, buffer_, 65535);
+			if (!CheckStatus(read))
 			{
-				GetSrtpKey();
-				 
-				SignalDtlsHandshakeDone(this);
 				return;
 			}
-			SSL_read(ssl_, buffer_, 65535);
+
+			// application data reccvide  not if 
+			// datachannel 
+			// Application data received. Notify to the listener.
+			if (read > 0)
+			{
+				// It is allowed to receive DTLS data even before validating remote fingerprint.
+				if (!handshake_done_)
+				{
+					//MS_WARN_TAG(dtls, "ignoring application data received while DTLS handshake not done");
+					LIBRTC_LOG(LS_WARNING) << "ignoring application data received while DTLS handshake not done";
+					return;
+				}
+
+				// Notify the listener.
+				//this->listener->OnDtlsTransportApplicationDataReceived(
+					//this, (uint8_t*)DtlsTransport::sslReadBuffer, static_cast<size_t>(read));
+			}
+		}
+
+		bool Dtls::CheckStatus(int returnCode)
+		{
+			int err;
+			bool wasHandshakeDone = is_done_;
+
+			err = SSL_get_error(ssl_, returnCode);
+
+			switch (err)
+			{
+			case SSL_ERROR_NONE:
+				break;
+
+			case SSL_ERROR_SSL:
+				//LOG_OPENSSL_ERROR("SSL status: SSL_ERROR_SSL");
+				LIBRTC_LOG(LS_ERROR) << "SSL status: SSL_ERROR_SSL";
+				break;
+
+			case SSL_ERROR_WANT_READ:
+				break;
+
+			case SSL_ERROR_WANT_WRITE:
+				//MS_WARN_TAG(dtls, "SSL status: SSL_ERROR_WANT_WRITE");
+				LIBRTC_LOG(LS_WARNING) << "SSL status: SSL_ERROR_WANT_WRITE";
+				break;
+
+			case SSL_ERROR_WANT_X509_LOOKUP:
+				LIBRTC_LOG(LS_ERROR) << "SSL status: SSL_ERROR_WANT_X509_LOOKUP";
+				break;
+
+			case SSL_ERROR_SYSCALL:
+				LIBRTC_LOG(LS_WARNING) << ("SSL status: SSL_ERROR_SYSCALL");
+				break;
+
+			case SSL_ERROR_ZERO_RETURN:
+				break;
+
+			case SSL_ERROR_WANT_CONNECT:
+				LIBRTC_LOG(LS_WARNING) << "SSL status: SSL_ERROR_WANT_CONNECT";
+				break;
+
+			case SSL_ERROR_WANT_ACCEPT:
+				LIBRTC_LOG(LS_WARNING) << "SSL status: SSL_ERROR_WANT_ACCEPT";
+				break;
+
+			default:
+				LIBRTC_LOG(LS_WARNING) << "SSL status: unknown error";
+			}
+
+			// Check if the handshake (or re-handshake) has been done right now.
+			if (is_done_)
+			{
+				is_done_ = false;
+				handshake_done_ = true;
+			
+				// Stop the timer.
+				//this->timer->Stop();
+			
+				// Process the handshake just once (ignore if DTLS renegotiation).
+				//if (!wasHandshakeDone && this->remoteFingerprint.algorithm != FingerprintAlgorithm::NONE)
+				//	return ProcessHandshake();
+				GetSrtpKey();
+				//	 
+					SignalDtlsHandshakeDone(this);
+				return true;
+			}
+			// Check if the peer sent close alert or a fatal error happened.
+			else if (((SSL_get_shutdown(ssl_) & SSL_RECEIVED_SHUTDOWN) != 0) || err == SSL_ERROR_SSL || err == SSL_ERROR_SYSCALL)
+			{ 
+				if (handshake_done_/*this->state == DtlsState::CONNECTED*/)
+				{
+					//MS_DEBUG_TAG(dtls, "disconnected");
+					LIBRTC_LOG(LS_INFO) << "disconnected";
+					//Reset();
+					handshake_done_ = false;
+					// Set state and notify the listener.
+					//this->state = DtlsState::CLOSED;
+					//this->listener->OnDtlsTransportClosed(this);
+				}
+				else
+				{
+					LIBRTC_LOG(LS_INFO) << "connection failed";
+					//MS_WARN_TAG(dtls, "connection failed");
+
+					//Reset();
+
+					// Set state and notify the listener.
+					//this->state = DtlsState::FAILED;
+					//this->listener->OnDtlsTransportFailed(this);
+				}
+
+				SignalDtlsClose(this);
+				return false;
+			} 
+			else
+			{
+				return true;
+			}
 		}
 		const std::string &Dtls::Fingerprint() const
 		{
@@ -154,25 +277,91 @@ namespace libmedia_transfer_protocol {
 		{
 			Dtls *dtls = static_cast<Dtls*>(SSL_get_ex_data(ssl, 0));
 			int w = where & ~SSL_ST_MASK;
-
+			const char* role;
 			if (w & SSL_ST_CONNECT)
 			{
 				dtls->SetClient(true);
+				role = "client";
 			}
 			else if (w & SSL_ST_ACCEPT)
 			{
 				dtls->SetClient(false);
+				role = "server";
 			}
 			else
 			{
 				dtls->SetClient(false);
+				role = "undefined";
 			}
-
-			if (where & SSL_CB_HANDSHAKE_DONE)
+			if ((where & SSL_CB_LOOP) != 0)
 			{
-				dtls->SetDone();
-				LIBRTC_LOG(LS_INFO) << "dtls handshake done.";
+				LIBRTC_LOG(LS_INFO) << "[role: " << role << ", action:'"<< SSL_state_string_long(ssl) <<"']";
+				//MS_DEBUG_TAG(dtls, "[role:%s, action:'%s']", role, SSL_state_string_long(ssl));
 			}
+			else if ((where & SSL_CB_ALERT) != 0)
+			{
+				const char* alertType;
+
+				switch (*SSL_alert_type_string(ret))
+				{
+				case 'W':
+					alertType = "warning";
+					break;
+
+				case 'F':
+					alertType = "fatal";
+					break;
+
+				default:
+					alertType = "undefined";
+				}
+
+				if ((where & SSL_CB_READ) != 0)
+				{
+					//MS_WARN_TAG(dtls, "received DTLS %s alert: %s", alertType, SSL_alert_desc_string_long(ret));
+					LIBRTC_LOG(LS_INFO) << "[received DTLS  " << alertType << ", alert:'" << SSL_alert_desc_string_long(ret) << "']";
+				}
+				else if ((where & SSL_CB_WRITE) != 0)
+				{
+					//MS_DEBUG_TAG(dtls, "sending DTLS %s alert: %s", alertType, SSL_alert_desc_string_long(ret));
+					LIBRTC_LOG(LS_INFO) << "[sending DTLS  " << alertType << ", alert:'" << SSL_alert_desc_string_long(ret) << "']";
+				}
+				else
+				{
+					//MS_DEBUG_TAG(dtls, "DTLS %s alert: %s", alertType, SSL_alert_desc_string_long(ret));
+					LIBRTC_LOG(LS_INFO) << "[  DTLS  " << alertType << ", alert:'" << SSL_alert_desc_string_long(ret) << "']";
+				}
+			}
+			else if ((where & SSL_CB_EXIT) != 0)
+			{
+				if (ret == 0)
+				{
+					//MS_DEBUG_TAG(dtls, "[role:%s, failed:'%s']", role, SSL_state_string_long(this->ssl));
+					LIBRTC_LOG(LS_INFO) << "[  role:  " << role << ", failed:'" << SSL_state_string_long(ssl) << "']";
+				}
+				else if (ret < 0)
+				{
+					//MS_DEBUG_TAG(dtls, "role: %s, waiting:'%s']", role, SSL_state_string_long(this->ssl));
+					LIBRTC_LOG(LS_INFO) << "[  role:  " << role << ", waiting:'" << SSL_state_string_long(ssl) << "']";
+				}
+			}
+			else if ((where & SSL_CB_HANDSHAKE_START) != 0)
+			{
+				//MS_DEBUG_TAG(dtls, "DTLS handshake start");
+				LIBRTC_LOG(LS_INFO) << "DTLS handshake start";
+			}
+			else if ((where & SSL_CB_HANDSHAKE_DONE) != 0)
+			{
+				//MS_DEBUG_TAG(dtls, "DTLS handshake done");
+				LIBRTC_LOG(LS_INFO) << "DTLS handshake done";
+				dtls->SetDone();
+				//this->handshakeDoneNow = true;
+			}
+			//if (where & SSL_CB_HANDSHAKE_DONE)
+			//{
+			//	dtls->SetDone();
+			//	LIBRTC_LOG(LS_INFO) << "dtls handshake done.";
+			//}
 		}
 		void Dtls::NeedPost()
 		{

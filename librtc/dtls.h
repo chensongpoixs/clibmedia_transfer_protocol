@@ -51,6 +51,7 @@ namespace libmedia_transfer_protocol {
 			const std::string &RecvKey();
 
 
+			bool CheckStatus(int returnCode);
 
 		public:
 
@@ -58,6 +59,8 @@ namespace libmedia_transfer_protocol {
 				SignalDtlsSendPakcet;
 			sigslot::signal1<  Dtls*>
 				SignalDtlsHandshakeDone;
+			// alter 
+			sigslot::signal1<Dtls*>     SignalDtlsClose;
 		private:
 			bool InitSSLContext();
 			bool InitSSL();
@@ -71,6 +74,7 @@ namespace libmedia_transfer_protocol {
 			DtlsCerts dtls_cert_;
 			bool is_client_{ false };
 			bool is_done_{ false };
+			bool handshake_done_{ false };
 			SSL * ssl_{ nullptr };
 			BIO * bio_read_{ nullptr };
 			BIO * bio_write_{ nullptr };
