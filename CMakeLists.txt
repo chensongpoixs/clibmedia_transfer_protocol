@@ -102,6 +102,8 @@ rtp_rtcp/rtp_header_extension_map.cpp
 	#play/*.cpp 
 	 librtc/*.h 
 	 librtc/*.cpp 
+	 libhttp/*.h
+	 libhttp/*.cpp 
 
 ) 
 

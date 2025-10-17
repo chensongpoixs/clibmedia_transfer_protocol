@@ -178,7 +178,7 @@ namespace libmedia_transfer_protocol {
 		 {
 			 if (!network_->IsCurrent())
 			 {
-
+				 //return 0 ;
 				 network_->PostTask(RTC_FROM_HERE, [this, 
 					 send_packets = std::move(packets), a = std::move(addr), o = std::move(options)]() {
 					 for (const std::unique_ptr<libmedia_transfer_protocol::RtpPacketToSend>& s : send_packets)
@@ -212,7 +212,7 @@ namespace libmedia_transfer_protocol {
 		 }
 		 void RtcServer::OnRecvPacket(rtc::AsyncPacketSocket * socket, const char * data, size_t len, const rtc::SocketAddress & addr, const int64_t & ms)
 		 {
-			// LIBRTC_LOG_T_F(LS_INFO) << "";
+			 LIBRTC_LOG_T_F(LS_INFO) << "";
 			 if (IsStun(data, len))
 			 {
 				 SignalStunPacket(socket, data, len, addr, ms);
