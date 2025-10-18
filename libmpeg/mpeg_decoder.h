@@ -21,7 +21,10 @@
 #define _C_LIBMPEG_DECODER_H_
 
 #include <algorithm>
-//#include "rtc_base/third_party/sigslot/sigslot.h"
+#include "rtc_base/third_party/sigslot/sigslot.h"
+#include "libmedia_codec/encoded_frame.h"
+#include "rtc_base/copy_on_write_buffer.h"
+#include "libmedia_codec/encoded_image.h"
 // //////////////////
 //#include "libcross_platform_collection_render/video_render/cvideo_render_factory.h"
 //#include "libcross_platform_collection_render/video_render/cvideo_render.h"
@@ -43,7 +46,7 @@ namespace  libmedia_transfer_protocol {
 	namespace libmpeg
 	{
 		
-		class MpegDecoder
+		class MpegDecoder : public   sigslot::has_slots<>
 		{
 		public:
 			MpegDecoder();
@@ -51,19 +54,23 @@ namespace  libmedia_transfer_protocol {
 
 		public:
 
-
+			// libmedia_codec::EncodedImage  image
 			int parse(const uint8_t *data, int32_t len);
 
-			void RegisterDecodeCompleteCallback(VideoReceiveStream * callback)
-			{
-				callback_ = callback;
-			}
+
+		public:
+			sigslot::signal1<libmedia_codec::EncodedImage> SignalRecvVideoFrame;
+			sigslot::signal1<rtc::CopyOnWriteBuffer> SignalRecvAudioFrame;
+			//void RegisterDecodeCompleteCallback(VideoReceiveStream * callback)
+			//{
+			//	callback_ = callback;
+			//}
 		public:
 
 			uint8_t*                h264_stream_;
 			int32_t									stream_len_;
 			int32_t                 read_byte_;
-			 VideoReceiveStream *     callback_ ;
+			// VideoReceiveStream *     callback_ ;
 		};
 
 

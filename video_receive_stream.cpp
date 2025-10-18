@@ -23,7 +23,24 @@
 namespace libmedia_transfer_protocol {
 
 	VideoReceiveStream::VideoReceiveStream(){}
-	VideoReceiveStream::~VideoReceiveStream(){}
+	VideoReceiveStream::~VideoReceiveStream(){
+	
+		if (mpeg_decoder_)
+		{
+
+			mpeg_decoder_->SignalRecvVideoFrame.disconnect(this);
+			mpeg_decoder_->SignalRecvAudioFrame.disconnect(this);
+			mpeg_decoder_.reset();
+		}
+		if (nal_parse_)
+		{
+			nal_parse_.reset();
+		}
+		if (decoder_)
+		{
+			decoder_.reset();
+		}
+	}
 
 	bool VideoReceiveStream::init(libmedia_codec::VideoCodecType codec_type, int32_t width, int32_t height)
 	{
@@ -46,7 +63,9 @@ namespace libmedia_transfer_protocol {
 		else
 		{
 			mpeg_decoder_ = std::make_unique<libmedia_transfer_protocol::libmpeg::MpegDecoder>();
-			mpeg_decoder_->RegisterDecodeCompleteCallback(this);
+			mpeg_decoder_->SignalRecvVideoFrame.connect(this, &VideoReceiveStream::OnVideoFrame);
+			mpeg_decoder_->SignalRecvAudioFrame.connect(this, &VideoReceiveStream::OnAudioFrame);
+			//mpeg_decoder_->RegisterDecodeCompleteCallback(this);
 
 			
 		}
@@ -59,7 +78,7 @@ namespace libmedia_transfer_protocol {
 	{
 		decoder_->Decode(image, true, 1);
 	}
-	void VideoReceiveStream::OnAudioFrame(rtc::Buffer frame)
+	void VideoReceiveStream::OnAudioFrame(rtc::CopyOnWriteBuffer frame)
 	{
 		//·ÖÀë adts 
 #if 0
@@ -85,7 +104,7 @@ namespace libmedia_transfer_protocol {
 		frame_length |= ff;
 
 #endif // 
-		uint8_t *data = frame.begin();
+		const uint8_t *data = frame.data();
 		uint8_t p = data[3];
 		int32_t   frame_length = (p & 0x03);
 		frame_length <<= 8;
@@ -95,7 +114,7 @@ namespace libmedia_transfer_protocol {
 		int32_t p3 = data[5];
 		int32_t  ff = ((p3 >> 5));
 		frame_length |= ff;
-		rtc::Buffer  new_aac_data(frame.begin() + 7, frame_length);
+		rtc::Buffer  new_aac_data(frame.data() + 7, frame_length);
 		audio_decder_->Decode(std::move(new_aac_data), 1);
 	}
 	void VideoReceiveStream::OnRtpPacket(const RtpPacketReceived & packet)

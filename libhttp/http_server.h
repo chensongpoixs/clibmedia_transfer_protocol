@@ -70,7 +70,7 @@ data ：          数据 - ，比如说RTP包，总长度与上面的数据长�
 namespace  libmedia_transfer_protocol {
 	namespace libhttp
 	{
-		class HttpServer : public   TcpHandler
+		class HttpServer : public sigslot::has_slots<> //: public   TcpHandler
 		{
 		public:
 			explicit HttpServer();
@@ -82,10 +82,11 @@ namespace  libmedia_transfer_protocol {
 
 			
 
-			//sigslot::signal1<  TcpSession*> SignalOnNewConnection;
-			//sigslot::signal1<  TcpSession*> SignalOnSent;
-			//sigslot::signal1<  TcpSession *> SignalOnSentNextChunk;
-			//sigslot::signal3<  TcpSession *, const  std::shared_ptr<HttpRequest>, const std::shared_ptr<Packet>> SignalOnRequest;
+			sigslot::signal1<  TcpSession*> SignalOnNewConnection;
+			sigslot::signal1<TcpSession*> SignalOnDestory;
+			sigslot::signal1<  TcpSession*> SignalOnSent;
+			sigslot::signal1<  TcpSession *> SignalOnSentNextChunk;
+			sigslot::signal3<  TcpSession *, const  std::shared_ptr<HttpRequest>, const std::shared_ptr<Packet>> SignalOnRequest;
 		public:
 			rtc::Thread* signaling_thread() { return tcp_server_->signaling_thread(); }
 			const rtc::Thread* signaling_thread() const { return tcp_server_->signaling_thread(); }

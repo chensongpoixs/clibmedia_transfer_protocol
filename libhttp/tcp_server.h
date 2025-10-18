@@ -54,7 +54,7 @@ data ：          数据 - ，比如说RTP包，总长度与上面的数据长�
 namespace  libmedia_transfer_protocol {
 	namespace libhttp
 	{
-		class TcpServer : public   TcpHandler
+		class TcpServer : public sigslot::has_slots<>  //: public   TcpHandler
 		{
 		public:
 			explicit TcpServer();
@@ -63,6 +63,22 @@ namespace  libmedia_transfer_protocol {
 		public:
 
 			bool Startup(const std::string &ip, uint16_t port); 
+
+
+		public:
+			void SetContext(int type, const std::shared_ptr<void> &context);
+			void SetContext(int type, std::shared_ptr<void> &&context);
+			template <typename T> std::shared_ptr<T> GetContext(int type) const
+			{
+				auto iter = contexts_.find(type);
+				if (iter != contexts_.end())
+				{
+					return std::static_pointer_cast<T>(iter->second);
+				}
+				return std::shared_ptr<T>();
+			}
+			void ClearContext(int type);
+			void ClearContext();
 		public:
 			rtc::Thread* signaling_thread() { return context_->signaling_thread(); }
 			const rtc::Thread* signaling_thread() const { return context_->signaling_thread(); }
@@ -77,10 +93,10 @@ namespace  libmedia_transfer_protocol {
 
 			void OnRecv(TcpSession*  conn,const rtc::CopyOnWriteBuffer & data );
 
-			//sigslot::signal1<TcpSession*> SignalOnNewConnection;
-			//sigslot::signal1<TcpSession*> SignalOnDestory;
-			//sigslot::signal2<TcpSession*, const rtc::CopyOnWriteBuffer&> SignalOnRecv;
-			//sigslot::signal1<TcpSession*> SignalOnSent;
+			sigslot::signal1<TcpSession*> SignalOnNewConnection;
+			sigslot::signal1<TcpSession*> SignalOnDestory;
+			sigslot::signal2<TcpSession*, const rtc::CopyOnWriteBuffer&> SignalOnRecv;
+			sigslot::signal1<TcpSession*> SignalOnSent;
 			 
 		public:
 			void InitSocketSignals();
@@ -99,6 +115,7 @@ namespace  libmedia_transfer_protocol {
 
 
 			std::map<rtc::Socket*, std::unique_ptr<libhttp::TcpSession>>						tcp_sessions_; 
+			std::unordered_map<int, std::shared_ptr<void>> contexts_;
 
 		};
 	}

@@ -78,7 +78,7 @@ namespace libmedia_transfer_protocol {
 			: h264_stream_((new uint8_t[1024 * 1024 * 8]))
 			, stream_len_(0)
 			, read_byte_(0)
-			, callback_(nullptr)
+			//, callback_(nullptr)
 		{
 		}
 
@@ -233,7 +233,7 @@ namespace libmedia_transfer_protocol {
 								// 判断当前是否nal一个包了
 								if (stream_len_ > 4 &&payload[0] == 0x00 && payload[1] == 0X00/*'\00'*/ &&
 									payload[2] == 0X00/*'\00'*/ &&
-									payload[3] == 0X01/*'\01'*/ && callback_
+									payload[3] == 0X01/*'\01'*/  
 									) 
 								{
 									libmedia_codec::EncodedImage encode_image;
@@ -242,7 +242,8 @@ namespace libmedia_transfer_protocol {
 											h264_stream_,
 											stream_len_
 										));
-									callback_->OnVideoFrame(encode_image);
+									SignalRecvVideoFrame(encode_image);
+									//callback_->OnVideoFrame(encode_image);
 									stream_len_ = 0;
 								}
 								
@@ -305,11 +306,14 @@ namespace libmedia_transfer_protocol {
 							{
 								const uint8_t *payload = ps + sizeof(program_stream_e) + PSEPack->stuffing_length;
 
-								if (callback_)
-								{
-									rtc::Buffer frame(payload, playload_size);
-									callback_->OnAudioFrame(std::move(frame));
-								}
+
+
+								SignalRecvAudioFrame(rtc::CopyOnWriteBuffer(payload, playload_size));
+								//if (callback_)
+								//{
+								//	rtc::Buffer frame(payload, playload_size);
+								//	callback_->OnAudioFrame(std::move(frame));
+								//}
 
 #if 0
 								static std::unique_ptr< libmedia_codec::AudioDecoder>  audio_codec;

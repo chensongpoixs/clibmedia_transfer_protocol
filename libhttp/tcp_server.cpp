@@ -79,6 +79,22 @@ namespace  libmedia_transfer_protocol {
 			LIBRTC_LOG(LS_INFO) << " tcp start port:" << port << " OK !!!";
 			return true;
 		}
+		void TcpServer::SetContext(int type, const std::shared_ptr<void> &context)
+		{
+			contexts_[type] = context;
+		}
+		void TcpServer::SetContext(int type, std::shared_ptr<void> &&context)
+		{
+			contexts_[type] = std::move(context);
+		}
+		void TcpServer::ClearContext(int type)
+		{
+			contexts_[type].reset();
+		}
+		void TcpServer::ClearContext()
+		{
+			contexts_.clear();
+		}
 		void TcpServer::OnRecv(TcpSession * conn, const rtc::CopyOnWriteBuffer & data)
 		{
 			SignalOnRecv(conn, data);
@@ -124,6 +140,10 @@ namespace  libmedia_transfer_protocol {
 			std::unique_ptr<libhttp::TcpSession>  tcp_session = std::make_unique<libhttp::TcpSession>(client, context_->worker_thread());
 			//http_session->RegisterDecodeCompleteCallback(callback_);
 			tcp_session->SignalOnRecv.connect(this, &TcpServer::OnRecv);
+			if (contexts_[kUserContext])
+			{
+				tcp_session->SetContext(kUserContext, contexts_[kUserContext]);
+			}
 			tcp_sessions_.emplace(std::make_pair(client, std::move(tcp_session)));
 			auto iter = tcp_sessions_.find(client);
 			if (iter == tcp_sessions_.end())

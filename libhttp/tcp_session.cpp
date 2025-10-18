@@ -74,7 +74,7 @@ namespace libmedia_transfer_protocol
 		}
 		void TcpSession::OnRead(rtc::Socket* socket)
 		{
-			//LIBHTTP_LOG_F(LS_INFO) << "";
+			//LIBTCP_LOG_T_F(LS_INFO) << "";
 
 			rtc::Buffer buffer(1024 * 1024 * 8);
 			buffer.SetSize(0);
