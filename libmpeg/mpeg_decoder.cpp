@@ -120,7 +120,7 @@ namespace libmedia_transfer_protocol {
 				}
 				else
 				{
-					RTC_LOG(LS_WARNING) << " size : " << size << ", len : " << len << ", read_byte_: " << read_byte_;;
+					LIBMPEG_LOG_T_F(LS_WARNING) << " size : " << size << ", len : " << len << ", read_byte_: " << read_byte_;;
 				}
 #if 0
 				if (read_byte_ == 0)
@@ -138,7 +138,7 @@ namespace libmedia_transfer_protocol {
 					stream_len_ = 0;
 				}
 #endif // 
-			 RTC_LOG(LS_INFO)<< ", size : " << size << ", len : " << len << ", read_byte_: " << read_byte_;;
+			 //RTC_LOG(LS_INFO)<< ", size : " << size << ", len : " << len << ", read_byte_: " << read_byte_;;
 			}
 			while  ((size - len) > 4)
 			{
@@ -173,7 +173,7 @@ namespace libmedia_transfer_protocol {
 							program_stream_map* PSMPack = (program_stream_map*)ps;
 							if (size -len < (4 + 2))
 							{
-								RTC_LOG(LS_ERROR) << "parse PS    System Header packet tai samil (7)!!! len :" << len << " < 7 ";
+								LIBMPEG_LOG_T_F(LS_ERROR) << "parse PS    System Header packet tai samil (7)!!! len :" << len << " < 7 ";
 								return -1;
 							}
 
@@ -192,7 +192,7 @@ namespace libmedia_transfer_protocol {
 							program_stream_map* PSMPack = (program_stream_map*)ps;
 							if (size - len < (4 + 2))
 							{
-								RTC_LOG(LS_ERROR) << "parse PS   Proprom Stream Map  packet tai samil (7)!!! len :" << len << " < 7 ";
+								LIBMPEG_LOG_T_F(LS_ERROR) << "parse PS   Proprom Stream Map  packet tai samil (7)!!! len :" << len << " < 7 ";
 								return -1;
 							}
 
@@ -213,7 +213,7 @@ namespace libmedia_transfer_protocol {
 							program_stream_e* PSEPack = (program_stream_e*)ps;
 							if (size - len < 9)
 							{
-								RTC_LOG(LS_ERROR) << "parse PES  video  packet tail small  len:" << len; 
+								LIBMPEG_LOG_T_F(LS_ERROR) << "parse PES  video  packet tail small  len:" << len;
 								return -1;
 							}
 							littel_endian_size pse_length;
@@ -293,7 +293,7 @@ namespace libmedia_transfer_protocol {
 							program_stream_e* PSEPack = (program_stream_e*)ps;
 							if (size - len < 9)
 							{
-								RTC_LOG(LS_ERROR) << "parse PES  video  packet tail small  len:" << len;
+								LIBMPEG_LOG_T_F(LS_ERROR) << "parse PES  video  packet tail small  len:" << len;
 								return -1;
 							}
 							littel_endian_size pse_length;
@@ -344,6 +344,7 @@ namespace libmedia_transfer_protocol {
 						}
 						default:
 						{
+#if 0
 							static int32_t count = 0;
 							++count;
 
@@ -356,7 +357,8 @@ namespace libmedia_transfer_protocol {
 								fclose(out_f);
 								out_f = nullptr;
 							}
-							RTC_LOG(LS_ERROR) << "parse mpeg  failed !!! (" << start_code->stream_id[0] <<")";
+#endif // 
+							LIBMPEG_LOG_T_F(LS_ERROR) << "parse mpeg  failed !!! (" << start_code->stream_id[0] <<")";
 							return -1;
 							break;
 						}
@@ -378,7 +380,7 @@ namespace libmedia_transfer_protocol {
 					fclose(out_f);
 					out_f = nullptr;
 				}*/
-				RTC_LOG(LS_ERROR) << "mpeg ps  start code not find !!!   read_byte_: " << read_byte_ << ", size: " << size << ", len:" << len;;
+				LIBMPEG_LOG_T_F(LS_ERROR) << "mpeg ps  start code not find !!!   read_byte_: " << read_byte_ << ", size: " << size << ", len:" << len;;
 				return 0;
 				}
 			}
