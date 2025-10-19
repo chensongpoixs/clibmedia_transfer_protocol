@@ -31,6 +31,15 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 #include "libavutil/imgutils.h"
 }  // extern "C"
+
+
+#include <stdint.h>
+#if defined(_MSC_VER)
+#include <stdlib.h>
+#include <intrin.h>
+#endif
+
+
 namespace libmedia_transfer_protocol {
 	namespace libmpeg
 	{
@@ -72,6 +81,15 @@ namespace libmedia_transfer_protocol {
 				unsigned char		stuffing_length; // 填充数据
 			} program_stream_e;
 			//#pragma pop(1)
+
+
+
+
+			//static inline int64_t ff_parse_pes_pts(const uint8_t *buf) {
+			//	return (int64_t)(*buf & 0x0e) << 29 |
+			//		(_rotr16(buf + 1, 8) >> 1) << 15 |
+			//		_rotr16(buf + 3, 8) >> 1;
+			//}
 		}
 
 		MpegDecoder::MpegDecoder()
@@ -234,24 +252,7 @@ namespace libmedia_transfer_protocol {
 							size_t payload_size = pse_length.length - 2 - 1 - PSEPack->stuffing_length;
 							if (payload_size > 0)
 							{
-								// pts flag
-								if (PSEPack->PackInfo1[1] == '\80')
-								{
-									// ps +9    ==> 5byte pts 
-									int64_t   pts = ps[9];
-									pts <<= 8;// sizeof(char);
-									pts += ps[10];
-									pts <<= 8;// sizeof(char);
-									pts += ps[11];
-									pts <<= 8;// sizeof(char);
-									pts += ps[12];
-									pts <<= 8;// sizeof(char);
-									pts += ps[13];
-									pts <<= 8;// sizeof(char);
-									//pts <<= 8;// sizeof(char);
-									LIBMPEG_LOG(LS_INFO) << "pts :"  <<pts;
-								}
-
+								
 								// 4 + 2 + 2 + 1 + stuffing 
 								const uint8_t *payload = ps +  sizeof(program_stream_e) + PSEPack->stuffing_length;
 
@@ -269,12 +270,81 @@ namespace libmedia_transfer_protocol {
 											h264_stream_,
 											stream_len_
 										));
+									encode_image.SetTimestamp(video_pts_);
 									SignalRecvVideoFrame(encode_image);
 									//callback_->OnVideoFrame(encode_image);
 									stream_len_ = 0;
 								}
 								
 #endif // 
+								// pts flag
+								if (PSEPack->PackInfo1[1] == '\80')
+								{
+
+									// ps +9    ==> 5byte pts 
+									int64_t   pts = ps[9];
+									pts <<= 8;// sizeof(char);
+									pts += ps[10];
+									pts <<= 8;// sizeof(char);
+									pts += ps[11];
+									pts <<= 8;// sizeof(char);
+									pts += ps[12];
+									pts <<= 8;// sizeof(char);
+									pts += ps[13];
+									pts <<= 8;// sizeof(char);
+									//pts <<= 8;// sizeof(char);
+									LIBMPEG_LOG(LS_INFO) << "pts :" << pts;
+								}
+								if ((PSEPack->PackInfo1[1] & 0xe0) == 0x20) {
+									//dts =
+									//	pts = get_pts(s->pb, c);
+									//len -= 4;
+									//if (c & 0x10) {
+									//	dts = get_pts(s->pb, -1);
+									//	len -= 5;
+									//}
+									int64_t   pts = ps[9];
+									pts <<= 8;// sizeof(char);
+									pts += ps[10];
+									pts <<= 8;// sizeof(char);
+									pts += ps[11];
+									pts <<= 8;// sizeof(char);
+									pts += ps[12];
+									pts <<= 8;// sizeof(char);
+									pts += ps[13];
+									pts <<= 8;// sizeof(char);
+									LIBMPEG_LOG(LS_INFO) << "===========>pts :" << pts;
+									video_pts_ = pts / 90;
+								}
+								else if ((PSEPack->PackInfo1[1] & 0xc0) == 0x80) {
+									/* mpeg 2 PES */
+									//flags = avio_r8(s->pb);
+									//header_len = avio_r8(s->pb);
+									//len -= 2;
+									//if (header_len > len)
+									//	goto error_redo;
+									//len -= header_len;
+									//if (flags & 0x80) {
+									//	dts = pts = get_pts(s->pb, -1);
+									//	header_len -= 5;
+									//	if (flags & 0x40) {
+									//		dts = get_pts(s->pb, -1);
+									//		header_len -= 5;
+									//	}
+									//}
+									int64_t   pts = ps[9];
+									pts <<= 8;// sizeof(char);
+									pts += ps[10];
+									pts <<= 8;// sizeof(char);
+									pts += ps[11];
+									pts <<= 8;// sizeof(char);
+									pts += ps[12];
+									pts <<= 8;// sizeof(char);
+									pts += ps[13];
+									pts <<= 8;// sizeof(char);
+									LIBMPEG_LOG(LS_INFO) << "===========>pts :" << pts;
+									video_pts_ = pts / 90;
+								}
 								
 								// 一帧数据大于 mtu的大小  rtp hreader 12  , rtp payload 1400  就会多个包传输 
 								

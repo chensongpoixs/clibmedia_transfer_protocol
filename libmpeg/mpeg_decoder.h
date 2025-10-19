@@ -71,6 +71,7 @@ namespace  libmedia_transfer_protocol {
 			int32_t									stream_len_;
 			int32_t                 read_byte_;
 			// VideoReceiveStream *     callback_ ;
+			int64_t                     video_pts_ = 0;
 		};
 
 
