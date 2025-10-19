@@ -206,7 +206,17 @@ namespace libmedia_transfer_protocol {
 						}
 						case 0XE0/*'\e0'*/:// PES（Packetized Elementary Stream）
 						{
-
+							/*
+							
+							 //  2 - PTS_DTS_flags()
+								//  1 - ESCR_flag(0)
+								//  1 - ES_rate_flag(0)
+								//  1 - DSM_trick_mode_flag(0)
+								//  1 - additional_copy_info_flag(0)
+								//  1 - PES_CRC_flag(0)
+								//  1 - PES_extension_flag()
+ 20 20 01 e0 7f ae 8c 20 03 ff ff f8 20 20 20 01 26 01 ad 13 80 8f 39 0b 51 6c c7 1e 8b 2f 7f 2d 20  
+							*/
 
 
 							// VIdeo
@@ -224,8 +234,25 @@ namespace libmedia_transfer_protocol {
 							size_t payload_size = pse_length.length - 2 - 1 - PSEPack->stuffing_length;
 							if (payload_size > 0)
 							{
-								// 4 + 2 + 2 + 1 + stuffing 
+								// pts flag
+								if (PSEPack->PackInfo1[1] == '\80')
+								{
+									// ps +9    ==> 5byte pts 
+									int64_t   pts = ps[9];
+									pts <<= 8;// sizeof(char);
+									pts += ps[10];
+									pts <<= 8;// sizeof(char);
+									pts += ps[11];
+									pts <<= 8;// sizeof(char);
+									pts += ps[12];
+									pts <<= 8;// sizeof(char);
+									pts += ps[13];
+									pts <<= 8;// sizeof(char);
+									//pts <<= 8;// sizeof(char);
+									LIBMPEG_LOG(LS_INFO) << "pts :"  <<pts;
+								}
 
+								// 4 + 2 + 2 + 1 + stuffing 
 								const uint8_t *payload = ps +  sizeof(program_stream_e) + PSEPack->stuffing_length;
 
 								

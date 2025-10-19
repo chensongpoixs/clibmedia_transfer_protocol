@@ -313,7 +313,52 @@ RTP封装示例：
 //  5. PES_header_data_length：			8位，PES 头部的长度，PES_header_data_length这个字段到PES数据之前的长度。一般是指DTS，PTS数据长度。
 //  6. PES_packet_data_byte：				PES负载
 
+```
 
+// 生成 pes 头数据
+    buffer[0] = 0x00;
+    buffer[1] = 0x00;
+    buffer[2] = 0x01;
+    buffer[3] = (unsigned char)(pes->stream_id);
+    
+    buffer[4] = (unsigned char)((pes_header_len_syt >> 8) & 0xff);
+    buffer[5] = (unsigned char)(pes_header_len_syt & 0xff);
+    
+	buffer[6] =   (1<<7)//  2 - check bits '10'
+                | ((prc->encrypt & 0x03) << 4)//  2 - PES_scrambling_control(0)
+                | ((pes_priority & 1) << 3)//  1 - PES_priority(0)
+                | (((~stuff_flag) << 1) & 0x04)     //  1 - data_alignment_indicator(0)	
+			    | 0                                 //  1 - copyright(0)
+				| 0;                                //  1 - original_or_copy(0)
+    
+	buffer[7] = (((unsigned char)pes->add_pts) << 7) | ((unsigned char)pes->add_user_data);
+//	buffer[7] = ((unsigned char)pes->add_pts) << 7;
+                    //  2 - PTS_DTS_flags()
+					//  1 - ESCR_flag(0)
+					//  1 - ES_rate_flag(0)
+					//  1 - DSM_trick_mode_flag(0)
+					//  1 - additional_copy_info_flag(0)
+					//  1 - PES_CRC_flag(0)
+					//  1 - PES_extension_flag()
+	
+    buffer[8] = (unsigned char)pes_header_ext_len;	//  8 - PES_header_data_length				
+
+    pos = 9;
+    if (pes->add_pts)
+    {
+        pts = prc->ptime_stamp;
+        buffer[pos++] = (pts >> 28 & 0x0e) | 0x21;	    //  4 - '0010'
+		    										//  3 - PTS [32..30]
+												    //  1 - marker_bit
+	    buffer[pos++] = (pts >> 21);					//  8 - PTS [29..22]
+	    buffer[pos++] = (pts >> 13 & 0xfe) | 0x01;	    //  7 - PTS [21..15]
+												    //  1 - marker_bit
+	    buffer[pos++] = (pts >>  6);					//  8 - PTS [14..7]
+	    buffer[pos++] = (pts << 2  & 0xfc) | 0x01;	    //  7 - PTS [6..0]
+		                							//  1 - marker_bit
+    }
+
+```
 
 ///////////////////////
 
