@@ -41,7 +41,7 @@ namespace libmedia_transfer_protocol {
 // create rtp header extensions or other data that is sent over the wire.
 class RtpPacketToSend : public RtpPacket {
  public:
-	 RtpPacketToSend() = default;
+	// RtpPacketToSend() ;
   // RtpPacketToSend::Type is deprecated. Use RtpPacketMediaType directly.
   using Type = RtpPacketMediaType;
 

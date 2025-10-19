@@ -24,7 +24,8 @@
 #include <cstdint>
 
 namespace libmedia_transfer_protocol {
-
+	//RtpPacketToSend::RtpPacketToSend()
+	//	: RtpPacket() {}
 RtpPacketToSend::RtpPacketToSend(const ExtensionManager* extensions)
     : RtpPacket(extensions) {}
 RtpPacketToSend::RtpPacketToSend(const ExtensionManager* extensions,

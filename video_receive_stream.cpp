@@ -23,40 +23,134 @@
 namespace libmedia_transfer_protocol {
 
 	VideoReceiveStream::VideoReceiveStream(){}
-	VideoReceiveStream::~VideoReceiveStream(){}
+	VideoReceiveStream::~VideoReceiveStream(){
+	
+		if (mpeg_decoder_)
+		{
+
+			mpeg_decoder_->SignalRecvVideoFrame.disconnect(this);
+			mpeg_decoder_->SignalRecvAudioFrame.disconnect(this);
+			mpeg_decoder_.reset();
+		}
+		if (nal_parse_)
+		{
+			nal_parse_.reset();
+		}
+		if (decoder_)
+		{
+			decoder_.reset();
+		}
+	}
 
 	bool VideoReceiveStream::init(libmedia_codec::VideoCodecType codec_type, int32_t width, int32_t height)
 	{
 
 
 		decoder_ = std::make_unique<libmedia_codec::H264Decoder>();
-
-		decoder_->Configure(codec_type, width, height);
+		
+		decoder_->Configure(codec_type == libmedia_codec::kVideoCodecGb28181 ? libmedia_codec::kVideoCodecH264 : codec_type, width, height);
 		decoder_->RegisterDecodeCompleteCallback(callback_);
-		nal_parse_ = libmedia_codec::NalParseFactory::Create(
-			codec_type == libmedia_codec::VideoCodecType::kVideoCodecH264 ?
-			libmedia_codec::ENalParseType::ENalH264Prase : 
-			libmedia_codec::ENalParseType::ENalHEVCPrase);;
+
+		
+
+		if (codec_type != libmedia_codec::kVideoCodecGb28181)
+		{
+			nal_parse_ = libmedia_codec::NalParseFactory::Create(
+				codec_type == libmedia_codec::VideoCodecType::kVideoCodecH264 ?
+				libmedia_codec::ENalParseType::ENalH264Prase :
+				libmedia_codec::ENalParseType::ENalHEVCPrase);;
+		}
+		else
+		{
+			mpeg_decoder_ = std::make_unique<libmedia_transfer_protocol::libmpeg::MpegDecoder>();
+			mpeg_decoder_->SignalRecvVideoFrame.connect(this, &VideoReceiveStream::OnVideoFrame);
+			mpeg_decoder_->SignalRecvAudioFrame.connect(this, &VideoReceiveStream::OnAudioFrame);
+			//mpeg_decoder_->RegisterDecodeCompleteCallback(this);
+
+			
+		}
 		return true;
 
 
 		return false;
 	}
+	void VideoReceiveStream::OnVideoFrame(libmedia_codec::EncodedImage  image)
+	{
+		decoder_->Decode(image, true, 1);
+	}
+	void VideoReceiveStream::OnAudioFrame(rtc::CopyOnWriteBuffer frame)
+	{
+		//·ÖÀë adts 
+#if 0
 
+		uint8_t  pdata[7] = {
+	0xff, /*1111 1111*/
+	0xf1, /*1111 0001*/
+	0x60, /*0110 0000*/
+	0x40, /*0100 0000*/
+	0x1f, /*0001 1111*/
+	0x7f, /*011-1 1111*/
+	0xfc  /*1111 1100*/
+		};
+		uint8_t *data = pdata;
+		uint8_t p = data[3];
+		int32_t   frame_length = (p & 0x03);
+		frame_length <<= 8;
+		int32_t p2 = data[4];
+		frame_length |= p2;
+		frame_length <<= 3;
+		int32_t p3 = data[5];
+		int32_t  ff = ((p3 >> 5));
+		frame_length |= ff;
+
+#endif // 
+		const uint8_t *data = frame.data();
+		uint8_t p = data[3];
+		int32_t   frame_length = (p & 0x03);
+		frame_length <<= 8;
+		int32_t p2 = data[4];
+		frame_length |= p2;
+		frame_length <<= 3;
+		int32_t p3 = data[5];
+		int32_t  ff = ((p3 >> 5));
+		frame_length |= ff;
+		rtc::Buffer  new_aac_data(frame.data() + 7, frame_length);
+		audio_decder_->Decode(std::move(new_aac_data), 1);
+	}
 	void VideoReceiveStream::OnRtpPacket(const RtpPacketReceived & packet)
 	{
-		nal_parse_->parse_packet(packet.payload().data(), packet.payload_size());
-		if (packet.Marker())
+		if (mpeg_decoder_)
 		{
-			libmedia_codec::EncodedImage encode_image;
+			mpeg_decoder_->parse(packet.payload().data(), packet.payload_size());
+#if 0
+			if (mpeg_decoder_->stream_len_ > 0 && mpeg_decoder_->read_byte_ == 0)
+			{
+
+			}libmedia_codec::EncodedImage encode_image;
 			encode_image.SetEncodedData(
 				libmedia_codec::EncodedImageBuffer::Create(
-					nal_parse_->buffer_stream_,
-					nal_parse_->buffer_index_
+					mpeg_decoder_->h264_stream_,
+					mpeg_decoder_->stream_len_
 				));
 			decoder_->Decode(encode_image, true, 1);
-			nal_parse_->buffer_index_ = 0;
-			//decoder_->Decode();
+			mpeg_decoder_->stream_len_ = 0;
+#endif // 
+		}
+		else if (nal_parse_)
+		{
+			nal_parse_->parse_packet(packet.payload().data(), packet.payload_size());
+			if (packet.Marker())
+			{
+				libmedia_codec::EncodedImage encode_image;
+				encode_image.SetEncodedData(
+					libmedia_codec::EncodedImageBuffer::Create(
+						nal_parse_->buffer_stream_,
+						nal_parse_->buffer_index_
+					));
+				decoder_->Decode(encode_image, true, 1);
+				nal_parse_->buffer_index_ = 0;
+				//decoder_->Decode();
+			}
 		}
 	}
 

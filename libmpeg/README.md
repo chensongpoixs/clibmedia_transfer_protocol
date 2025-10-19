@@ -1,9 +1,223 @@
-# libmpeg
+﻿# libmpeg
+
+# 一、数字信号实际传送的是数据流，一般数据流包括以下三种：
+
+1. ES流：也叫基本码流（elementarystream）或裸码流，包含视频、音频或数据的连续码流。
+2. PES流：也叫打包的基本码流，是将基本的码流ES流根据需要分成长度不等的数据包，并加上包头就形成了打包的基本码流PES流。
+3. TS流：也叫传输流，是由固定长度为188字节的包组成，含有独立时基的一个或多个节目，适用于误码较多的环境。
 
 
-# 一、 TS 
 
-                            PSI 
+![TS、PS、PES、ES数据流关系图](ps_ts_pes_es.png)
+
+#  二、PSI 节目专用信息
+
+![PSI、PAT、PMT、CAT、NIT节目关系](psi_pat_pmt_cat_nit.png)
+
+# 三、 PS流
+
+## 1、 PS包整体结构
+
+```
+[PS Header] → [System Header] → [PSM] → [视频PES包] → [音频PES包] → [Padding（可选）]
+```
+
+
+1、视频关键帧的封装 RTP + PS header + PS system header + PS system Map + PES header +h264 data
+
+2、视频非关键帧的封装 RTP +PS header + PES header + h264 data
+
+3、音频帧的封装: RTP + PES header + G711
+
+```
+       MPEG-4视频流： 0x10；
+       H.264视频流： 0x1B；
+       SVAC视频流： 0x80；
+       G.711音频流： 0x90；
+       G.722.1音频流： 0x92；
+       G.723.1音频流： 0x93；
+       G.729音频流： 0x99；
+      SVAC音频流： 0x9B。
+```
+
+## 2、PS包详细字段解析
+
+
+### ① PS Header
+
+
+|字段名	|长度（字节）	|值示例/描述|
+|:---|:---:|:---:|
+|Start Code	|4|	00 00 01 BA（固定起始码）|
+|SCR（系统时钟参考）|	6	|高33位为SCR基值（90kHz时钟），低9位为SCR扩展值。示例：44 00 00 03 FF FF|
+|MUX Rate	|3|	复用速率（单位：50字节/秒），填充FF FF FF表示未定义。|
+|Reserved	|1|	固定FF|
+ 
+### ②、System Header
+
+|字段名	|长度（字节）|	描述|
+|:---:|:---:|:---:|
+|Start Code	|4|	00 00 01 BB|
+|Header Length|	2|	后续字段总长度（如00 0C表示12字节）|
+|Rate Bound|	3|	最大复用速率（单位：50字节/秒），示例：80 00 01|
+|Audio/Video Flags|	1|	位掩码标识（如0xFF表示支持所有流类型）。|
+|Reserved|	6|	填充FF FF FC 00 00 00|
+ 
+### ③、 PSM（Program Stream Map）
+
+|字段名|	长度（字节）|	描述|
+|:---:|:---:|:---:|
+|Start Code|	4|	00 00 01 BC|
+|PSM Length|	2	|PSM数据总长度（如00 08表示8字节）[不占用开始符（Start code）]|
+|Stream Entries	|<br>可变|	每项描述一个基本流： <br>视频示例：0F E0 00 1B → Stream ID=0xE0（视频），Stream Type=0x1B（H.264） <br>音频示例：1B BD 00 → Stream ID=0xBD（音频），Stream Type=0x1B（G.711）|
+ 
+### ④ PES（Packetized Elementary Stream）
+
+|字段名	|长度（字节）|	描述|
+|:---:|:---:|:---:|
+|Start Code|	4	|00 00 01 E0（视频）或00 00 01 C0（音频）|
+|PES Packet Length|	2	|PES包总长度（若未知填00 00）[不占用开始符（Start code）]|
+|packet info|2|包的信息|
+|P	|1|	填充数据的大小| 
+|Payload Data	|可变	|音视频裸数据（如H.264 NALU、G.711帧）。|
+
+
+### 视频封装（以H.264为例）
+
+
+```
+// PES
+// -----------------
+//     0                   1                   2                   3
+//     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+//    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//    |                         start code   4byte                    |
+//    +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+//  0 |    pes length      2byte       |   PTS/DTS  3byte   
+//    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//  4 |               |P|                                             |
+//    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//  8 |                                                               |
+//    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// 12 |         ..... audio data / video data   ....                  |
+//    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+```
+
+
+1. 生成PES包
+
+1） 提取NALU：从H.264码流中获取NALU（如SPS、PPS、I帧、P帧）。
+
+2） 封装为PES包：
+
+```
+   00 00 01 E0          // 视频PES起始码（Stream ID=0xE0）
+   00 00                // PES包长度（若未知填0）
+   80 80 05             // PES头标志（PTS/DTS存在）
+   21 00 07 00 00       // PTS=0x2100070000（90kHz时钟）
+   00 00 00 01 67 ...   // H.264 SPS数据
+
+```
+
+2. 关键帧处理
+
+插入SPS/PPS：在I帧的PES包前插入携带SPS/PPS的PES包：
+
+```
+  00 00 01 E0 ... [PES头] 00 00 00 01 67 ... // SPS
+  00 00 01 E0 ... [PES头] 00 00 00 01 68 ... // PPS
+  00 00 01 E0 ... [PES头] 00 00 00 01 65 ... // I帧
+
+```
+
+3)  时间戳同步
+
+计算PTS/DTS：
+
+```
+  // 帧率25fps时，每帧时间戳增量 = 90000 / 25 = 3600
+  pts += 3600;
+  dts = pts; // 若无B帧，DTS=PTS
+```
+
+####  音频封装（以G.711为例）
+
+1) 生成PES包
+
+切分音频帧：每20ms（160字节）的G.711数据为一帧。
+
+封装为PES包：
+
+```
+   00 00 01 C0          // 音频PES起始码（Stream ID=0xC0）
+   00 A0                // PES包长度=160字节
+   84 80 05             // PES头标志（仅PTS）
+   21 00 07 00 00       // PTS=0x2100070000（与视频同步）
+   [G.711音频数据（160字节）]
+
+```
+
+2) 时间戳同步
+
+计算PTS：
+
+```
+  // 8kHz采样率，每帧时间戳增量 = 90000 * (20ms / 1000) = 1800
+  pts += 1800;
+```
+
+#### 五、PS包复用与RTP传输
+
+1. PS包复用流程
+
+初始化PS Header：填充SCR和MUX Rate。
+
+插入System Header和PSM：描述全局参数和流类型。
+
+交替插入音视频PES包：确保时间戳对齐。
+
+2. RTP分片规则
+
+MTU限制：PS包超过MTU（通常≤1450字节）时需分片。
+
+RTP封装示例：
+
+```
+  // RTP Header（Payload Type=96）
+  80 60 00 01 00 00 00 00 00 00 00 00
+  // PS包分片数据...
+```
+
+六、PS解析流程
+
+1. 解析步骤
+
+定位起始码：搜索00 00 01 BA找到PS Header。
+
+提取SCR和MUX Rate：用于时间同步。
+
+解析System Header和PSM：确认音视频流类型及参数。
+
+提取PES包：
+
+视频PES：00 00 01 E0 → 提取H.264 NALU。
+
+音频PES：00 00 01 C0 → 提取G.711帧。
+
+时间戳对齐：根据SCR和PTS/DTS同步音视频。
+
+2. 关键问题处理
+
+分片丢失：通过RTP序列号检测丢包，请求重传关键帧。
+
+错误恢复：丢弃不完整的PS包，重置解析状态机。
+
+
+
+
+# 四、 TS 
+
+```                           PSI 
 // PSI
 // -----------------
 //     0                   1                   2                   3
@@ -99,7 +313,52 @@
 //  5. PES_header_data_length：			8位，PES 头部的长度，PES_header_data_length这个字段到PES数据之前的长度。一般是指DTS，PTS数据长度。
 //  6. PES_packet_data_byte：				PES负载
 
+```
 
+// 生成 pes 头数据
+    buffer[0] = 0x00;
+    buffer[1] = 0x00;
+    buffer[2] = 0x01;
+    buffer[3] = (unsigned char)(pes->stream_id);
+    
+    buffer[4] = (unsigned char)((pes_header_len_syt >> 8) & 0xff);
+    buffer[5] = (unsigned char)(pes_header_len_syt & 0xff);
+    
+	buffer[6] =   (1<<7)//  2 - check bits '10'
+                | ((prc->encrypt & 0x03) << 4)//  2 - PES_scrambling_control(0)
+                | ((pes_priority & 1) << 3)//  1 - PES_priority(0)
+                | (((~stuff_flag) << 1) & 0x04)     //  1 - data_alignment_indicator(0)	
+			    | 0                                 //  1 - copyright(0)
+				| 0;                                //  1 - original_or_copy(0)
+    
+	buffer[7] = (((unsigned char)pes->add_pts) << 7) | ((unsigned char)pes->add_user_data);
+//	buffer[7] = ((unsigned char)pes->add_pts) << 7;
+                    //  2 - PTS_DTS_flags()
+					//  1 - ESCR_flag(0)
+					//  1 - ES_rate_flag(0)
+					//  1 - DSM_trick_mode_flag(0)
+					//  1 - additional_copy_info_flag(0)
+					//  1 - PES_CRC_flag(0)
+					//  1 - PES_extension_flag()
+	
+    buffer[8] = (unsigned char)pes_header_ext_len;	//  8 - PES_header_data_length				
+
+    pos = 9;
+    if (pes->add_pts)
+    {
+        pts = prc->ptime_stamp;
+        buffer[pos++] = (pts >> 28 & 0x0e) | 0x21;	    //  4 - '0010'
+		    										//  3 - PTS [32..30]
+												    //  1 - marker_bit
+	    buffer[pos++] = (pts >> 21);					//  8 - PTS [29..22]
+	    buffer[pos++] = (pts >> 13 & 0xfe) | 0x01;	    //  7 - PTS [21..15]
+												    //  1 - marker_bit
+	    buffer[pos++] = (pts >>  6);					//  8 - PTS [14..7]
+	    buffer[pos++] = (pts << 2  & 0xfc) | 0x01;	    //  7 - PTS [6..0]
+		                							//  1 - marker_bit
+    }
+
+```
 
 ///////////////////////
 
@@ -152,7 +411,7 @@
 
 
 ////////////////////////////////////////////////////////////////
-// PID
+// PID  ==>>>>>>标记第一个包 |0x40
 //     TS中的每个表或基本流均由 13 位数据包标识符 (PID) 标识。解复用器部分地通过查找由相同 PID 标识的数据包来从传输流中提取基本流。在大多数应用中，时分复用将用于决定特定 PID 在传输流中出现的频率 
 ///////////////
 0 							0x0000 						节目关联表（PAT）包含所有节目映射表的目录列表
@@ -192,3 +451,4 @@
 // 用于同步声音ES和视频ES的内容。STC是MPEG-2系统里校时的基准。例如，表示时间戳（Presentation timestamp，PTS）的值即是以PCR值为基准的偏移量。
 
 //  2.PCR包括一个33比特的低精度部分（90kHz）和一个9比特的高精度部分（27MHz，取值为0-299）。PCR容许的最大抖动为+/-500ns。
+```
