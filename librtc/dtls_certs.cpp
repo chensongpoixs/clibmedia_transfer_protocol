@@ -44,7 +44,26 @@ namespace libmedia_transfer_protocol {
 
 				static_cast<Dtls*>(SSL_get_ex_data(ssl, 0))->OnSslInfo(where, ret);
 			}
+
+			static const   std::map< std::string, FingerprintAlgorithm> kString2FingerprintAlgorithm =
+			{
+				{ "sha-1",    FingerprintAlgorithm::SHA1   },
+				{ "sha-224",  FingerprintAlgorithm::SHA224 },
+				{ "sha-256",  FingerprintAlgorithm::SHA256 },
+				{ "sha-384",  FingerprintAlgorithm::SHA384 },
+				{ "sha-512",  FingerprintAlgorithm::SHA512 }
+			};
+			static const     std::map<FingerprintAlgorithm, std::string> kFingerprintAlgorithm2String =
+			{
+				{  FingerprintAlgorithm::SHA1,   "sha-1"   },
+				{  FingerprintAlgorithm::SHA224, "sha-224" },
+				{  FingerprintAlgorithm::SHA256, "sha-256" },
+				{  FingerprintAlgorithm::SHA384, "sha-384" },
+				{  FingerprintAlgorithm::SHA512, "sha-512" }
+			};
 		}
+
+		
 
 		DtlsCerts::DtlsCerts(){}
 		DtlsCerts::~DtlsCerts()
@@ -60,6 +79,25 @@ namespace libmedia_transfer_protocol {
 			//	X509_free(dtls_certs_);
 			//	dtls_certs_ = nullptr;
 			//}
+		}
+		FingerprintAlgorithm DtlsCerts::GetFingerprintAlgorithm(const std::string & fingerprint)
+		{
+			auto it = kString2FingerprintAlgorithm.find(fingerprint);
+
+			if (it != kString2FingerprintAlgorithm.end())
+			{
+				return it->second;
+			}
+			else
+			{
+				return  FingerprintAlgorithm::NONE;
+			}
+		}
+		std::string DtlsCerts::GetFingerprintAlgorithmString(FingerprintAlgorithm fingerprint)
+		{
+			auto it = kFingerprintAlgorithm2String.find(fingerprint);
+
+			return it->second;
 		}
 		bool DtlsCerts::Init(const char * dtls_certificate_file  ,
 			const char * dtls_private_key_file  )
@@ -99,7 +137,7 @@ namespace libmedia_transfer_protocol {
 				SSL_CTX_free(ssl_ctx_);
 			}
 		}
-		const std::vector<libssl::Fingerprint> &DtlsCerts::Fingerprints()const
+		 std::vector<libssl::Fingerprint> DtlsCerts::Fingerprints() 
 		{
 			return local_fingerprints_;
 		}

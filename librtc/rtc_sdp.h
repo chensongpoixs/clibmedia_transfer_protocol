@@ -43,7 +43,9 @@ namespace libmedia_transfer_protocol {
 		public:
 			bool Decode(const std::string &sdp);
 			const std::string &GetRemoteUFrag() const;
-			const std::vector<libssl::Fingerprint> &GetFingerprint()const;
+			const std::vector<libssl::Fingerprint> &GetLocalFingerprints()const;
+			const libssl::Fingerprint  &  GetRemoteFingerprint() const;
+			const std::string  &GetRemoteRole() const;
 			int32_t GetVideoPayloadType() const;
 			int32_t GetAudioPayloadType() const;
 
@@ -65,11 +67,17 @@ namespace libmedia_transfer_protocol {
 			int32_t video_payload_type_{ -1 };
 			// 远端的用户名和密码
 			std::string remote_ufrag_;
-			 
+			/*  a = setup 主要是表示dtls的协商过程中角色的问题，谁是客户端，谁是服务器
+				a = setup:actpass 既可以是客户端，也可以是服务器
+				a = setup : active 客户端
+				a = setup : passive 服务器
+				由客户端先发起client hello*/
+			std::string remote_role_;// role = "active" / "passive" / "actpass" / "holdconn"
 			std::string remote_passwd_;
 			std::string local_ufrag_;
 			std::string local_passwd_;
-			std::string remote_fingerprint_;
+			//std::string remote_fingerprint_;
+			libssl::Fingerprint  remote_fingerprint_;
 			std::vector<libssl::Fingerprint>   finger_prints_;
 			int32_t video_ssrc_{ 0 };
 			int32_t audio_ssrc_{ 0 };

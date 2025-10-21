@@ -21,22 +21,11 @@
 #ifndef _C_LIBRTC_SRTP_SESSION__H_
 #define _C_LIBRTC_SRTP_SESSION__H_
 
-#include <cstddef>
 
-#include "absl/types/optional.h"
-#include <cstdint>
-#include <string>
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
-#include <openssl/bio.h>
-#include <random>
-#include "libmedia_transfer_protocol/librtc/dtls_certs.h"
-#include "rtc_base/third_party/sigslot/sigslot.h"
-#include "rtc_base/buffer.h"
 #include "srtp.h"
 //#include "usrsctp.h"
 
-
+#include "libmedia_transfer_protocol/librtc/dtls_certs.h"
 struct srtp_event_data_t;
 struct srtp_ctx_t_;
 
@@ -45,7 +34,7 @@ namespace libmedia_transfer_protocol {
 	namespace libsrtp
 	{
 		////////////////////////////////
-		enum   CryptoSuite
+		enum  class  CryptoSuite
 		{
 			NONE = 0,
 			AES_CM_128_HMAC_SHA1_80 = 1,
@@ -59,28 +48,23 @@ namespace libmedia_transfer_protocol {
 			OUTBOUND
 		};
 		// AES-HMAC: http://tools.ietf.org/html/rfc3711
-		static constexpr size_t kSrtpMasterKeyLength{ 16 };
-		static constexpr size_t kSrtpMasterSaltLength{ 14 };
-		static constexpr size_t kSrtpMasterLength{ kSrtpMasterKeyLength + kSrtpMasterSaltLength };
+		static const  size_t kSrtpMasterKeyLength{ 16 };
+		static const  size_t kSrtpMasterSaltLength{ 14 };
+		static const  size_t kSrtpMasterLength{ kSrtpMasterKeyLength + kSrtpMasterSaltLength };
 		// AES-GCM: http://tools.ietf.org/html/rfc7714
-		static constexpr size_t kSrtpAesGcm256MasterKeyLength{ 32 };
-		static constexpr size_t kSrtpAesGcm256MasterSaltLength{ 12 };
-		static constexpr size_t kSrtpAesGcm256MasterLength{ kSrtpAesGcm256MasterKeyLength + kSrtpAesGcm256MasterSaltLength };
-		static constexpr size_t kSrtpAesGcm128MasterKeyLength{ 16 };
-		static constexpr size_t kSrtpAesGcm128MasterSaltLength{ 12 };
-		static constexpr size_t kSrtpAesGcm128MasterLength{ kSrtpAesGcm128MasterKeyLength + kSrtpAesGcm128MasterSaltLength };
+		static const size_t kSrtpAesGcm256MasterKeyLength{ 32 };
+		static const size_t kSrtpAesGcm256MasterSaltLength{ 12 };
+		static const size_t kSrtpAesGcm256MasterLength{ kSrtpAesGcm256MasterKeyLength + kSrtpAesGcm256MasterSaltLength };
+		static const size_t kSrtpAesGcm128MasterKeyLength{ 16 };
+		static const size_t kSrtpAesGcm128MasterSaltLength{ 12 };
+		static const size_t kSrtpAesGcm128MasterLength{ kSrtpAesGcm128MasterKeyLength + kSrtpAesGcm128MasterSaltLength };
 		// clang-format on
 		struct SrtpCryptoSuiteMapEntry
 		{
 			CryptoSuite   crypto_suite;
 			const char *  name;
 		};
-		std::vector< SrtpCryptoSuiteMapEntry>   kSrtpCryptoSuites = {
-		{ AEAD_AES_256_GCM, "SRTP_AEAD_AES_256_GCM" },
-		{ AEAD_AES_128_GCM, "SRTP_AEAD_AES_128_GCM" },
-		{ AES_CM_128_HMAC_SHA1_80, "SRTP_AES128_CM_SHA1_80" },
-		{ AES_CM_128_HMAC_SHA1_32, "SRTP_AES128_CM_SHA1_32" }
-		};
+		 extern   std::vector< SrtpCryptoSuiteMapEntry>   kSrtpCryptoSuites;
 		//const int32_t kSrtpMaxBufferSize = 65535;
 		static const size_t kEncryptBufferSize{ 65536 };
 		class SrtpSession

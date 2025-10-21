@@ -23,18 +23,7 @@
 
 #include <cstddef>
 
-#include "absl/types/optional.h"
-#include <cstdint>
-#include <string>
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
-#include <openssl/bio.h>
-#include <random>
 #include "libmedia_transfer_protocol/librtc/dtls_certs.h"
-#include "rtc_base/third_party/sigslot/sigslot.h"
-#include "api/task_queue/default_task_queue_factory.h"
-#include "rtc_base/task_queue.h"
-#include "libmedia_transfer_protocol/librtc/srtp_session.h"
 
 
 namespace libmedia_transfer_protocol {
@@ -129,7 +118,7 @@ namespace libmedia_transfer_protocol {
 			bool ProcessHandshake();
 			bool CheckRemoteFingerprint();
 			void ExtractSrtpKeys(libsrtp::CryptoSuite srtpCryptoSuite);
-			libsrtp::CryptoSuite GetNegotiatedSrtpCryptoSuite();
+			libmedia_transfer_protocol::libsrtp::CryptoSuite GetNegotiatedSrtpCryptoSuite();
 
 			
 		private: 

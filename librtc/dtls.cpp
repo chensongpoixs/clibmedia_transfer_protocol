@@ -150,8 +150,9 @@ namespace libmedia_transfer_protocol {
 		}
 		void Dtls::Run(Role local_role)
 		{
-			RTC_CHECK_DESC(
-				local_role_ == Role::CLIENT || local_role_ == Role::SERVER,
+			 
+			RTC_ASSERT(
+				local_role == Role::CLIENT || local_role == Role::SERVER,
 				"local DTLS role must be 'client' or 'server'");
 
 			Role previousLocalRole = this->local_role_;
@@ -210,7 +211,7 @@ namespace libmedia_transfer_protocol {
 					//RTC_CHECK(
 					//	local_role_ == Role::CLIENT || local_role_ == Role::SERVER,
 					//	"local DTLS role must be 'client' or 'server'");
-					RTC_FATAL("invalid local DTLS role");
+					RTC_ABORT(  "invalid local DTLS role");
 				}
 			}
 		}
@@ -316,7 +317,7 @@ namespace libmedia_transfer_protocol {
 
 		bool Dtls::SetRemoteFingerprint(Fingerprint fingerprint)
 		{
-			RTC_CHECK_DESC(
+			RTC_ASSERT(
 				fingerprint.algorithm != FingerprintAlgorithm::NONE, "no fingerprint algorithm provided");
 
 			this->remote_fingerprint_ = fingerprint;
@@ -579,7 +580,7 @@ namespace libmedia_transfer_protocol {
 
 		bool Dtls::SetTimeout()
 		{
-			RTC_CHECK(
+			RTC_ASSERT(
 				this->state_ == DtlsState::CONNECTING || this->state_ == DtlsState::CONNECTED,
 				"invalid DTLS state");
 
@@ -672,8 +673,8 @@ namespace libmedia_transfer_protocol {
 		}
 		bool Dtls::ProcessHandshake()
 		{
-			RTC_CHECK_DESC(this->handshake_done_, "handshake not done yet");
-			RTC_CHECK_DESC(
+			RTC_ASSERT(this->handshake_done_, "handshake not done yet");
+			RTC_ASSERT(
 				this->remote_fingerprint_.algorithm != FingerprintAlgorithm::NONE, "remote fingerprint not set");
 
 			// Validate the remote fingerprint.
@@ -714,7 +715,7 @@ namespace libmedia_transfer_protocol {
 
 		bool Dtls::CheckRemoteFingerprint()
 		{
-			RTC_CHECK_DESC(
+			RTC_ASSERT(
 				this->remote_fingerprint_.algorithm != FingerprintAlgorithm::NONE, "remote fingerprint not set");
 
 			X509* certificate;
@@ -756,7 +757,7 @@ namespace libmedia_transfer_protocol {
 				break;
 
 			default:
-				RTC_CHECK_DESC(false, "unknown algorithm");
+				RTC_ABORT( "unknown algorithm");
 			}
 
 			// Compare the remote fingerprint with the value given via signaling.
@@ -764,7 +765,7 @@ namespace libmedia_transfer_protocol {
 
 			if (ret == 0)
 			{
-				RTC_CHECK_DESC(false, "X509_digest() failed");
+				LIBSSL_LOG_T_F(LS_ERROR)<<(  "X509_digest() failed");
 
 				X509_free(certificate);
 
@@ -870,7 +871,7 @@ namespace libmedia_transfer_protocol {
 
 			default:
 			{
-				RTC_CHECK_DESC(false, "unknown SRTP crypto suite");
+				RTC_ABORT( "unknown SRTP crypto suite");
 			}
 			}
 
@@ -886,7 +887,7 @@ namespace libmedia_transfer_protocol {
 			ret = SSL_export_keying_material(
 				this->ssl_, srtpMaterial, srtpMasterLength * 2, "EXTRACTOR-dtls_srtp", 19, nullptr, 0, 0);
 
-			RTC_CHECK_DESC(ret != 0, "SSL_export_keying_material() failed");
+			RTC_ASSERT(ret != 0, "SSL_export_keying_material() failed");
 
 			switch ( local_role_)
 			{
@@ -912,7 +913,7 @@ namespace libmedia_transfer_protocol {
 
 			default:
 			{
-				RTC_CHECK_DESC(false, "no DTLS role set");
+				RTC_ABORT(  "no DTLS role set");
 			}
 			}
 
@@ -974,7 +975,7 @@ namespace libmedia_transfer_protocol {
 				}
 			}
 
-			RTC_CHECK_DESC(
+			RTC_ASSERT(
 				negotiatedSrtpCryptoSuite != libsrtp::CryptoSuite::NONE,
 				"chosen SRTP crypto suite is not an available one");
 

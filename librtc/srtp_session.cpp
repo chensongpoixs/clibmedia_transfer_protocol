@@ -33,6 +33,12 @@ namespace libmedia_transfer_protocol
 
 	namespace libsrtp
 	{
+	    		std::vector< SrtpCryptoSuiteMapEntry>   kSrtpCryptoSuites = {
+		{ CryptoSuite::AEAD_AES_256_GCM, "SRTP_AEAD_AES_256_GCM" },
+		{ CryptoSuite::AEAD_AES_128_GCM, "SRTP_AEAD_AES_128_GCM" },
+		{ CryptoSuite::AES_CM_128_HMAC_SHA1_80, "SRTP_AES128_CM_SHA1_80" },
+		{ CryptoSuite::AES_CM_128_HMAC_SHA1_32, "SRTP_AES128_CM_SHA1_32" }
+		};
 		namespace
 		{
 
@@ -76,8 +82,8 @@ namespace libmedia_transfer_protocol
 			auto ret = srtp_init();
 			if (ret != srtp_err_status_ok)
 			{
-				MS_THROW_ERROR("srtp_install_event_handler() failed: %s", SrtpSession::GetErrorString(ret));
-
+				//MS_THROW_ERROR("srtp_install_event_handler() failed: %s", SrtpSession::GetErrorString(ret));
+				throw std::runtime_error("srtp_install_event_handler() failed:");
 				//LIBRTC_LOG_F(LS_WARNING) << "srtp init failed.";
 				return false;
 			}
@@ -174,8 +180,9 @@ namespace libmedia_transfer_protocol
 				//MS_THROW_ERROR("srtp_create() failed: %s", DepLibSRTP::srtp_create() failed:(err));
 			if (srtp_err_status_ok != err)
 			{
-				MS_THROW_ERROR("srtp_create() failed:%s", SrtpSession::GetErrorString(err));
+				//MS_THROW_ERROR("srtp_create() failed:%s", SrtpSession::GetErrorString(err));
 				//LIBSRTP_LOG_T_F(LS_ERROR) << "srtp_create() failed:" << SrtpSession:: GetErrorString(err);
+				throw std::runtime_error("srtp_create() failed");
 			}
 		}
 		SrtpSession::~SrtpSession()

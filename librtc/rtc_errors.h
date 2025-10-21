@@ -22,41 +22,41 @@
 #define _C_RTC_ERRORS_H_
 
 #include <cstddef>
-
-#include "absl/types/optional.h"
-#include <cstdint>
-#include <string>
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
-#include <openssl/bio.h>
-#include <random>
-#include <map>
+ 
+//#include <cstdint>
+//#include <string>
+//
+//#include <random>
+//#include <map>
 #include <stdexcept>
 
 namespace libmedia_transfer_protocol {
 	namespace librtc {
 
-		class RtcError :public std::runtime_error
-		{
-		public:
-			explicit RtcError(const char* description) : std::runtime_error(description)
-			{
-			}
+		//class RtcError :public std::runtime_error
+		//{
+		//public:
+		//	explicit RtcError(const char* description) : std::runtime_error(description)
+		//	{
+		//	}
+		//
+		//public:
+		//	static const size_t bufferSize{ 2000 };
+		//	static char buffer[bufferSize] ;
+		//};
 
-		public:
-			static const size_t bufferSize{ 2000 };
-			thread_local static char buffer[];
-		};
 
-		// clang-format off
-#define MS_THROW_ERROR(desc, ...) \
-	do \
-	{ \
-		std::snprintf(libmedia_transfer_protocol::librtc::RtcError::buffer, libmedia_transfer_protocol::librtc::RtcError::bufferSize, desc, ##__VA_ARGS__); \
-		throw libmedia_transfer_protocol::librtc::RtcError(libmedia_transfer_protocol::librtc::RtcError::buffer); \
-	} while (false)
 	}
 }
+
+
+// clang-format off
+//#define MS_THROW_ERROR(desc, ...) \
+//	do \
+//	{ \
+//		std::snprintf(libmedia_transfer_protocol::librtc::RtcError::buffer, libmedia_transfer_protocol::librtc::RtcError::bufferSize, desc, ##__VA_ARGS__); \
+//		throw libmedia_transfer_protocol::librtc::RtcError(libmedia_transfer_protocol::librtc::RtcError::buffer); \
+//	} while (false)
 
 
 #endif 

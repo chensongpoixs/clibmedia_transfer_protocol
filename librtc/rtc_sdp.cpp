@@ -76,6 +76,7 @@ namespace libmedia_transfer_protocol {
 			static const std::string ice_ufrag_token = "a=ice-ufrag:";
 			static const std::string ice_pwd_token = "a=ice-pwd:";
 			static const std::string  fingerprint_token = "a=fingerprint:";
+			static const std::string   role_token = "a=setup:";
 		}
 
 		RtcSdp::RtcSdp() {}
@@ -104,10 +105,30 @@ namespace libmedia_transfer_protocol {
 					remote_passwd_ = line.substr(ice_pwd_token.size());
 					LIBRTC_LOG(LS_INFO) << "remote passwd:" << remote_passwd_;
 				}
+				else if (StringUtils::StartsWith(line, role_token))
+				{
+					remote_role_ = line.substr(role_token.size(), line.size() - role_token.size()  -1);
+					LIBRTC_LOG(LS_INFO) << "remote role:" << remote_role_;
+				}
 				else if (StringUtils::StartsWith(line, fingerprint_token))
 				{
-					remote_fingerprint_ = line.substr(fingerprint_token.size());
-					LIBRTC_LOG(LS_INFO) << "remote_fingerprint:" << remote_fingerprint_;
+					std::string remote_fingerprint = line.substr(fingerprint_token.size());
+					
+					
+					LIBRTC_LOG(LS_INFO) << "remote_fingerprint:" << remote_fingerprint;
+				
+					auto pos = remote_fingerprint.find_first_of(" ");
+					if (pos == std::string::npos)
+					{
+						continue;
+					}
+					std::string   alg = remote_fingerprint.substr(0, pos);
+					std::string   sha = remote_fingerprint.substr(pos + 1, remote_fingerprint.size() - pos-2);
+					LIBRTC_LOG(LS_INFO) << "alg:" << alg << ", sha: << " << sha ;
+
+					// audio video 
+					remote_fingerprint_.algorithm = libssl::DtlsCerts::GetFingerprintAlgorithm(alg);
+						remote_fingerprint_.value = sha;
 				}
 				else if (StringUtils::StartsWith(line, rtpmap_token))
 				{
@@ -137,14 +158,24 @@ namespace libmedia_transfer_protocol {
 					}
 				}
 			}
+			return true;
 		}
 		const std::string &RtcSdp::GetRemoteUFrag() const
 		{
 			return remote_ufrag_;
 		}
-		const std::vector<libssl::Fingerprint> &RtcSdp::GetFingerprint()const
+		const std::vector<libssl::Fingerprint> &RtcSdp::GetLocalFingerprints()const
 		{
 			return finger_prints_;
+		}
+		const  libssl::Fingerprint  &RtcSdp::GetRemoteFingerprint()const
+		{
+			return remote_fingerprint_;
+		}
+		const std::string & RtcSdp::GetRemoteRole() const
+		{
+			// TODO: insert return statement here
+			return remote_role_;
 		}
 		int32_t RtcSdp::GetVideoPayloadType() const
 		{
