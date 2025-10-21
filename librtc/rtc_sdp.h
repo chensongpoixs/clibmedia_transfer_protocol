@@ -30,6 +30,7 @@
 #include <cstddef>
 
 #include "absl/types/optional.h"
+#include "libmedia_transfer_protocol/librtc/dtls_certs.h"
 
 namespace libmedia_transfer_protocol {
 	namespace librtc {
@@ -42,11 +43,11 @@ namespace libmedia_transfer_protocol {
 		public:
 			bool Decode(const std::string &sdp);
 			const std::string &GetRemoteUFrag() const;
-			const std::string &GetFingerprint()const;
+			const std::vector<libssl::Fingerprint> &GetFingerprint()const;
 			int32_t GetVideoPayloadType() const;
 			int32_t GetAudioPayloadType() const;
 
-			void SetFingerprint(const std::string &fp);
+			void SetLocalFingerprint(const std::vector<libssl::Fingerprint> &fps);
 			void SetStreamName(const std::string &name);
 			void SetLocalUFrag(const std::string &frag);
 			void SetLocalPasswd(const std::string &pwd);
@@ -68,7 +69,8 @@ namespace libmedia_transfer_protocol {
 			std::string remote_passwd_;
 			std::string local_ufrag_;
 			std::string local_passwd_;
-			std::string fingerprint_;
+			std::string remote_fingerprint_;
+			std::vector<libssl::Fingerprint>   finger_prints_;
 			int32_t video_ssrc_{ 0 };
 			int32_t audio_ssrc_{ 0 };
 			int16_t server_port_{ 0 };

@@ -65,6 +65,7 @@ Interleaved Mode:
 #include "rtc_base/logging.h"
 #include "libmedia_transfer_protocol/string_utils.h"
 #include <iostream>
+#include "libmedia_transfer_protocol/librtc/dtls_certs.h"
 
 namespace libmedia_transfer_protocol {
 	namespace librtc
@@ -105,8 +106,8 @@ namespace libmedia_transfer_protocol {
 				}
 				else if (StringUtils::StartsWith(line, fingerprint_token))
 				{
-					fingerprint_ = line.substr(fingerprint_token.size());
-					LIBRTC_LOG(LS_INFO) << "fingerprint:" << fingerprint_;
+					remote_fingerprint_ = line.substr(fingerprint_token.size());
+					LIBRTC_LOG(LS_INFO) << "remote_fingerprint:" << remote_fingerprint_;
 				}
 				else if (StringUtils::StartsWith(line, rtpmap_token))
 				{
@@ -141,9 +142,9 @@ namespace libmedia_transfer_protocol {
 		{
 			return remote_ufrag_;
 		}
-		const std::string &RtcSdp::GetFingerprint()const
+		const std::vector<libssl::Fingerprint> &RtcSdp::GetFingerprint()const
 		{
-			return fingerprint_;
+			return finger_prints_;
 		}
 		int32_t RtcSdp::GetVideoPayloadType() const
 		{
@@ -154,9 +155,9 @@ namespace libmedia_transfer_protocol {
 			return  audio_payload_type_;
 		}
 
-		void RtcSdp::SetFingerprint(const std::string &fp)
+		void RtcSdp::SetLocalFingerprint(const std::vector<libssl::Fingerprint> &fps)
 		{
-			fingerprint_ = fp;
+			finger_prints_ = fps;
 		}
 		void RtcSdp::SetStreamName(const std::string &name)
 		{
@@ -225,6 +226,15 @@ namespace libmedia_transfer_protocol {
 			ss << "a=group:BUNDLE 0 1\n";
 			ss << "a=msid-semantic: WMS " << stream_name_ << "\n";
 
+			std::stringstream finger_prints;
+			for (auto finger_print : finger_prints_)
+			{
+				finger_prints << "a=fingerprint:" << libssl::DtlsCerts::GetFingerprintAlgorithmString(finger_print.algorithm)
+					<< " " << finger_print.value << "\n";
+			}
+			
+
+
 			if (video_payload_type_ != -1 && audio_payload_type_ != -1)
 			{
 				ss << "m=audio 9 UDP/TLS/RTP/SAVPF " << audio_payload_type_ << "\n";
@@ -235,7 +245,8 @@ namespace libmedia_transfer_protocol {
 				ss << "a=ice-pwd:" << local_passwd_ << "\n";
 
 				ss << "a=candidate:0 1 udp 2130706431 " << server_addr_ << " " << server_port_ << " typ host generation 0\n";
-				ss << "a=fingerprint:sha-256 " << fingerprint_ << "\n";
+				//ss << "a=fingerprint:sha-256 " << fingerprint_ << "\n";
+				ss << finger_prints.str();
 				ss << "a=setup:passive\n"; 
 				
 				ss << "a=sendonly\n";
@@ -263,7 +274,8 @@ namespace libmedia_transfer_protocol {
 				ss << "a=mid:1\n";
 				ss << "a=ice-ufrag:" << local_ufrag_ << "\n";
 				ss << "a=ice-pwd:" << local_passwd_ << "\n";
-				ss << "a=fingerprint:sha-256 " << fingerprint_ << "\n";
+				//ss << "a=fingerprint:sha-256 " << fingerprint_ << "\n";
+				ss << finger_prints.str();
 				ss << "a=setup:passive\n";
 				ss << "a=candidate:0 1 udp 2130706431 " << server_addr_ << " " << server_port_ << " typ host generation 0\n";
 				ss << "a=sendonly\n";

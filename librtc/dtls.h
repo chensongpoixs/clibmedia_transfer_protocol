@@ -32,56 +32,135 @@
 #include <random>
 #include "libmedia_transfer_protocol/librtc/dtls_certs.h"
 #include "rtc_base/third_party/sigslot/sigslot.h"
+#include "api/task_queue/default_task_queue_factory.h"
+#include "rtc_base/task_queue.h"
+#include "libmedia_transfer_protocol/librtc/srtp_session.h"
+
+
 namespace libmedia_transfer_protocol {
 
-	namespace librtc
+	namespace libssl
 	{
+		static const int32_t  kDtlsMtu{ 1350 };
+		static const int32_t  kSsslReadBufferSize{ 65536 };
+		enum  class  DtlsState
+		{
+			NONE = 1,
+			CONNECTING,
+			CONNECTED,
+			FAILED,
+			CLOSED
+		};
+		 
+		enum class  Role
+		{
+			NONE = 0,
+			AUTO = 1,
+			CLIENT,
+			SERVER
+		};
+		
+
+
 		class Dtls : public sigslot::has_slots<>
 		{
 		public:
-			Dtls(/*DtlsHandler *handler*/) =default;
+			Dtls(webrtc::TaskQueueFactory* task_queue_factory)  ;
 			~Dtls();
 
-			bool Init();
-			void OnRecv(const char *data, uint32_t size);
-			const std::string &Fingerprint() const;
-			void SetDone();
-			void SetClient(bool client);
-			const std::string &SendKey();
-			const std::string &RecvKey();
 
+			void Run(Role local_role);
 
-			bool CheckStatus(int returnCode);
+			 
+			void OnRecv(const char *data, int32_t size);
+			bool SetRemoteFingerprint(Fingerprint fingerprint);
+			 
+			
 
 		public:
 
-			sigslot::signal3<const char *, size_t, Dtls*>
-				SignalDtlsSendPakcet;
-			sigslot::signal1<  Dtls*>
-				SignalDtlsHandshakeDone;
-			// alter 
-			sigslot::signal1<Dtls*>     SignalDtlsClose;
-		private:
-			bool InitSSLContext();
-			bool InitSSL();
-			static int SSLVerify(int preverify_ok, X509_STORE_CTX *ctx);
-			static void SSLInfo(const SSL* ssl, int where, int ret);
-			void NeedPost();
-			void GetSrtpKey();
-		private:
+			
+			// alter
 
-			SSL_CTX * ssl_context_{ nullptr };
-			DtlsCerts dtls_cert_;
-			bool is_client_{ false };
-			bool is_done_{ false };
-			bool handshake_done_{ false };
+			sigslot::signal1<Dtls*>									SignalDtlsConnecting;
+			sigslot::signal7<Dtls*, libsrtp::CryptoSuite  ,
+				uint8_t*  , size_t  ,
+				uint8_t*  , size_t  , std::string&  >				SignalDtlsConnected; 
+			sigslot::signal1<Dtls*>									SignalDtlsClose;
+			sigslot::signal1<Dtls*>									SignalDtlsFailed; 
+			sigslot::signal3< Dtls*,const uint8_t *, size_t>		SignalDtlsSendPakcet; 
+			sigslot::signal3<  Dtls*, const uint8_t *, size_t>		SignalDtlsApplicationDataReceived;
+		private:
+			 
+			 
+			 
+
+
+		public:
+			/* Callbacks fired by OpenSSL events. */
+			void OnSslInfo(int32_t where, int32_t ret);
+
+			void OnTimer();
+
+		private:
+			bool IsRunning() const
+			{
+				switch (this->state_)
+				{
+				case DtlsState::NONE:
+					return false;
+				case DtlsState::CONNECTING:
+				case DtlsState::CONNECTED:
+					return true;
+				case DtlsState::FAILED:
+				case DtlsState::CLOSED:
+					return false;
+				}
+
+				// Make GCC 4.9 happy.
+				return false;
+			}
+
+			
+			void Reset();
+			bool CheckStatus(int returnCode);
+			void SendPendingOutgoingDtlsData();
+			bool SetTimeout();
+			bool ProcessHandshake();
+			bool CheckRemoteFingerprint();
+			void ExtractSrtpKeys(libsrtp::CryptoSuite srtpCryptoSuite);
+			libsrtp::CryptoSuite GetNegotiatedSrtpCryptoSuite();
+
+			
+		private: 
+		private: 
+			//std::string send_key_;
+			//std::string recv_key_;
+
+
+			///
+			///
+			// Others 
 			SSL * ssl_{ nullptr };
 			BIO * bio_read_{ nullptr };
 			BIO * bio_write_{ nullptr };
-			char buffer_[65535];
-			//DtlsHandler * handler_{ nullptr };
-			std::string send_key_;
-			std::string recv_key_;
+			uint8_t   ssl_read_buffer_[kSsslReadBufferSize];
+			DtlsState  state_{ DtlsState::NONE };
+			Role    local_role_{ Role::NONE };
+
+			Fingerprint remote_fingerprint_;
+			
+			//libssl::Fingerprint    remote_finger_print_;
+			//bool handshake_done_{ false };
+			bool handshake_done_{ false };
+			bool handshake_done_now_{ false };
+			std::string remote_cert_;
+			
+			
+
+			 //
+			 rtc::TaskQueue   dtls_queue_;
+			 
 		};
 	}
 

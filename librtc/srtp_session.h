@@ -33,7 +33,7 @@
 #include "libmedia_transfer_protocol/librtc/dtls_certs.h"
 #include "rtc_base/third_party/sigslot/sigslot.h"
 #include "rtc_base/buffer.h"
-//#include "srtp.h"
+#include "srtp.h"
 //#include "usrsctp.h"
 
 
@@ -42,31 +42,81 @@ struct srtp_ctx_t_;
 
 namespace libmedia_transfer_protocol {
 
-	namespace librtc
+	namespace libsrtp
 	{
-
-		const int32_t kSrtpMaxBufferSize = 65535;
+		////////////////////////////////
+		enum   CryptoSuite
+		{
+			NONE = 0,
+			AES_CM_128_HMAC_SHA1_80 = 1,
+			AES_CM_128_HMAC_SHA1_32,
+			AEAD_AES_256_GCM,
+			AEAD_AES_128_GCM
+		};
+		enum   SrtpType
+		{
+			INBOUND = 1,
+			OUTBOUND
+		};
+		// AES-HMAC: http://tools.ietf.org/html/rfc3711
+		static constexpr size_t kSrtpMasterKeyLength{ 16 };
+		static constexpr size_t kSrtpMasterSaltLength{ 14 };
+		static constexpr size_t kSrtpMasterLength{ kSrtpMasterKeyLength + kSrtpMasterSaltLength };
+		// AES-GCM: http://tools.ietf.org/html/rfc7714
+		static constexpr size_t kSrtpAesGcm256MasterKeyLength{ 32 };
+		static constexpr size_t kSrtpAesGcm256MasterSaltLength{ 12 };
+		static constexpr size_t kSrtpAesGcm256MasterLength{ kSrtpAesGcm256MasterKeyLength + kSrtpAesGcm256MasterSaltLength };
+		static constexpr size_t kSrtpAesGcm128MasterKeyLength{ 16 };
+		static constexpr size_t kSrtpAesGcm128MasterSaltLength{ 12 };
+		static constexpr size_t kSrtpAesGcm128MasterLength{ kSrtpAesGcm128MasterKeyLength + kSrtpAesGcm128MasterSaltLength };
+		// clang-format on
+		struct SrtpCryptoSuiteMapEntry
+		{
+			CryptoSuite   crypto_suite;
+			const char *  name;
+		};
+		std::vector< SrtpCryptoSuiteMapEntry>   kSrtpCryptoSuites = {
+		{ AEAD_AES_256_GCM, "SRTP_AEAD_AES_256_GCM" },
+		{ AEAD_AES_128_GCM, "SRTP_AEAD_AES_128_GCM" },
+		{ AES_CM_128_HMAC_SHA1_80, "SRTP_AES128_CM_SHA1_80" },
+		{ AES_CM_128_HMAC_SHA1_32, "SRTP_AES128_CM_SHA1_32" }
+		};
+		//const int32_t kSrtpMaxBufferSize = 65535;
+		static const size_t kEncryptBufferSize{ 65536 };
 		class SrtpSession
 		{
 		public:
-			SrtpSession() = default;
-			~SrtpSession() = default;
-
-			static bool InitSrtpLibrary();
-			bool Init(const std::string &recv_key, const std::string &send_key);
-			rtc::Buffer RtpProtect(rtc::Buffer &pkt);
-			rtc::Buffer RtcpProtect(rtc::Buffer &pkt);
-			rtc::Buffer SrtpUnprotect(rtc::Buffer &pkt);
-			rtc::Buffer SrtcpUnprotect(rtc::Buffer &pkt);
-			rtc::Buffer SrtcpUnprotect(const char *buf, size_t size);
+			SrtpSession(SrtpType type, CryptoSuite cryptoSuite, uint8_t* key, size_t keyLen)  ;
+			~SrtpSession()  ;
 		private:
 			static void OnSrtpEvent(srtp_event_data_t* data);
 		public:
 
-			srtp_ctx_t_* send_ctx_{ nullptr };
-			srtp_ctx_t_* recv_ctx_{ nullptr };
-			char w_buffer_[kSrtpMaxBufferSize];
-			char r_buffer_[kSrtpMaxBufferSize];
+			static bool InitSrtpLibrary();
+			static void DestroySrtpLibrary();
+			static const char* GetErrorString(srtp_err_status_t code);
+		public:
+			
+			//bool Init(const std::string &recv_key, const std::string &send_key);
+			//rtc::Buffer RtpProtect(rtc::Buffer &pkt);
+			//rtc::Buffer RtcpProtect(rtc::Buffer &pkt);
+			//rtc::Buffer SrtpUnprotect(rtc::Buffer &pkt);
+			//rtc::Buffer SrtcpUnprotect(rtc::Buffer &pkt);
+			//rtc::Buffer SrtcpUnprotect(const char *buf, size_t size);
+			bool EncryptRtp(const uint8_t** data, size_t* len);
+			bool DecryptSrtp(uint8_t* data, size_t* len);
+			bool EncryptRtcp(const uint8_t** data, size_t* len);
+			bool DecryptSrtcp(uint8_t* data, size_t* len);
+			void RemoveStream(uint32_t ssrc);
+			
+		public:
+			// Allocated by this.
+			srtp_ctx_t_* session_{ nullptr };
+			uint8_t EncryptBuffer[kEncryptBufferSize];
+			//srtp_ctx_t_* send_ctx_{ nullptr };
+			//srtp_ctx_t_* recv_ctx_{ nullptr };
+			//char w_buffer_[kSrtpMaxBufferSize];
+			//char r_buffer_[kSrtpMaxBufferSize];
 		};
 	}
 }
