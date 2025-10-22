@@ -293,7 +293,7 @@ namespace libmedia_transfer_protocol {
 									pts += ps[13];
 									pts <<= 8;// sizeof(char);
 									//pts <<= 8;// sizeof(char);
-									LIBMPEG_LOG(LS_INFO) << "pts :" << pts;
+									//LIBMPEG_LOG(LS_INFO) << "pts :" << pts;
 								}
 								if ((PSEPack->PackInfo1[1] & 0xe0) == 0x20) {
 									//dts =
@@ -313,7 +313,7 @@ namespace libmedia_transfer_protocol {
 									pts <<= 8;// sizeof(char);
 									pts += ps[13];
 									pts <<= 8;// sizeof(char);
-									LIBMPEG_LOG(LS_INFO) << "===========>pts :" << pts;
+									//LIBMPEG_LOG(LS_INFO) << "===========>pts :" << pts;
 									video_pts_ = pts / 90;
 								}
 								else if ((PSEPack->PackInfo1[1] & 0xc0) == 0x80) {
