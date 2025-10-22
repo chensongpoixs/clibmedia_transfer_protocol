@@ -342,7 +342,7 @@ namespace libmedia_transfer_protocol {
 									pts <<= 8;// sizeof(char);
 									pts += ps[13];
 									pts <<= 8;// sizeof(char);
-									LIBMPEG_LOG(LS_INFO) << "===========>pts :" << pts;
+									//LIBMPEG_LOG(LS_INFO) << "===========>pts :" << pts;
 									video_pts_ = pts / 90;
 								}
 								
