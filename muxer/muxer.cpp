@@ -35,6 +35,7 @@ namespace libmedia_transfer_protocol
 	}
 	Muxer::~Muxer()
 	{
+		RTC_LOG_T_F(LS_INFO) << "";
 		if (opus_encoder_)
 		{
 			opus_encoder_->Stop();
@@ -134,7 +135,7 @@ namespace libmedia_transfer_protocol
 		{
 			return 0;
 		}
-#if 1
+#if 0
 		static FILE * out_file_ptr = fopen("aac_ch_.pcm", "wb+");
 		if (out_file_ptr)
 		{
@@ -144,11 +145,12 @@ namespace libmedia_transfer_protocol
 #endif //
 
 
-#if 0
+#if 1
+		// samplerate:32000 channels:2
 		std::shared_ptr<libmedia_codec::AudioFrame> pcm_frame = std::make_shared<libmedia_codec::AudioFrame>();
-		pcm_frame->sample_rate_hz_ = ff_mpeg4audio_sample_rates[aac_adts_header_info.sampling_freq_index];
+		pcm_frame->sample_rate_hz_ =   ff_mpeg4audio_sample_rates[aac_adts_header_info.sampling_freq_index];
 		pcm_frame->num_channels_ =   aac_adts_header_info.channel_configuration;
-		pcm_frame->samples_per_channel_ = pcm.size();
+		pcm_frame->samples_per_channel_ = 960;// 480;// pcm.size();
 		//RTC_LOG(LS_INFO) << "sample_rate_hz:" << pcm_frame->sample_rate_hz_ << ", samples_per_channel_: " << pcm_frame->samples_per_channel_;
 		memcpy((   uint8_t  *)(pcm_frame->mutable_data()), pcm.data(), pcm.size());
 		opus_encoder_->OnNewMediaFrame(pcm_frame);
