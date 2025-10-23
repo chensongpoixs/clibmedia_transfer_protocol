@@ -92,6 +92,8 @@ namespace libmedia_transfer_protocol {
 			//}
 		}
 
+		
+
 		MpegDecoder::MpegDecoder()
 			: h264_stream_((new uint8_t[1024 * 1024 * 8]))
 			, stream_len_(0)

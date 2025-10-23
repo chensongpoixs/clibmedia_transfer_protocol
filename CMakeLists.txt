@@ -104,6 +104,9 @@ rtp_rtcp/rtp_header_extension_map.cpp
 	 librtc/*.cpp 
 	 libhttp/*.h
 	 libhttp/*.cpp 
+	 muxer/*.h 
+	 muxer/*.cpp
+	 
 
 ) 
 
