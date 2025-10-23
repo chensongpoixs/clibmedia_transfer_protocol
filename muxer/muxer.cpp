@@ -69,11 +69,15 @@ namespace libmedia_transfer_protocol
 
 	}
 	Muxer::Muxer( ) 
+		:audio_processing_filter_(new libmedia_codec::AudioProcessingFilter())
 	{
+		audio_processing_filter_->Configure();
+		//audio_processing_filter_->SignalAudio3AFrame(this, )
 	}
 	Muxer::~Muxer()
 	{
 		RTC_LOG_T_F(LS_INFO) << "";
+		audio_processing_filter_->SignalAudio3AFrame.disconnect_all();
 		if (opus_encoder_)
 		{
 			opus_encoder_->SignalAudioEncoderInfoFrame.disconnect_all();
@@ -119,6 +123,7 @@ namespace libmedia_transfer_protocol
 			{
 				opus_encoder_ = std::make_shared<libmedia_codec::OpusEncoder2>();
 				//opus_encoder_->SetSendFrame(encoder_audio_obj_);
+				audio_processing_filter_->SignalAudio3AFrame.connect(opus_encoder_.get(), &libmedia_codec::OpusEncoder2::OnNewMediaFrame);
 				opus_encoder_->SignalAudioEncoderInfoFrame.connect(this, &Muxer::SendAudioEncode);
 				opus_encoder_->SetChannel( aac_adts_header_info.channel_configuration );
 				opus_encoder_->SetSample(ff_mpeg4audio_sample_rates[aac_adts_header_info.sampling_freq_index]/*aac_adts_header_info.sampling_freq_index*/);
@@ -163,7 +168,7 @@ namespace libmedia_transfer_protocol
 		pcm_frame->samples_per_channel_ = 960;// 480;// pcm.size();
 		//RTC_LOG(LS_INFO) << "sample_rate_hz:" << pcm_frame->sample_rate_hz_ << ", samples_per_channel_: " << pcm_frame->samples_per_channel_;
 		memcpy((   uint8_t  *)(pcm_frame->mutable_data()), pcm.data(), pcm.size());
-		opus_encoder_->OnNewMediaFrame(pcm_frame);
+		audio_processing_filter_->OnNewMediaFrame(pcm_frame);
 #endif 
 		//return int32_t();
 		return 0;

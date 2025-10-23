@@ -28,6 +28,7 @@
 #include "libmedia_codec/x264_encoder.h"
 
 #include "rtc_base/third_party/sigslot/sigslot.h"
+#include "libmedia_codec/audio_codec/audio_processing.h"
 namespace libmedia_transfer_protocol
 {
 	class Muxer
@@ -60,6 +61,7 @@ namespace libmedia_transfer_protocol
 		//libmedia_codec::EncodeAudioObser   *            encoder_audio_obj_;
 		//libmedia_codec::AdtsHeader       adts_header_;
 		std::shared_ptr<libmedia_codec::AacDecoder>     aac_decoder_;
+		std::unique_ptr<libmedia_codec::AudioProcessingFilter>   audio_processing_filter_;
 		std::shared_ptr<libmedia_codec::OpusEncoder2>   opus_encoder_;
 	};
 }
