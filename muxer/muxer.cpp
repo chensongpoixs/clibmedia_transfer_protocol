@@ -28,9 +28,47 @@ namespace libmedia_transfer_protocol
 		   96000, 88200, 64000, 48000, 44100, 32000,
 		   24000, 22050, 16000, 12000, 11025, 8000, 7350
 		};
+
+		static int get_one_ADTS_frame(unsigned char* buffer, size_t buf_size, unsigned char* data, size_t* data_size)
+		{
+			size_t size = 0;
+
+			if (!buffer || !data || !data_size)
+			{
+				return -1;
+			}
+
+			while (1)
+			{
+				if (buf_size < 7)
+				{
+					return -1;
+				}
+
+				if ((buffer[0] == 0xff) && ((buffer[1] & 0xf0) == 0xf0))
+				{
+					size |= ((buffer[3] & 0x03) << 11);     //high 2 bit  
+					size |= buffer[4] << 3;                //middle 8 bit  
+					size |= ((buffer[5] & 0xe0) >> 5);        //low 3bit  
+					break;
+				}
+				--buf_size;
+				++buffer;
+			}
+
+			if (buf_size < size)
+			{
+				return -1;
+			}
+
+			memcpy(data, buffer, size);
+			*data_size = size;
+
+			return 0;
+		}
+
 	}
-	Muxer::Muxer(libmedia_codec::EncodeAudioObser   * obj)
-		: encoder_audio_obj_(obj)
+	Muxer::Muxer( ) 
 	{
 	}
 	Muxer::~Muxer()
@@ -38,6 +76,7 @@ namespace libmedia_transfer_protocol
 		RTC_LOG_T_F(LS_INFO) << "";
 		if (opus_encoder_)
 		{
+			opus_encoder_->SignalAudioEncoderInfoFrame.disconnect_all();
 			opus_encoder_->Stop();
 			opus_encoder_.reset();
 		}
@@ -46,44 +85,14 @@ namespace libmedia_transfer_protocol
 			aac_decoder_.reset();
 		}
 	}
-	static int get_one_ADTS_frame(unsigned char* buffer, size_t buf_size, unsigned char* data, size_t* data_size)
+	void   Muxer::SendVideoEncode(std::shared_ptr<libmedia_codec::EncodedImage> f)
 	{
-		size_t size = 0;
-
-		if (!buffer || !data || !data_size)
-		{
-			return -1;
-		}
-
-		while (1)
-		{
-			if (buf_size < 7)
-			{
-				return -1;
-			}
-
-			if ((buffer[0] == 0xff) && ((buffer[1] & 0xf0) == 0xf0))
-			{
-				size |= ((buffer[3] & 0x03) << 11);     //high 2 bit  
-				size |= buffer[4] << 3;                //middle 8 bit  
-				size |= ((buffer[5] & 0xe0) >> 5);        //low 3bit  
-				break;
-			}
-			--buf_size;
-			++buffer;
-		}
-
-		if (buf_size < size)
-		{
-			return -1;
-		}
-
-		memcpy(data, buffer, size);
-		*data_size = size;
-
-		return 0;
+		SignalVideoEncodedImage(f);
 	}
-
+	void   Muxer::SendAudioEncode(std::shared_ptr<libmedia_codec::AudioEncoder::EncodedInfoLeaf> f)
+	{
+		SignalAudioEncoderInfoFrame(f);
+	}
 	int32_t Muxer::EncodeAudio(const rtc::CopyOnWriteBuffer & frame)
 	{
 		//static unsigned char new_frame[1024 * 5 * 1024];
@@ -109,7 +118,8 @@ namespace libmedia_transfer_protocol
 			if (!opus_encoder_)
 			{
 				opus_encoder_ = std::make_shared<libmedia_codec::OpusEncoder2>();
-				opus_encoder_->SetSendFrame(encoder_audio_obj_);
+				//opus_encoder_->SetSendFrame(encoder_audio_obj_);
+				opus_encoder_->SignalAudioEncoderInfoFrame.connect(this, &Muxer::SendAudioEncode);
 				opus_encoder_->SetChannel( aac_adts_header_info.channel_configuration );
 				opus_encoder_->SetSample(ff_mpeg4audio_sample_rates[aac_adts_header_info.sampling_freq_index]/*aac_adts_header_info.sampling_freq_index*/);
 				opus_encoder_->Start();

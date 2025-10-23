@@ -24,21 +24,40 @@
 #include "libmedia_codec/audio_codec/opus_encoder.h"
 #include "libmedia_codec/audio_codec/aac_decoder.h"
 #include "libmedia_codec/audio_codec/adts_header.h"
+#include "libmedia_codec/encoded_image.h"
+#include "libmedia_codec/x264_encoder.h"
 
+#include "rtc_base/third_party/sigslot/sigslot.h"
 namespace libmedia_transfer_protocol
 {
 	class Muxer
+		: public   sigslot::has_slots<>
 	{
 	public:
-		explicit Muxer(libmedia_codec::EncodeAudioObser   * obj);
+		explicit Muxer( );
 		~Muxer();
 
 
 		int32_t EncodeAudio(const rtc::CopyOnWriteBuffer & frame);
 
+
+
+	public:
+		sigslot::signal1<std::shared_ptr<libmedia_codec::EncodedImage>  > SignalVideoEncodedImage;
+		sigslot::signal1<std::shared_ptr<libmedia_codec::AudioEncoder::EncodedInfoLeaf>  > SignalAudioEncoderInfoFrame;
+
+
+	public:
+
+		
+
+
+		void   SendVideoEncode(std::shared_ptr<libmedia_codec::EncodedImage> f);
+		void   SendAudioEncode(std::shared_ptr<libmedia_codec::AudioEncoder::EncodedInfoLeaf> f);
+		
 	public:
 	private:
-		libmedia_codec::EncodeAudioObser   *            encoder_audio_obj_;
+		//libmedia_codec::EncodeAudioObser   *            encoder_audio_obj_;
 		//libmedia_codec::AdtsHeader       adts_header_;
 		std::shared_ptr<libmedia_codec::AacDecoder>     aac_decoder_;
 		std::shared_ptr<libmedia_codec::OpusEncoder2>   opus_encoder_;
