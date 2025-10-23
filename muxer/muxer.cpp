@@ -165,7 +165,7 @@ namespace libmedia_transfer_protocol
 		std::shared_ptr<libmedia_codec::AudioFrame> pcm_frame = std::make_shared<libmedia_codec::AudioFrame>();
 		pcm_frame->sample_rate_hz_ =   ff_mpeg4audio_sample_rates[aac_adts_header_info.sampling_freq_index];
 		pcm_frame->num_channels_ =   aac_adts_header_info.channel_configuration;
-		pcm_frame->samples_per_channel_ = 960;// 480;// pcm.size();
+		pcm_frame->samples_per_channel_ = pcm.size();// 480;// pcm.size();
 		//RTC_LOG(LS_INFO) << "sample_rate_hz:" << pcm_frame->sample_rate_hz_ << ", samples_per_channel_: " << pcm_frame->samples_per_channel_;
 		memcpy((   uint8_t  *)(pcm_frame->mutable_data()), pcm.data(), pcm.size());
 		audio_processing_filter_->OnNewMediaFrame(pcm_frame);
