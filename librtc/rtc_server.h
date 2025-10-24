@@ -47,52 +47,52 @@
 #include "rtc_base/copy_on_write_buffer.h"
 #include "libmedia_transfer_protocol/rtp_rtcp/rtp_packet_to_send.h"
 #include "api/task_queue/default_task_queue_factory.h"
+#include "libmedia_transfer_protocol/libnetwork/udp_server.h"
 namespace libmedia_transfer_protocol {
 	namespace librtc {
 		
 		class RtcServer : public sigslot::has_slots<>
 		{
 		public:
-			RtcServer(rtc::Thread* network);
-			~RtcServer();
+			explicit RtcServer();
+			virtual ~RtcServer();
 
 
 
 		public:
 			
-			void Start(const char * ip, uint16_t port);
+			bool Start(const char * ip, uint16_t port);
 
-			  int SendPacket(const rtc::Buffer& packet, const rtc::PacketOptions& options)  ;
-			  int SendPacketTo(const rtc::Buffer& packet,
-				  const rtc::SocketAddress& addr,
-				  const rtc::PacketOptions& options);
-
-
-			  // rtp 
-			  int SendRtpPacketTo(rtc::CopyOnWriteBuffer packet, const rtc::SocketAddress& addr, const rtc::PacketOptions& options);
-			  int32_t SendRtpPacketTo(std::vector< std::unique_ptr<libmedia_transfer_protocol::RtpPacketToSend>>  packets, 
-				  const rtc::SocketAddress& addr, const rtc::PacketOptions& options);
-			  // rtcp 
-			  int SendRtcpPacketTo(rtc::CopyOnWriteBuffer packet, const rtc::SocketAddress& addr, const rtc::PacketOptions& options);
-			//void SendPacket();
 		public:
-			//void OnConnect(rtc::Socket*socket);
-			//void OnRead(rtc::Socket* socket);
-			//void OnWrite(rtc::Socket* socket);
-			//void OnClose(rtc::Socket* socket, int32_t );
-
-			void  OnRecvPacket(rtc::AsyncPacketSocket* socket,
-				const char* data,
-				size_t len,
+			int SendPacket(const rtc::Buffer& packet, const rtc::PacketOptions& options);
+			int SendPacketTo(const rtc::Buffer& packet,
 				const rtc::SocketAddress& addr,
-				// TODO(bugs.webrtc.org/9584): Change to passing the int64_t
-				// timestamp by value.
-				const int64_t& ms);
+				const rtc::PacketOptions& options);
 
-			void OnSend(rtc::AsyncPacketSocket* socket);
+
+			// rtp 
+			int SendRtpPacketTo(rtc::CopyOnWriteBuffer packet, const rtc::SocketAddress& addr, const rtc::PacketOptions& options);
+			int32_t SendRtpPacketTo(std::vector< std::unique_ptr<libmedia_transfer_protocol::RtpPacketToSend>>  packets,
+				const rtc::SocketAddress& addr, const rtc::PacketOptions& options);
+			// rtcp 
+			int SendRtcpPacketTo(rtc::CopyOnWriteBuffer packet, const rtc::SocketAddress& addr, const rtc::PacketOptions& options);
+
+		public:
+
+			void  OnRecvPacket(rtc::AsyncPacketSocket * socket, const uint8_t * data, size_t len,
+				const rtc::SocketAddress & addr, const int64_t & ms);
+			 
+		public:
+			rtc::Thread* signaling_thread() { return udp_server_->signaling_thread(); }
+			const rtc::Thread* signaling_thread() const { return udp_server_->signaling_thread(); }
+			rtc::Thread* worker_thread() { return udp_server_->worker_thread(); }
+			const rtc::Thread* worker_thread() const { return udp_server_->worker_thread(); }
+			rtc::Thread* network_thread() { return udp_server_->network_thread(); }
+			const rtc::Thread* network_thread() const { return udp_server_->network_thread(); }
+			 
 		public:
 			sigslot::signal5<rtc::AsyncPacketSocket*,
-				const char*,
+				const uint8_t*,
 				size_t,
 				const rtc::SocketAddress&,
 				// TODO(bugs.webrtc.org/9584): Change to passing the int64_t
@@ -100,7 +100,7 @@ namespace libmedia_transfer_protocol {
 				const int64_t&>
 				SignalStunPacket;
 			sigslot::signal5<rtc::AsyncPacketSocket*,
-				const char*,
+				const uint8_t*,
 				size_t,
 				const rtc::SocketAddress&,
 				// TODO(bugs.webrtc.org/9584): Change to passing the int64_t
@@ -108,7 +108,7 @@ namespace libmedia_transfer_protocol {
 				const int64_t&>
 				SignalDtlsPacket;
 			sigslot::signal5<rtc::AsyncPacketSocket*,
-				const char*,
+				const uint8_t*,
 				size_t,
 				const rtc::SocketAddress&,
 				// TODO(bugs.webrtc.org/9584): Change to passing the int64_t
@@ -116,7 +116,7 @@ namespace libmedia_transfer_protocol {
 				const int64_t&>
 				SignalRtpPacket;
 			sigslot::signal5<rtc::AsyncPacketSocket*,
-				const char*,
+				const uint8_t*,
 				size_t,
 				const rtc::SocketAddress&,
 				// TODO(bugs.webrtc.org/9584): Change to passing the int64_t
@@ -126,60 +126,19 @@ namespace libmedia_transfer_protocol {
 
 
 
-		public:
-			sigslot::signal4<rtc::Socket*,
-				const rtc::Buffer&,
-				const rtc::SocketAddress&,
-				// TODO(bugs.webrtc.org/9584): Change to passing the int64_t
-				// timestamp by value.
-				const int64_t&>
-				SignalStunPacketBuffer;
-			sigslot::signal4<rtc::Socket*,
-				const rtc::Buffer&,
-				const rtc::SocketAddress&,
-				// TODO(bugs.webrtc.org/9584): Change to passing the int64_t
-				// timestamp by value.
-				const int64_t&>
-				SignalDtlsPacketBuffer;
-			sigslot::signal4<rtc::Socket*,
-				const rtc::Buffer&,
-				const rtc::SocketAddress&,
-				// TODO(bugs.webrtc.org/9584): Change to passing the int64_t
-				// timestamp by value.
-				const int64_t&>
-				SignalRtpPacketBuffer;
-			sigslot::signal4<rtc::Socket*,
-				const rtc::Buffer&,
-				const rtc::SocketAddress&,
-				// TODO(bugs.webrtc.org/9584): Change to passing the int64_t
-				// timestamp by value.
-				const int64_t&>
-				SignalRtcpPacketBuffer;
+		 
 		public:
 			
-			bool IsStun(const char * data, int32_t len);
-			bool IsDtls(const char * data, int32_t len);
-			bool IsRtp(const char * data, int32_t len);
-			bool IsRtcp(const char * data, int32_t len);
-		public:
-			void OnConnect(rtc::Socket* socket);
-			void OnClose(rtc::Socket* socket, int ret);
-			void OnRead(rtc::Socket* socket);
-			void OnWrite(rtc::Socket* socket);
-		private:
-			void InitSocketSignals();
+			bool IsStun(const uint8_t  * data, int32_t len);
+			bool IsDtls(const uint8_t * data, int32_t len);
+			bool IsRtp(const uint8_t * data, int32_t len);
+			bool IsRtcp(const uint8_t * data, int32_t len);
+		 
 		private:
 
 
-			rtc::Thread*   network_;
+			std::unique_ptr<libnetwork::UdpServer>      udp_server_;
 
-			rtc::SocketAddress               server_address_;
-#if 1
-			std::unique_ptr<rtc::AsyncPacketSocket>      udp_control_socket_;
-#else 
-			std::unique_ptr<rtc::Socket>       control_socket_;
-#endif 
-			
 		};
 
 	}

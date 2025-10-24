@@ -65,8 +65,7 @@ data ：          数据 - ，比如说RTP包，总长度与上面的数据长�
 #include "libmedia_transfer_protocol/libhttp/msg_buffer.h"
 #include "libmedia_transfer_protocol/libhttp/packet.h"
 #include "libmedia_transfer_protocol/libhttp/http_request.h"
-#include "libmedia_transfer_protocol/libhttp/tcp_handler.h"
-
+#include "libmedia_transfer_protocol/libnetwork/tcp_server.h"
 namespace  libmedia_transfer_protocol {
 	namespace libhttp
 	{
@@ -81,12 +80,17 @@ namespace  libmedia_transfer_protocol {
 			bool Startup(const std::string &ip, uint16_t port);
 
 			
+		public:
 
-			sigslot::signal1<  TcpSession*> SignalOnNewConnection;
-			sigslot::signal1<TcpSession*> SignalOnDestory;
-			sigslot::signal1<  TcpSession*> SignalOnSent;
-			sigslot::signal1<  TcpSession *> SignalOnSentNextChunk;
-			sigslot::signal3<  TcpSession *, const  std::shared_ptr<HttpRequest>, const std::shared_ptr<Packet>> SignalOnRequest;
+		
+			sigslot::signal1< libnetwork:: TcpSession*> SignalOnNewConnection;
+			sigslot::signal1<libnetwork::TcpSession*> SignalOnDestory;
+			sigslot::signal1< libnetwork::TcpSession*> SignalOnSent;
+			sigslot::signal1< libnetwork::TcpSession *> SignalOnSentNextChunk;
+			sigslot::signal3< libnetwork::TcpSession *, const  std::shared_ptr<HttpRequest>, const std::shared_ptr<Packet>> SignalOnRequest;
+			void OnSentNextChunk(libnetwork::TcpSession *conn);
+			void OnRequest(libnetwork::TcpSession *conn, const  std::shared_ptr<HttpRequest> http_request, const std::shared_ptr<Packet> packet);
+
 		public:
 			rtc::Thread* signaling_thread() { return tcp_server_->signaling_thread(); }
 			const rtc::Thread* signaling_thread() const { return tcp_server_->signaling_thread(); }
@@ -98,29 +102,13 @@ namespace  libmedia_transfer_protocol {
 			void InitSocketSignals();
 
 
-			void OnNewConnection(TcpSession* conn);
-			void OnDestory(TcpSession* conn);
-			void OnRecv(TcpSession* conn, const rtc::CopyOnWriteBuffer& data);
-			void OnSent(TcpSession* conn);
+			void OnNewConnection(libnetwork::TcpSession* conn);
+			void OnDestory(libnetwork::TcpSession* conn);
+			void OnRecv(libnetwork::TcpSession* conn, const rtc::CopyOnWriteBuffer& data);
+			void OnSent(libnetwork::TcpSession* conn);
 
-			//sigslot::signal1<TcpSession*> SignalOnNewConnection;
-			//sigslot::signal1<TcpSession*> SignalOnDestroy;
-			//sigslot::signal2<TcpSession*, const rtc::CopyOnWriteBuffer&> SignalOnRecv;
-			//sigslot::signal1<TcpSession*> SignalOnSent;
-			/*
-			sigslot::signal1<  TcpSession *> SignalOnSent;
-			sigslot::signal1<  TcpSession *> SignalOnSentNextChunk;
-			sigslot::signal3<  TcpSession *,  const  std::shared_ptr<HttpRequest> , const std::shared_ptr<Packet>> SignalOnRequest;
-			
-			*/
-
-
-			//HttpContext
-			//void OnSent(TcpSession *conn);
-			void OnSentNextChunk(TcpSession *conn);
-			void OnRequest(TcpSession *conn, const  std::shared_ptr<HttpRequest> http_request, const std::shared_ptr<Packet> packet);
 		private:
-			std::unique_ptr<TcpServer>					tcp_server_;
+			std::unique_ptr<libnetwork::TcpServer>					tcp_server_;
 
 
 			//std::map<rtc::Socket*, std::unique_ptr<libhttp::TcpSession>>						http_sessions_;

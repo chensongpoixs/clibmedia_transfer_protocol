@@ -61,7 +61,7 @@ namespace libmedia_transfer_protocol {
 			void Run(Role local_role);
 
 			 
-			void OnRecv(const char *data, int32_t size);
+			void OnRecv(const uint8_t *data, int32_t size);
 			bool SetRemoteFingerprint(Fingerprint fingerprint);
 			 
 			

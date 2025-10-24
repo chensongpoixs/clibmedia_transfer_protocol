@@ -25,9 +25,9 @@
 #include "rtc_base/third_party/sigslot/sigslot.h"
  
 #include "libp2p_peerconnection/connection_context.h"
- 
+#include <atomic>
 namespace  libmedia_transfer_protocol {
-	namespace libhttp
+	namespace libnetwork
 	{
 		enum
 		{
@@ -68,8 +68,9 @@ namespace  libmedia_transfer_protocol {
 			void ClearContext(int type);
 			void ClearContext();
 
-
+			sigslot::signal1<TcpSession*> SignalOnClose;  
 			sigslot::signal2<TcpSession*, const rtc::CopyOnWriteBuffer&> SignalOnRecv;
+			sigslot::signal1<TcpSession*> SignalOnSent;
 		public:
 
 			void InitSocketSignals();
@@ -84,6 +85,7 @@ namespace  libmedia_transfer_protocol {
 			rtc::Thread*  network_thread_;
 			rtc::Buffer  recv_buffer_;
 			int32_t  recv_buffer_size_ = 0; 
+			std::atomic_bool         available_write  ;
 		};
 	}
 

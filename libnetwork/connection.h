@@ -18,36 +18,59 @@
  ******************************************************************************/
 
 
-#ifndef _C_LIBHTTP_SESSION_H_
-#define _C_LIBHTTP_SESSION_H_
+#ifndef _C_LIBHTTP_TCP_SESSION_H_
+#define _C_LIBHTTP_TCP_SESSION_H_
 
 #include <algorithm>
 #include "rtc_base/third_party/sigslot/sigslot.h"
- ////////////////////
+ 
 #include "libp2p_peerconnection/connection_context.h"
-#include "libmedia_transfer_protocol/libnetwork/tcp_server.h"
+#include <atomic>
 namespace  libmedia_transfer_protocol {
-	namespace libhttp
+	namespace libnetwork
 	{
+		enum
+		{
+			kNormalContext = 0,
+			kRtmpContext,
+			kHttpContext,
+			kUserContext,
+			kFlvContext,
+		};
 
-#if 0
-		class HttpSession : public   sigslot::has_slots<>
+		class TcpSession : public   sigslot::has_slots<>
 		{
 		public:
 
-			explicit HttpSession(TcpSession * tcp_session, rtc::Thread* network_thread);
+			explicit TcpSession(rtc::Socket* socket, rtc::Thread* network_thread);
 
-			virtual ~HttpSession();
+			virtual ~TcpSession();
 		public:
-			//void RegisterDecodeCompleteCallback(libcross_platform_collection_render::cvideo_renderer * callback)
-			//{
-			//	callback_ = callback;
-			//
-			//	//h264_decoder_.RegisterDecodeCompleteCallback(callback);
-			//}
+			 
 			void  Close();
 
 			void Send(uint8_t *data, int32_t  size);
+
+
+			rtc::Socket*   GetSocket() const { return socket_; }
+
+			void SetContext(int type, const std::shared_ptr<void> &context);
+			void SetContext(int type, std::shared_ptr<void> &&context);
+			template <typename T> std::shared_ptr<T> GetContext(int type) const
+			{
+				auto iter = contexts_.find(type);
+				if (iter != contexts_.end())
+				{
+					return std::static_pointer_cast<T>(iter->second);
+				}
+				return std::shared_ptr<T>();
+			}
+			void ClearContext(int type);
+			void ClearContext();
+
+			sigslot::signal1<TcpSession*> SignalOnClose;  
+			sigslot::signal2<TcpSession*, const rtc::CopyOnWriteBuffer&> SignalOnRecv;
+			sigslot::signal1<TcpSession*> SignalOnSent;
 		public:
 
 			void InitSocketSignals();
@@ -56,13 +79,17 @@ namespace  libmedia_transfer_protocol {
 			void OnRead(rtc::Socket* socket);
 			void OnWrite(rtc::Socket* socket);
 		public:
-			TcpSession*  tcp_session_;
-			 rtc::Thread*  network_thread_; 
+		private:
+			std::unordered_map<int, std::shared_ptr<void>> contexts_;
+			rtc::Socket*  socket_;
+			rtc::Thread*  network_thread_;
+			rtc::Buffer  recv_buffer_;
+			int32_t  recv_buffer_size_ = 0; 
+			std::atomic_bool         available_write  ;
 		};
-#endif //
 	}
 
 }
 
 
-#endif // _C_LIBGB28181_SESSION_H_
+#endif // _C_LIBHTTP_TCP_SESSION_H_

@@ -107,6 +107,9 @@ rtp_rtcp/rtp_header_extension_map.cpp
 	 muxer/*.h 
 	 muxer/*.cpp
 	 
+	 libnetwork/*.h
+	 libnetwork/*.cpp 
+	 
 
 ) 
 

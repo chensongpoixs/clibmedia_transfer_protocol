@@ -16,10 +16,10 @@
 
 
  ******************************************************************************/
-#include "libmedia_transfer_protocol/libhttp/tcp_server.h"
+#include "libmedia_transfer_protocol/libnetwork/tcp_server.h"
 #include "rtc_base/logging.h"
 namespace  libmedia_transfer_protocol {
-	namespace libhttp
+	namespace libnetwork
 	{
 
 
@@ -59,25 +59,35 @@ namespace  libmedia_transfer_protocol {
 			control_socket_.reset(context_->network_thread()->socketserver()->CreateSocket(server_address_.ipaddr().family(), SOCK_STREAM));
 			if (!context_)
 			{
-				LIBTCP_LOG(LS_WARNING) << "create socket failed !!! " << server_address_.ToString();
+				LIBNETWORK_LOG_T_F(LS_WARNING) << "create socket failed !!! " << server_address_.ToString();
 				return false;
 			}
 			InitSocketSignals();
 			int32_t ret = control_socket_->Bind(server_address_);
 			if (ret != 0)
 			{
-				LIBTCP_LOG(LS_WARNING) << "bind socket failed !!! " << server_address_.ToString();
+				LIBNETWORK_LOG_T_F(LS_WARNING) << "bind socket failed !!! " << server_address_.ToString();
 				return false;
 			}
 
 			ret = control_socket_->Listen(500);
 			if (ret != 0)
 			{
-				LIBTCP_LOG(LS_WARNING) << "Listen socket failed !!! " << server_address_.ToString();
+				LIBNETWORK_LOG_T_F(LS_WARNING) << "Listen socket failed !!! " << server_address_.ToString();
 				return false;
 			}
-			LIBRTC_LOG(LS_INFO) << " tcp start port:" << port << " OK !!!";
+			LIBNETWORK_LOG_T_F(LS_INFO) << " tcp start port:" << port << " OK !!!";
 			return true;
+		}
+
+
+		void TcpServer::CloseSession(TcpSession *conn)
+		{
+			conn->Close();
+		}
+		void TcpServer::Close(rtc::Socket *socket)
+		{
+			socket->Close();
 		}
 		void TcpServer::SetContext(int type, const std::shared_ptr<void> &context)
 		{
@@ -95,9 +105,32 @@ namespace  libmedia_transfer_protocol {
 		{
 			contexts_.clear();
 		}
-		void TcpServer::OnRecv(TcpSession * conn, const rtc::CopyOnWriteBuffer & data)
+		void TcpServer::OnSessionRecv(TcpSession * conn, const rtc::CopyOnWriteBuffer & data)
 		{
 			SignalOnRecv(conn, data);
+		}
+		void TcpServer::OnSessionClose(TcpSession*  conn)
+		{
+			network_thread()->PostTask(RTC_FROM_HERE, [this, conn]() {
+				//LIBTCP_LOG(LS_INFO) << "";
+				LIBNETWORK_LOG_T_F(LS_INFO) << "";
+				auto iter = tcp_sessions_.find(conn->GetSocket());
+				if (iter == tcp_sessions_.end())
+				{
+					LIBNETWORK_LOG_T_F(LS_WARNING) << " tcp session not find socket :" << conn->GetSocket()->GetRemoteAddress().ToString();
+					SignalOnDestory(conn);
+					conn->SignalOnClose.disconnect_all();
+					conn->SignalOnRecv.disconnect_all();
+					return;
+				}
+				SignalOnDestory(iter->second.get());
+				conn->SignalOnClose.disconnect_all();
+				conn->SignalOnRecv.disconnect_all();
+				 
+				iter->second.reset();
+				tcp_sessions_.erase(iter);
+			});
+			
 		}
 		void TcpServer::InitSocketSignals()
 		{
@@ -108,15 +141,15 @@ namespace  libmedia_transfer_protocol {
 		}
 		void TcpServer::OnConnect(rtc::Socket* socket)
 		{
-			LIBTCP_LOG(LS_INFO) << "";
+			LIBNETWORK_LOG_T_F(LS_INFO) << "";
 		}
 		void TcpServer::OnClose(rtc::Socket* socket, int ret)
 		{
-			//LIBTCP_LOG(LS_INFO) << "";
+			LIBNETWORK_LOG_T_F(LS_INFO) << "";
 			auto iter = tcp_sessions_.find(socket);
 			if (iter == tcp_sessions_.end())
 			{
-				LIBTCP_LOG_T_F(LS_WARNING) << " tcp session not find socket :" << socket->GetRemoteAddress().ToString();
+				LIBNETWORK_LOG_T_F(LS_WARNING) << " tcp session not find socket :" << socket->GetRemoteAddress().ToString();
 
 				return;
 			}
@@ -126,20 +159,21 @@ namespace  libmedia_transfer_protocol {
 		}
 		void TcpServer::OnRead(rtc::Socket* socket)
 		{
-			LIBTCP_LOG(LS_INFO) << "";
+			LIBNETWORK_LOG_T_F(LS_INFO) << "";
 
 
 			rtc::SocketAddress address;
 			rtc::Socket*  client = socket->Accept(&address);
 			if (!client)
 			{
-				LIBTCP_LOG_T_F(LS_ERROR) << "accept failed !!!";
+				LIBNETWORK_LOG_T_F(LS_ERROR) << "accept failed !!!";
 				return;
 			}
-			LIBTCP_LOG_T_F(LS_INFO) << "tcp new client accept :  " << address.ToString();
-			std::unique_ptr<libhttp::TcpSession>  tcp_session = std::make_unique<libhttp::TcpSession>(client, context_->worker_thread());
+			LIBNETWORK_LOG_T_F(LS_INFO) << "tcp new client accept :  " << address.ToString();
+			std::unique_ptr<libnetwork::TcpSession>  tcp_session = std::make_unique<libnetwork::TcpSession>(client, context_->worker_thread());
 			//http_session->RegisterDecodeCompleteCallback(callback_);
-			tcp_session->SignalOnRecv.connect(this, &TcpServer::OnRecv);
+			tcp_session->SignalOnRecv.connect(this, &TcpServer::OnSessionRecv);
+			tcp_session->SignalOnClose.connect(this, &TcpServer::OnSessionClose);
 			if (contexts_[kUserContext])
 			{
 				tcp_session->SetContext(kUserContext, contexts_[kUserContext]);
@@ -148,14 +182,14 @@ namespace  libmedia_transfer_protocol {
 			auto iter = tcp_sessions_.find(client);
 			if (iter == tcp_sessions_.end())
 			{
-				LIBTCP_LOG_T_F(LS_WARNING) << "tcp session not find failed !!! socket: " << client->GetLocalAddress().ToString() << ", remote:" << client->GetRemoteAddress().ToString();
+				LIBNETWORK_LOG_T_F(LS_WARNING) << "tcp session not find failed !!! socket: " << client->GetLocalAddress().ToString() << ", remote:" << client->GetRemoteAddress().ToString();
 				return;
 			}
 			SignalOnNewConnection(iter->second.get());
 		}
 		void TcpServer::OnWrite(rtc::Socket* socket)
 		{
-			LIBTCP_LOG(LS_INFO) << "";
+			LIBNETWORK_LOG_T_F(LS_INFO) << "";
 
 		}
 	}

@@ -216,7 +216,7 @@ namespace libmedia_transfer_protocol {
 			}
 		}
 		
-		void Dtls::OnRecv(const char *data, int32_t size)
+		void Dtls::OnRecv(const uint8_t *data, int32_t size)
 		{
 #if SAMPLE_SSL
 			BIO_reset(bio_read_);

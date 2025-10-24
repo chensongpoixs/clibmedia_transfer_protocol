@@ -52,6 +52,7 @@ data ：          数据 - ，比如说RTP包，总长度与上面的数据长�
 #include "libmedia_transfer_protocol/libhttp/packet.h"
 #include "libmedia_transfer_protocol/libhttp/msg_buffer.h"
 #include "libmedia_transfer_protocol/libhttp/http_parser.h"
+#include "libmedia_transfer_protocol/libnetwork/tcp_server.h"
 namespace  libmedia_transfer_protocol {
 	namespace libhttp
 	{
@@ -78,7 +79,7 @@ namespace  libmedia_transfer_protocol {
 		class HttpContext
 		{
 		public:
-			HttpContext( TcpSession*conn );
+			HttpContext(libnetwork::TcpSession*conn );
 			~HttpContext() = default;
 
 			int32_t Parse(MsgBuffer &buf);
@@ -90,15 +91,15 @@ namespace  libmedia_transfer_protocol {
 			void PostEofChunk();
 			bool PostStreamHeader(const std::string &header);
 			bool PostStreamChunk(std::shared_ptr<Packet> &packet);
-			void WriteComplete(  TcpSession *);
+			void WriteComplete(libnetwork::TcpSession *);
 
 
 		public:
-			sigslot::signal1<  TcpSession *> SignalOnSent;
-			sigslot::signal1<  TcpSession *> SignalOnSentNextChunk;
-			sigslot::signal3<  TcpSession *,  const  std::shared_ptr<HttpRequest> , const std::shared_ptr<Packet>> SignalOnRequest;
+			sigslot::signal1<libnetwork::   TcpSession *> SignalOnSent;
+			sigslot::signal1<libnetwork::   TcpSession *> SignalOnSentNextChunk;
+			sigslot::signal3<libnetwork::   TcpSession *,  const  std::shared_ptr<HttpRequest> , const std::shared_ptr<Packet>> SignalOnRequest;
 		private:
-			TcpSession* connection_;
+			libnetwork::TcpSession* connection_;
 			HttpParser http_parser_;
 			std::string header_;
 			std::shared_ptr<Packet> out_pakcet_;

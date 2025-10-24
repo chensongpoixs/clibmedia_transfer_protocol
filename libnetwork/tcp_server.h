@@ -49,10 +49,10 @@ data ：          数据 - ，比如说RTP包，总长度与上面的数据长�
 #include "rtc_base/thread.h"
 #include "rtc_base/physical_socket_server.h"
 #include "libp2p_peerconnection/connection_context.h"
-#include "libmedia_transfer_protocol/libhttp/tcp_session.h"
-#include "libmedia_transfer_protocol/libhttp/tcp_handler.h"
+#include "libmedia_transfer_protocol/libnetwork/tcp_session.h"
+ 
 namespace  libmedia_transfer_protocol {
-	namespace libhttp
+	namespace libnetwork
 	{
 		class TcpServer : public sigslot::has_slots<>  //: public   TcpHandler
 		{
@@ -64,6 +64,14 @@ namespace  libmedia_transfer_protocol {
 
 			bool Startup(const std::string &ip, uint16_t port); 
 
+			void CloseSession(TcpSession *conn);
+			void Close(rtc::Socket *socket);
+		public: 
+			sigslot::signal1<TcpSession*> SignalOnNewConnection;
+			sigslot::signal2<TcpSession*, const rtc::CopyOnWriteBuffer&> SignalOnRecv;
+			sigslot::signal1<TcpSession*> SignalOnSent;
+			sigslot::signal1<TcpSession*> SignalOnDestory;
+			
 
 		public:
 			void SetContext(int type, const std::shared_ptr<void> &context);
@@ -88,16 +96,11 @@ namespace  libmedia_transfer_protocol {
 			const rtc::Thread* network_thread() const { return context_->network_thread(); }
 
 
+	
 		public:
-
-
-			void OnRecv(TcpSession*  conn,const rtc::CopyOnWriteBuffer & data );
-
-			sigslot::signal1<TcpSession*> SignalOnNewConnection;
-			sigslot::signal1<TcpSession*> SignalOnDestory;
-			sigslot::signal2<TcpSession*, const rtc::CopyOnWriteBuffer&> SignalOnRecv;
-			sigslot::signal1<TcpSession*> SignalOnSent;
-			 
+			/// session
+			void OnSessionRecv(TcpSession*  conn, const rtc::CopyOnWriteBuffer & data);
+			void OnSessionClose(TcpSession*  conn);
 		public:
 			void InitSocketSignals();
 			void OnConnect(rtc::Socket* socket);
@@ -114,7 +117,7 @@ namespace  libmedia_transfer_protocol {
 			rtc::AsyncResolver* resolver_;
 
 
-			std::map<rtc::Socket*, std::unique_ptr<libhttp::TcpSession>>						tcp_sessions_; 
+			std::map<rtc::Socket*, std::unique_ptr<libnetwork::TcpSession>>						tcp_sessions_; 
 			std::unordered_map<int, std::shared_ptr<void>> contexts_;
 
 		};

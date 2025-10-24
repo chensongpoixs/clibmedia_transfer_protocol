@@ -24,196 +24,106 @@
 
 namespace libmedia_transfer_protocol {
 	namespace librtc {
-		 RtcServer::RtcServer(rtc::Thread * network)
-			 :network_(network)
+		namespace {
+			static const uint8_t kStunmagicCookie[] = { 0x21, 0x12, 0xA4, 0x42 };
+		}
+		 RtcServer::RtcServer( ) 
+			 :udp_server_(new  libnetwork::UdpServer())
 		{
+
+			 // = std::make_unique<libnetwork::UdpServer>();
+			 udp_server_->SignalReadPacket.connect(this, &RtcServer::OnRecvPacket);
 		}
 		 RtcServer::~RtcServer()
 		 {
-			 if (network_->IsCurrent())
+			 if (udp_server_)
 			 {
-#if 1
-				 //udp_control_socket_->SignalCloseEvent.disconnect(this);
-				 //udp_control_socket_->SignalConnectEvent.disconnect(this);
-				 udp_control_socket_->SignalReadyToSend.disconnect(this);
-				 udp_control_socket_->SignalReadPacket.disconnect(this);
-#else 
-				 control_socket_->SignalCloseEvent.disconnect(this);
-				 control_socket_->SignalConnectEvent.disconnect(this);
-				 control_socket_->SignalReadEvent.disconnect(this);
-				 control_socket_->SignalWriteEvent.disconnect(this);
-#endif // 
-			 }
-			 else
-			 {
-				 network_->PostTask(RTC_FROM_HERE, [ this,  socket = std::move(udp_control_socket_) ]() {
-					
-#if 0
-					 control_socket_->SignalCloseEvent.disconnect(this);
-					 control_socket_->SignalConnectEvent.disconnect(this);
-					 control_socket_->SignalReadEvent.disconnect(this);
-					 control_socket_->SignalWriteEvent.disconnect(this);
-#else 
-					 socket->SignalReadPacket.disconnect(this);
-				     socket->SignalReadyToSend.disconnect(this);
-					//socket->SignalReadEvent.disconnect(this);
-					//socket->SignalWriteEvent.disconnect(this);
-#endif // 
-				 });
+				 udp_server_->SignalReadPacket.disconnect_all();
+
+				 udp_server_.reset();
 			 }
 
 		 }
 
-		 void RtcServer::Start(const char * ip, uint16_t port)
+		 bool RtcServer::Start(const char * ip, uint16_t port)
 		 {
-			 server_address_.SetIP(ip);
-			 server_address_.SetPort(port);
-			 if (network_->IsCurrent())
-			 {
 
 
-				  udp_control_socket_.reset(  rtc::AsyncUDPSocket::Create(network_->socketserver(), server_address_));
-				 //control_socket_.reset(network_->socketserver()->CreateSocket(server_address_.ipaddr().family(), SOCK_DGRAM));
-				 if (!udp_control_socket_)
-				 {
-					 LIBRTC_LOG_T_F(LS_WARNING) << "create rtc udp server  socket failed !!! " << server_address_.ToString();
-					 return;
-				 }
-				 InitSocketSignals();
-				 /*int32_t ret = control_socket_->Bind(server_address_);
-				 if (ret != 0)
-				 {
-					 LIBRTC_LOG(LS_WARNING) << "bind socket failed !!! " << server_address_.ToString();
-					 return;
-				 }
-
-				 ret = control_socket_->Listen(5);
-				 if (ret != 0)
-				 {
-					 LIBRTC_LOG(LS_WARNING) << "Listen socket failed !!! " << server_address_.ToString();
-					 return;
-				 }*/
-				 LIBRTC_LOG(LS_INFO) << " start rtc udp server port:" << server_address_.port() << ", start OK!!!";
-			 }
-			 else
-			 {
-				 network_->Invoke<void>(RTC_FROM_HERE, [this]() {
-					  udp_control_socket_.reset(  rtc::AsyncUDPSocket::Create(network_->socketserver(), server_address_));
-					// control_socket_.reset(network_->socketserver()->CreateSocket(server_address_.ipaddr().family(), SOCK_DGRAM));
-					 if (!udp_control_socket_)
-					 {
-						 LIBRTC_LOG_T_F(LS_WARNING) << "create rtc udp server  socket failed !!! " << server_address_.ToString();
-						 return;
-					 }
-					 InitSocketSignals();
-					/* int32_t ret = control_socket_->Bind(server_address_);
-					 if (ret != 0)
-					 {
-						 LIBRTC_LOG(LS_WARNING) << "bind socket failed !!! " << server_address_.ToString();
-						 return;
-					 }
-
-					 ret = control_socket_->Listen(5);
-					 if (ret != 0)
-					 {
-						 LIBRTC_LOG(LS_WARNING) << "Listen socket failed !!! " << server_address_.ToString();
-						 return;
-					 }*/
-					 LIBRTC_LOG(LS_INFO) << " start rtc udp server port:" << server_address_.port() << ", start OK!!!";
-				 });
-			 }
-			 return  ;
+			 return udp_server_->Startup(ip, port);
+			  
 		 }
-
-
 		 int RtcServer::SendPacket(const rtc::Buffer& packet, const rtc::PacketOptions& options)
 		 {
-			 if (!network_->IsCurrent())
-			 {
-				 rtc::Buffer p(packet.data(), packet.size());
-				 p.SetSize(packet.size());
-				 network_->PostTask(RTC_FROM_HERE, [this,   f = std::move(p), o = std::move(options)]() {
-					 udp_control_socket_->Send(f.data(), f.size(), o);
-				 });
-				 return 0 ;
-			 }
-		
-			 return udp_control_socket_->Send(packet.data(), packet.size(), options);
-			 
-			 
+			 udp_server_->network_thread()->PostTask(RTC_FROM_HERE, [this]() {
+				// udp_server_->SendPacketTo
+			 });
+			 //if (!udp_server_->network_thread()->IsCurrent())
+			 //{
+			//	 rtc::Buffer p(packet.data(), packet.size());
+			//	 p.SetSize(packet.size());
+			//	 network_->PostTask(RTC_FROM_HERE, [this, f = std::move(p), o = std::move(options)]() {
+			//		 udp_control_socket_->Send(f.data(), f.size(), o);
+			//	 });
+			//	 return 0;
+			 //}
+
+			 //return udp_control_socket_->Send(packet.data(), packet.size(), options);
+			 return 0;
+
 		 }
 		 int RtcServer::SendPacketTo(const rtc::Buffer& packet,
 			 const rtc::SocketAddress& addr,
 			 const rtc::PacketOptions& options)
 		 {
-			 if (!network_->IsCurrent())
-			 {
-				 rtc::Buffer p(packet.data(), packet.size());
-				 p.SetSize(packet.size());
-				 network_->PostTask(RTC_FROM_HERE, [this, f = std::move(p), a = std::move(addr), o = std::move(options)]() {
-					    udp_control_socket_->SendTo(f.data(), f.size(), a, o);
-				 });
-				 return 0;
-			 }
-
-			// return udp_control_socket_->Send(packet.data(), packet.size(), options);
-			return  udp_control_socket_->SendTo(packet.data(), packet.size(), addr, options);
+			 rtc::Buffer p(packet.data(), packet.size());
+			 p.SetSize(packet.size());
+			 udp_server_->network_thread()->PostTask(RTC_FROM_HERE, [this,   f = std::move(p), a = std::move(addr), o = std::move(options)]() {
+				 udp_server_->SendPacketTo(f, a, o);
+			 });
+			 return 0;
+			 
 		 }
 		 int RtcServer::SendRtpPacketTo(rtc::CopyOnWriteBuffer packet, const rtc::SocketAddress & addr, const rtc::PacketOptions & options)
 		 {
-			 if (!network_->IsCurrent())
-			 {
-				 
-				 network_->PostTask(RTC_FROM_HERE, [this, f = std::move(packet), a = std::move(addr), o = std::move(options)]() {
-					 udp_control_socket_->SendTo(f.data(), f.size(), a, o);
+			  
+
+			 udp_server_->network_thread()->PostTask(RTC_FROM_HERE, [this, f = std::move(packet), a = std::move(addr), o = std::move(options)]() {
+				 udp_server_->SendRtpPacketTo(f , a, o);
 				 });
 				 return 0;
-			 }
-
-			 // return udp_control_socket_->Send(packet.data(), packet.size(), options);
-			 return  udp_control_socket_->SendTo(packet.data(), packet.size(), addr, options);
+			  
 		 }
 		 int32_t RtcServer::SendRtpPacketTo(std::vector< std::unique_ptr<libmedia_transfer_protocol::RtpPacketToSend>>  packets,
 			 const rtc::SocketAddress& addr, const rtc::PacketOptions& options)
 		 {
-			 if (!network_->IsCurrent())
-			 {
-				 //return 0 ;
-				 network_->PostTask(RTC_FROM_HERE, [this, 
+			 
+			 udp_server_->network_thread()->PostTask(RTC_FROM_HERE, [this,
 					 send_packets = std::move(packets), a = std::move(addr), o = std::move(options)]() {
-					// LIBRTC_LOG(LS_INFO) << "send remote:" << a.ToString();
+					 // LIBRTC_LOG(LS_INFO) << "send remote:" << a.ToString();
 					 for (const std::unique_ptr<libmedia_transfer_protocol::RtpPacketToSend>& s : send_packets)
 					 {
-						 udp_control_socket_->SendTo(s->data(), s->size(), a, o);
+						 udp_server_->SendTo( s->data(), s->size(), a, o);
 					 }
 				 });
 				 return 0;
-			 }
-			 for (std::unique_ptr<libmedia_transfer_protocol::RtpPacketToSend>& s : packets)
-			 {
-				 udp_control_socket_->SendTo(s->data(), s->size(), addr, options);
-			 }
-			 return 0;
+			 
 			 // return udp_control_socket_->Send(packet.data(), packet.size(), options);
 			// return  udp_control_socket_->SendTo(packet.data(), packet.size(), addr, options);
 		 }
 		 int RtcServer::SendRtcpPacketTo(rtc::CopyOnWriteBuffer packet, const rtc::SocketAddress & addr, const rtc::PacketOptions & options)
 		 {
-			 if (!network_->IsCurrent())
-			 {
-
-				 network_->PostTask(RTC_FROM_HERE, [this, f = std::move(packet), a = std::move(addr), o = std::move(options)]() {
-					 udp_control_socket_->SendTo(f.data(), f.size(), a, o);
+			 
+			 udp_server_->network_thread()->PostTask(RTC_FROM_HERE, [this, f = std::move(packet), a = std::move(addr), o = std::move(options)]() {
+				 udp_server_->SendTo(f.data(), f.size(), a, o);
 				 });
 				 return 0;
-			 }
-
-			 // return udp_control_socket_->Send(packet.data(), packet.size(), options);
-			 return  udp_control_socket_->SendTo(packet.data(), packet.size(), addr, options);
+			  
 		 }
-		 void RtcServer::OnRecvPacket(rtc::AsyncPacketSocket * socket, const char * data, size_t len, const rtc::SocketAddress & addr, const int64_t & ms)
+		  
+		 void RtcServer::OnRecvPacket(rtc::AsyncPacketSocket * socket, const uint8_t * data, size_t len,
+			 const rtc::SocketAddress & addr, const int64_t & ms)
 		 {
-			// LIBRTC_LOG_T_F(LS_INFO) << "";
+			 LIBRTC_LOG_T_F(LS_INFO) << "";
 			 if (IsStun(data, len))
 			 {
 				 SignalStunPacket(socket, data, len, addr, ms);
@@ -233,126 +143,85 @@ namespace libmedia_transfer_protocol {
 			 else
 			 {
 				 LIBRTC_LOG_T_F(LS_WARNING) << " recv unk type packet addr:" << addr.ToString();
-			 }
-			 //SignalReadPacket(socket, data, len, addr, ms);
+			 } 
 		 }
-		 void RtcServer::OnSend(rtc::AsyncPacketSocket * socket)
+		 
+		 bool RtcServer::IsStun(const uint8_t * data, int32_t len)
 		 {
-			 LIBRTC_LOG_T_F(LS_INFO) << "addr:" << socket->GetRemoteAddress().ToString();
+			 // clang-format off
+			 return (
+				 // STUN headers are 20 bytes.
+				 (len >= 20) &&
+				 // DOC: https://tools.ietf.org/html/draft-ietf-avtcore-rfc5764-mux-fixes
+				 (data[0] < 3) &&
+				 // Magic cookie must match.
+				 (data[4] == kStunmagicCookie[0]) && (data[5] == kStunmagicCookie[1]) &&
+				 (data[6] == kStunmagicCookie[2]) && (data[7] == kStunmagicCookie[3])
+				 );
+			 // clang-format on
+			// return len >= 20 && data[0] >= 0 && data[0] <= 3;
 		 }
-		 bool RtcServer::IsStun(const char * data, int32_t len)
+		 bool RtcServer::IsDtls(const uint8_t * data, int32_t len)
 		 {
-			 return len >= 20 && data[0] >= 0 && data[0] <= 3;
+			 // clang-format off
+			 return (
+				 // Minimum DTLS record length is 13 bytes.
+				 (len >= 13) &&
+				 // DOC: https://tools.ietf.org/html/draft-ietf-avtcore-rfc5764-mux-fixes
+				 (data[0] > 19 && data[0] < 64)
+				 );
+			 // clang-format on
+			 //return len >= 13 && data[0] >= 20 && data[0] <= 63;
 		 }
-		 bool RtcServer::IsDtls(const char * data, int32_t len)
-		 {
-			 return len >= 13 && data[0] >= 20 && data[0] <= 63;
-		 }
-		 bool RtcServer::IsRtp(const char * data, int32_t len)
+		 bool RtcServer::IsRtp(const uint8_t * data, int32_t len)
 		 {
 			 uint8_t pt = (uint8_t)data[1];
-			 return len >= 12 && data[0] & 0x80 && !(pt >= 192 && pt <= 223);
+			 // clang-format off
+			 return (
+				 (len >= 12) &&
+				 // DOC: https://tools.ietf.org/html/draft-ietf-avtcore-rfc5764-mux-fixes
+				 (data[0] > 127 && data[0] < 192) &&
+				 // RTP Version must be 2.
+				 (data[0] & 0x80)
+				 );
+			 // clang-format on
+			 //return len >= 12 && data[0] & 0x80 && !(pt >= 192 && pt <= 223);
 		 }
-		 bool RtcServer::IsRtcp(const char * data, int32_t len)
+		 bool RtcServer::IsRtcp(const uint8_t * data, int32_t len)
 		 {
+			 /* Struct for RTCP common header. */
+			 struct CommonHeader
+			 {
+#if defined(MS_LITTLE_ENDIAN)
+				 uint8_t count : 5;  // 一个包中Report Block个数
+				 uint8_t padding : 1;// 填充标识， 最后一个填充字节是（）个数
+				 uint8_t version : 2;
+#elif defined(MS_BIG_ENDIAN)
+				 uint8_t version : 2;
+				 uint8_t padding : 1;
+				 uint8_t count : 5;
+#endif
+				 uint8_t packetType : 8; // 不同RTCP包的类型
+				 uint16_t length : 16;   // 16位，包长度（包括头）。[数值为（N-1）个4字节]
+			 };
+			 // clang-format off
 			 uint8_t pt = (uint8_t)data[1];
-			 return len >= 12 && data[0] & 0x80 && (pt >= 192 && pt <= 223);
+			 return (
+				 (len >= 12) &&
+				 // DOC: https://tools.ietf.org/html/draft-ietf-avtcore-rfc5764-mux-fixes
+				 (data[0] > 127 && data[0] < 192) &&
+				 // RTP Version must be 2.
+				 //(header->version == 2) &&
+				 (data[0] & 0x80) &&
+				 // RTCP packet types defined by IANA:
+				 // http://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-4
+				 // RFC 5761 (RTCP-mux) states this range for secure RTCP/RTP detection.
+				 (pt >= 192 && pt <= 223)
+				 );
+			 // clang-format on
+			 //uint8_t pt = (uint8_t)data[1];
+			// return len >= 12 && data[0] & 0x80 && (pt >= 192 && pt <= 223);
 		 }
-		 void RtcServer::InitSocketSignals()
-		 {
-			
-
-#if 1
-			 udp_control_socket_->SignalReadPacket.connect(this, &RtcServer::OnRecvPacket);
-			 udp_control_socket_->SignalReadyToSend.connect(this, &RtcServer::OnSend);
-#else 
-
-			  control_socket_->SignalCloseEvent.connect(this, &RtcServer::OnClose);
-			  control_socket_->SignalConnectEvent.connect(this, &RtcServer::OnConnect);
-			  control_socket_->SignalReadEvent.connect(this, &RtcServer::OnRead);
-			  control_socket_->SignalWriteEvent.connect(this, &RtcServer::OnWrite);
-#endif 
-			// udp_control_socket_->SignalReadEvent.connect(this, &RtcServer::OnRead);
-			// udp_control_socket_->SignalWriteEvent.connect(this, &RtcServer::OnWrite);
-		 }
-		// void RtcServer::OnConnect(rtc::Socket * socket)
-		// {
-		//	 LIBRTC_LOG_T_F(LS_INFO) << "";
-		// }
-		// void RtcServer::OnRead(rtc::Socket * socket)
-		// {
-		//	 LIBRTC_LOG_T_F(LS_INFO);
-		// }
-		//
-		// void RtcServer::OnWrite(rtc::Socket * socket)
-		// {
-		//	 LIBRTC_LOG_T_F(LS_INFO);
-		// }
-		//
-		// void RtcServer::OnClose(rtc::Socket * socket, int32_t)
-		// {
-		//	 LIBRTC_LOG_T_F(LS_INFO);
-		// }
-
-
-		 void RtcServer::OnConnect(rtc::Socket* socket)
-		 {
-
-			 LIBRTC_LOG_T_F(LS_INFO) << "";
-		 }
-		 void RtcServer::OnClose(rtc::Socket* socket, int ret)
-		 {
-			 LIBRTC_LOG_T_F(LS_INFO) << "";
-		 }
-		 void RtcServer::OnRead(rtc::Socket* socket)
-		 {
-			 LIBRTC_LOG_T_F(LS_INFO) << "";
-			 // UDP // mtu 1500
-			 rtc::Buffer buffer(2000);
-			 buffer.SetSize(0);
-			 rtc::SocketAddress out_addr;
-			 int64_t timestamp = 0;
-			 do {
-
-
-				 int bytes = socket->RecvFrom(buffer.begin() + buffer.size(), buffer.capacity() - buffer.size(), &out_addr, &timestamp);
-				 if (bytes <= 0)
-				 {
-					 break;
-				 }
-				 buffer.SetSize(buffer.size() + bytes);
-				 if (buffer.size() >= (buffer.capacity()))
-				 {
-					 break;
-				 }
-			 } while (true);
-
-			 if (IsStun((const char *)buffer.data(), buffer.size()))
-			 {
-				 SignalStunPacketBuffer(socket, buffer, out_addr, timestamp);
-			 }
-			 else if (IsDtls((const char *)buffer.data(), buffer.size()))
-			 {
-				 SignalDtlsPacketBuffer(socket, buffer, out_addr, timestamp);
-			 }
-			 else if (IsRtp((const char *)buffer.data(), buffer.size()))
-			 {
-				 SignalRtpPacketBuffer(socket, buffer, out_addr, timestamp);
-			 }
-			 else if (IsRtcp((const char *)buffer.data(), buffer.size()))
-			 {
-				 SignalRtcpPacketBuffer(socket, buffer, out_addr, timestamp);
-			 }
-			 else
-			 {
-				 LIBRTC_LOG_T_F(LS_WARNING) << " recv unk type packet addr:" << out_addr.ToString();
-			 }
-			 //RTC_LOG(LS_INFO) << "recvFrom : " << out_addr.ToString() << ",  data => " << std::string((char *)buffer.data(), buffer.size());
-		 }
-		 void RtcServer::OnWrite(rtc::Socket* socket)
-		 {
-			 LIBRTC_LOG_T_F(LS_INFO) << "";
-		 }
-
+		 
 	}
 }

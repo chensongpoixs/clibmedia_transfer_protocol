@@ -26,7 +26,7 @@ namespace  libmedia_transfer_protocol {
 
 
 		HttpServer::HttpServer()
-			: tcp_server_(new TcpServer())
+			: tcp_server_(new libnetwork::TcpServer())
 		{
 			InitSocketSignals();
 		}
@@ -65,7 +65,7 @@ namespace  libmedia_transfer_protocol {
 			tcp_server_->SignalOnDestory.connect(this, &HttpServer::OnDestory);
 		}
 
-		void HttpServer::OnNewConnection(TcpSession* conn)
+		void HttpServer::OnNewConnection(libnetwork::TcpSession* conn)
 		{
 			SignalOnNewConnection(conn);
 			std::shared_ptr<HttpContext> shake = std::make_shared<HttpContext>(conn);
@@ -75,24 +75,24 @@ namespace  libmedia_transfer_protocol {
 				shake->SignalOnSentNextChunk.connect(this, &HttpServer::OnSentNextChunk);
 				shake->SignalOnRequest.connect(this, &HttpServer::OnRequest);
 			}
-			conn->SetContext(kHttpContext, shake);
+			conn->SetContext(libnetwork::kHttpContext, shake);
 		}
-		void HttpServer::OnDestory(TcpSession* conn)
+		void HttpServer::OnDestory(libnetwork::TcpSession* conn)
 		{
 			SignalOnDestory(conn);
-			std::shared_ptr<HttpContext> shake = conn->GetContext<HttpContext>(kHttpContext);
+			std::shared_ptr<HttpContext> shake = conn->GetContext<HttpContext>(libnetwork::kHttpContext);
 			if (shake)
 			{
 				shake->SignalOnSent.disconnect(this );
 				shake->SignalOnSentNextChunk.disconnect(this );
 				shake->SignalOnRequest.disconnect(this );
 			}
-			conn->ClearContext(kHttpContext);
+			conn->ClearContext(libnetwork::kHttpContext);
 		}
-		void HttpServer::OnRecv(TcpSession* conn, const rtc::CopyOnWriteBuffer& data)
+		void HttpServer::OnRecv(libnetwork::TcpSession* conn, const rtc::CopyOnWriteBuffer& data)
 		{
 			//SignalOnRecv(conn, data);
-			std::shared_ptr<HttpContext> s = conn->GetContext<HttpContext>(kHttpContext);
+			std::shared_ptr<HttpContext> s = conn->GetContext<HttpContext>(libnetwork::kHttpContext);
 			if (s)
 			{
 				MsgBuffer buffer;
@@ -104,9 +104,9 @@ namespace  libmedia_transfer_protocol {
 				}
 			}
 		}
-		void HttpServer::OnSent(TcpSession* conn)
+		void HttpServer::OnSent(libnetwork::TcpSession* conn)
 		{
-			std::shared_ptr<HttpContext> shake = conn->GetContext<HttpContext>(kHttpContext);
+			std::shared_ptr<HttpContext> shake = conn->GetContext<HttpContext>(libnetwork::kHttpContext);
 			if (shake)
 			{
 				shake->WriteComplete( conn);
@@ -118,11 +118,11 @@ namespace  libmedia_transfer_protocol {
 			//}
 			//SignalOnSent(conn);
 		}
-		void HttpServer::OnSentNextChunk(TcpSession *conn)
+		void HttpServer::OnSentNextChunk(libnetwork::TcpSession *conn)
 		{
 			SignalOnSentNextChunk(conn);
 		}
-		void HttpServer::OnRequest(TcpSession *conn, const  std::shared_ptr<HttpRequest> http_request, const std::shared_ptr<Packet> packet)
+		void HttpServer::OnRequest(libnetwork::TcpSession *conn, const  std::shared_ptr<HttpRequest> http_request, const std::shared_ptr<Packet> packet)
 		{
 			SignalOnRequest(conn, http_request, packet);
 		}

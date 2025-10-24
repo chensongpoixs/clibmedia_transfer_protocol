@@ -57,7 +57,7 @@ namespace  libmedia_transfer_protocol {
 		{
 			static std::string CHUNK_EOF = "0\r\n\r\n";
 		}
-		HttpContext::HttpContext(   TcpSession*conn/*, HttpHandler *handler*/)
+		HttpContext::HttpContext(libnetwork::TcpSession*conn/*, HttpHandler *handler*/)
 			:connection_(conn)//, handler_(handler)
 		{
 
@@ -191,7 +191,7 @@ namespace  libmedia_transfer_protocol {
 			}
 			return false;
 		}
-		void HttpContext::WriteComplete(  TcpSession *conn)
+		void HttpContext::WriteComplete(libnetwork::TcpSession *conn)
 		{
 			switch (post_state_)
 			{

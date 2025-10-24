@@ -16,7 +16,7 @@
 
 
  ******************************************************************************/
-#include "libmedia_transfer_protocol/libhttp/tcp_session.h"
+#include "libmedia_transfer_protocol/libnetwork/tcp_session.h"
 #include "rtc_base/internal/default_socket_server.h"
 #include "libice/stun.h"
 #include "rtc_base/third_party/base64/base64.h"
@@ -31,19 +31,22 @@
 #include "rtc_base/logging.h"
 namespace libmedia_transfer_protocol
 {
-	namespace libhttp
+	namespace libnetwork
 	{
 		TcpSession::TcpSession(rtc::Socket * socket, rtc::Thread * network_thread)
 			: socket_(socket)
 			, network_thread_(network_thread)
 			, recv_buffer_(1024 * 1024 * 8)
-			, recv_buffer_size_(0) 
+			, recv_buffer_size_(0)
+			, available_write(false)
 		{
+			LIBRTC_LOG_T_F(LS_INFO) << "";
 			InitSocketSignals();
 			 
 		}
 		TcpSession::~TcpSession()
 		{
+			LIBRTC_LOG_T_F(LS_INFO) << "";
 			socket_->SignalCloseEvent.disconnect(this);
 			socket_->SignalConnectEvent.disconnect(this);
 			socket_->SignalReadEvent.disconnect(this);
@@ -51,6 +54,7 @@ namespace libmedia_transfer_protocol
 		}
 		void TcpSession::Close()
 		{
+			available_write = false;
 			socket_->Close();
 		}
 		void TcpSession::Send(uint8_t * data, int32_t size)
@@ -66,11 +70,12 @@ namespace libmedia_transfer_protocol
 		}
 		void TcpSession::OnConnect(rtc::Socket* socket)
 		{
-			LIBTCP_LOG_T_F(LS_INFO) << "";
+			LIBNETWORK_LOG_T_F(LS_INFO) << "";
 		}
 		void TcpSession::OnClose(rtc::Socket* socket, int ret)
 		{
-			LIBTCP_LOG_T_F(LS_INFO) << "";
+			LIBNETWORK_LOG_T_F(LS_INFO) << "";
+			SignalOnClose(this);
 		}
 		void TcpSession::OnRead(rtc::Socket* socket)
 		{
@@ -97,7 +102,8 @@ namespace libmedia_transfer_protocol
 		}
 		void TcpSession::OnWrite(rtc::Socket* socket)
 		{
-			LIBTCP_LOG_T_F(LS_INFO) << "";
+			LIBNETWORK_LOG_T_F(LS_INFO) << "";
+			available_write = true;
 		}
 		void TcpSession::SetContext(int type, const std::shared_ptr<void> &context)
 		{
