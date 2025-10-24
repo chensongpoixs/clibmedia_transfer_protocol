@@ -46,7 +46,7 @@ namespace  libmedia_transfer_protocol {
 					return  false;
 				}
 				InitSocketSignals(); 
-				LIBNETWORK_LOG_T_F(LS_INFO) << " start rtc udp server port:" << server_address_.port() << ", start OK!!!";
+				LIBNETWORK_LOG(LS_INFO) << " start rtc udp server port:" << server_address_.port() << ", start OK!!!";
 				return true;
 			}
 			 
@@ -61,7 +61,7 @@ namespace  libmedia_transfer_protocol {
 					}
 					InitSocketSignals();
 					 
-					LIBNETWORK_LOG_T_F(LS_INFO) << " start rtc udp server port:" << server_address_.port() << ", start OK!!!";
+					LIBNETWORK_LOG (LS_INFO) << " start rtc udp server port:" << server_address_.port() << ", start OK!!!";
 					return true;
 				});
 			 
@@ -128,7 +128,7 @@ namespace  libmedia_transfer_protocol {
 		void UdpServer::OnRecvPacket(rtc::AsyncPacketSocket * socket, const char  * data, size_t len,
 			const rtc::SocketAddress & addr, const int64_t & ms)
 		{
-			LIBNETWORK_LOG_T_F(LS_INFO) << "";
+			//LIBNETWORK_LOG_T_F(LS_INFO) << "";
 			SignalReadPacket(socket, (const uint8_t *)data, len, addr, ms);
 		}
 		

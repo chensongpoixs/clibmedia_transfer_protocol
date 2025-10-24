@@ -123,7 +123,7 @@ namespace libmedia_transfer_protocol {
 		 void RtcServer::OnRecvPacket(rtc::AsyncPacketSocket * socket, const uint8_t * data, size_t len,
 			 const rtc::SocketAddress & addr, const int64_t & ms)
 		 {
-			 LIBRTC_LOG_T_F(LS_INFO) << "";
+			// LIBRTC_LOG_T_F(LS_INFO) << "";
 			 if (IsStun(data, len))
 			 {
 				 SignalStunPacket(socket, data, len, addr, ms);

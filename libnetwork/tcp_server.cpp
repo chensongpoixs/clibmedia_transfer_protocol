@@ -77,7 +77,7 @@ namespace  libmedia_transfer_protocol {
 				LIBNETWORK_LOG_T_F(LS_WARNING) << "Listen socket failed !!! " << server_address_.ToString();
 				return false;
 			}
-			LIBNETWORK_LOG_T_F(LS_INFO) << " tcp start port:" << port << " OK !!!";
+			LIBNETWORK_LOG(LS_INFO) << " tcp start port:" << port << " OK !!!";
 			return true;
 		}
 
@@ -160,7 +160,7 @@ namespace  libmedia_transfer_protocol {
 		}
 		void TcpServer::OnRead(rtc::Socket* socket)
 		{
-			LIBNETWORK_LOG_T_F(LS_INFO) << "";
+			//LIBNETWORK_LOG_T_F(LS_INFO) << "";
 
 
 			rtc::SocketAddress address;
