@@ -79,7 +79,7 @@ namespace  libmedia_transfer_protocol {
 		class HttpContext
 		{
 		public:
-			HttpContext(libnetwork::TcpSession*conn );
+			HttpContext(libnetwork::Connection*conn );
 			~HttpContext() = default;
 
 			int32_t Parse(MsgBuffer &buf);
@@ -91,15 +91,15 @@ namespace  libmedia_transfer_protocol {
 			void PostEofChunk();
 			bool PostStreamHeader(const std::string &header);
 			bool PostStreamChunk(std::shared_ptr<Packet> &packet);
-			void WriteComplete(libnetwork::TcpSession *);
+			void WriteComplete(libnetwork::Connection *);
 
 
 		public:
-			sigslot::signal1<libnetwork::   TcpSession *> SignalOnSent;
-			sigslot::signal1<libnetwork::   TcpSession *> SignalOnSentNextChunk;
-			sigslot::signal3<libnetwork::   TcpSession *,  const  std::shared_ptr<HttpRequest> , const std::shared_ptr<Packet>> SignalOnRequest;
+			sigslot::signal1<libnetwork::Connection *> SignalOnSent;
+			sigslot::signal1<libnetwork::Connection *> SignalOnSentNextChunk;
+			sigslot::signal3<libnetwork::Connection *,  const  std::shared_ptr<HttpRequest> , const std::shared_ptr<Packet>> SignalOnRequest;
 		private:
-			libnetwork::TcpSession* connection_;
+			libnetwork::Connection* connection_;
 			HttpParser http_parser_;
 			std::string header_;
 			std::shared_ptr<Packet> out_pakcet_;

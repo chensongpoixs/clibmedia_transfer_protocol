@@ -65,7 +65,7 @@ namespace  libmedia_transfer_protocol {
 			tcp_server_->SignalOnDestory.connect(this, &HttpServer::OnDestory);
 		}
 
-		void HttpServer::OnNewConnection(libnetwork::TcpSession* conn)
+		void HttpServer::OnNewConnection(libnetwork::Connection* conn)
 		{
 			SignalOnNewConnection(conn);
 			std::shared_ptr<HttpContext> shake = std::make_shared<HttpContext>(conn);
@@ -77,7 +77,7 @@ namespace  libmedia_transfer_protocol {
 			}
 			conn->SetContext(libnetwork::kHttpContext, shake);
 		}
-		void HttpServer::OnDestory(libnetwork::TcpSession* conn)
+		void HttpServer::OnDestory(libnetwork::Connection* conn)
 		{
 			SignalOnDestory(conn);
 			std::shared_ptr<HttpContext> shake = conn->GetContext<HttpContext>(libnetwork::kHttpContext);
@@ -89,7 +89,7 @@ namespace  libmedia_transfer_protocol {
 			}
 			conn->ClearContext(libnetwork::kHttpContext);
 		}
-		void HttpServer::OnRecv(libnetwork::TcpSession* conn, const rtc::CopyOnWriteBuffer& data)
+		void HttpServer::OnRecv(libnetwork::Connection* conn, const rtc::CopyOnWriteBuffer& data)
 		{
 			//SignalOnRecv(conn, data);
 			std::shared_ptr<HttpContext> s = conn->GetContext<HttpContext>(libnetwork::kHttpContext);
@@ -104,7 +104,7 @@ namespace  libmedia_transfer_protocol {
 				}
 			}
 		}
-		void HttpServer::OnSent(libnetwork::TcpSession* conn)
+		void HttpServer::OnSent(libnetwork::Connection* conn)
 		{
 			std::shared_ptr<HttpContext> shake = conn->GetContext<HttpContext>(libnetwork::kHttpContext);
 			if (shake)
@@ -118,11 +118,11 @@ namespace  libmedia_transfer_protocol {
 			//}
 			//SignalOnSent(conn);
 		}
-		void HttpServer::OnSentNextChunk(libnetwork::TcpSession *conn)
+		void HttpServer::OnSentNextChunk(libnetwork::Connection *conn)
 		{
 			SignalOnSentNextChunk(conn);
 		}
-		void HttpServer::OnRequest(libnetwork::TcpSession *conn, const  std::shared_ptr<HttpRequest> http_request, const std::shared_ptr<Packet> packet)
+		void HttpServer::OnRequest(libnetwork::Connection *conn, const  std::shared_ptr<HttpRequest> http_request, const std::shared_ptr<Packet> packet)
 		{
 			SignalOnRequest(conn, http_request, packet);
 		}

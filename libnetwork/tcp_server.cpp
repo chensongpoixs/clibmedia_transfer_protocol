@@ -81,7 +81,7 @@ namespace  libmedia_transfer_protocol {
 		}
 
 
-		void TcpServer::CloseSession(TcpSession *conn)
+		void TcpServer::CloseSession(Connection *conn)
 		{
 			conn->Close();
 		}
@@ -105,11 +105,11 @@ namespace  libmedia_transfer_protocol {
 		{
 			contexts_.clear();
 		}
-		void TcpServer::OnSessionRecv(TcpSession * conn, const rtc::CopyOnWriteBuffer & data)
+		void TcpServer::OnSessionRecv(Connection * conn, const rtc::CopyOnWriteBuffer & data)
 		{
 			SignalOnRecv(conn, data);
 		}
-		void TcpServer::OnSessionClose(TcpSession*  conn)
+		void TcpServer::OnSessionClose(Connection*  conn)
 		{
 			network_thread()->PostTask(RTC_FROM_HERE, [this, conn]() {
 				//LIBTCP_LOG(LS_INFO) << "";
@@ -170,7 +170,7 @@ namespace  libmedia_transfer_protocol {
 				return;
 			}
 			LIBNETWORK_LOG_T_F(LS_INFO) << "tcp new client accept :  " << address.ToString();
-			std::unique_ptr<libnetwork::TcpSession>  tcp_session = std::make_unique<libnetwork::TcpSession>(client, context_->worker_thread());
+			std::unique_ptr<libnetwork::Connection>  tcp_session = std::make_unique<libnetwork::Connection>(client );
 			//http_session->RegisterDecodeCompleteCallback(callback_);
 			tcp_session->SignalOnRecv.connect(this, &TcpServer::OnSessionRecv);
 			tcp_session->SignalOnClose.connect(this, &TcpServer::OnSessionClose);

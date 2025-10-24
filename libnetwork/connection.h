@@ -18,14 +18,20 @@
  ******************************************************************************/
 
 
-#ifndef _C_LIBHTTP_TCP_SESSION_H_
-#define _C_LIBHTTP_TCP_SESSION_H_
+#ifndef _C_LIBHTTP_CONNECTION_H_
+#define _C_LIBHTTP_CONNECTION_H_
 
 #include <algorithm>
 #include "rtc_base/third_party/sigslot/sigslot.h"
  
 #include "libp2p_peerconnection/connection_context.h"
 #include <atomic>
+#include "libmedia_transfer_protocol/libnetwork/tcp_server.h"
+#include "libmedia_transfer_protocol/libnetwork/udp_server.h"
+#include <unordered_map>
+
+
+
 namespace  libmedia_transfer_protocol {
 	namespace libnetwork
 	{
@@ -36,23 +42,45 @@ namespace  libmedia_transfer_protocol {
 			kHttpContext,
 			kUserContext,
 			kFlvContext,
+			kRtcContext,
+			kGb28181Context,
 		};
 
-		class TcpSession : public   sigslot::has_slots<>
+
+		enum class  ProtocolType{
+			ProtocolUdp= 1,
+			ProtocolTcp
+		};
+		typedef    UdpServer    UdpSession;
+		class Connection : public   sigslot::has_slots<>
 		{
 		public:
-
-			explicit TcpSession(rtc::Socket* socket, rtc::Thread* network_thread);
-
-			virtual ~TcpSession();
+			//explicit Connection();
+			 Connection(UdpSession * session, const rtc::SocketAddress& addr);
+			  Connection(rtc::Socket * session);
+			virtual ~Connection();
 		public:
-			 
+
 			void  Close();
 
 			void Send(uint8_t *data, int32_t  size);
 
 
 			rtc::Socket*   GetSocket() const { return socket_; }
+
+
+			sigslot::signal1<Connection*> SignalOnClose;
+			sigslot::signal2<Connection*, const rtc::CopyOnWriteBuffer&> SignalOnRecv;
+			sigslot::signal1<Connection*> SignalOnSent;
+		public:
+
+			
+		public:
+		private:
+			
+		public:
+			 
+			 
 
 			void SetContext(int type, const std::shared_ptr<void> &context);
 			void SetContext(int type, std::shared_ptr<void> &&context);
@@ -68,24 +96,24 @@ namespace  libmedia_transfer_protocol {
 			void ClearContext(int type);
 			void ClearContext();
 
-			sigslot::signal1<TcpSession*> SignalOnClose;  
-			sigslot::signal2<TcpSession*, const rtc::CopyOnWriteBuffer&> SignalOnRecv;
-			sigslot::signal1<TcpSession*> SignalOnSent;
-		public:
-
+		private:
 			void InitSocketSignals();
 			void OnConnect(rtc::Socket* socket);
 			void OnClose(rtc::Socket* socket, int ret);
 			void OnRead(rtc::Socket* socket);
 			void OnWrite(rtc::Socket* socket);
-		public:
 		private:
-			std::unordered_map<int, std::shared_ptr<void>> contexts_;
+			UdpSession *        udp_session_;
+			
+			//TcpSession*        tcp_session_;
 			rtc::Socket*  socket_;
-			rtc::Thread*  network_thread_;
+			rtc::SocketAddress  remote_address_;
 			rtc::Buffer  recv_buffer_;
-			int32_t  recv_buffer_size_ = 0; 
-			std::atomic_bool         available_write  ;
+			int32_t  recv_buffer_size_ = 0;
+			std::atomic_bool         available_write;
+			ProtocolType        protocol_type_ = ProtocolType::ProtocolUdp;
+
+			std::unordered_map<uint32_t, std::shared_ptr<void>>     contexts_;
 		};
 	}
 

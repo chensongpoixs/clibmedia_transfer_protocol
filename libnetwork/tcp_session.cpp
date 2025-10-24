@@ -33,9 +33,8 @@ namespace libmedia_transfer_protocol
 {
 	namespace libnetwork
 	{
-		TcpSession::TcpSession(rtc::Socket * socket, rtc::Thread * network_thread)
-			: socket_(socket)
-			, network_thread_(network_thread)
+		TcpSession::TcpSession(rtc::Socket * socket )
+			: socket_(socket) 
 			, recv_buffer_(1024 * 1024 * 8)
 			, recv_buffer_size_(0)
 			, available_write(false)
@@ -105,21 +104,6 @@ namespace libmedia_transfer_protocol
 			LIBNETWORK_LOG_T_F(LS_INFO) << "";
 			available_write = true;
 		}
-		void TcpSession::SetContext(int type, const std::shared_ptr<void> &context)
-		{
-			contexts_[type] = context;
-		}
-		void TcpSession::SetContext(int type, std::shared_ptr<void> &&context)
-		{
-			contexts_[type] = std::move(context);
-		}
-		void TcpSession::ClearContext(int type)
-		{
-			contexts_[type].reset();
-		}
-		void TcpSession::ClearContext()
-		{
-			contexts_.clear();
-		}
+		 
 	}
 }

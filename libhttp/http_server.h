@@ -83,13 +83,13 @@ namespace  libmedia_transfer_protocol {
 		public:
 
 		
-			sigslot::signal1< libnetwork:: TcpSession*> SignalOnNewConnection;
-			sigslot::signal1<libnetwork::TcpSession*> SignalOnDestory;
-			sigslot::signal1< libnetwork::TcpSession*> SignalOnSent;
-			sigslot::signal1< libnetwork::TcpSession *> SignalOnSentNextChunk;
-			sigslot::signal3< libnetwork::TcpSession *, const  std::shared_ptr<HttpRequest>, const std::shared_ptr<Packet>> SignalOnRequest;
-			void OnSentNextChunk(libnetwork::TcpSession *conn);
-			void OnRequest(libnetwork::TcpSession *conn, const  std::shared_ptr<HttpRequest> http_request, const std::shared_ptr<Packet> packet);
+			sigslot::signal1< libnetwork::Connection*> SignalOnNewConnection;
+			sigslot::signal1<libnetwork::Connection*> SignalOnDestory;
+			sigslot::signal1< libnetwork::Connection*> SignalOnSent;
+			sigslot::signal1< libnetwork::Connection *> SignalOnSentNextChunk;
+			sigslot::signal3< libnetwork::Connection *, const  std::shared_ptr<HttpRequest>, const std::shared_ptr<Packet>> SignalOnRequest;
+			void OnSentNextChunk(libnetwork::Connection *conn);
+			void OnRequest(libnetwork::Connection *conn, const  std::shared_ptr<HttpRequest> http_request, const std::shared_ptr<Packet> packet);
 
 		public:
 			rtc::Thread* signaling_thread() { return tcp_server_->signaling_thread(); }
@@ -102,10 +102,10 @@ namespace  libmedia_transfer_protocol {
 			void InitSocketSignals();
 
 
-			void OnNewConnection(libnetwork::TcpSession* conn);
-			void OnDestory(libnetwork::TcpSession* conn);
-			void OnRecv(libnetwork::TcpSession* conn, const rtc::CopyOnWriteBuffer& data);
-			void OnSent(libnetwork::TcpSession* conn);
+			void OnNewConnection(libnetwork::Connection* conn);
+			void OnDestory(libnetwork::Connection* conn);
+			void OnRecv(libnetwork::Connection* conn, const rtc::CopyOnWriteBuffer& data);
+			void OnSent(libnetwork::Connection* conn);
 
 		private:
 			std::unique_ptr<libnetwork::TcpServer>					tcp_server_;

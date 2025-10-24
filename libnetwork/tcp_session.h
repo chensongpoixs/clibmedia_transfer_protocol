@@ -29,22 +29,13 @@
 namespace  libmedia_transfer_protocol {
 	namespace libnetwork
 	{
-		enum
-		{
-			kNormalContext = 0,
-			kRtmpContext,
-			kHttpContext,
-			kUserContext,
-			kFlvContext,
-			kRtcContext,
-			kGb28181Context,
-		};
+		
 
 		class TcpSession : public   sigslot::has_slots<>
 		{
 		public:
 
-			explicit TcpSession(rtc::Socket* socket, rtc::Thread* network_thread);
+			explicit TcpSession(rtc::Socket* socket );
 
 			virtual ~TcpSession();
 		public:
@@ -56,20 +47,7 @@ namespace  libmedia_transfer_protocol {
 
 			rtc::Socket*   GetSocket() const { return socket_; }
 
-			void SetContext(int type, const std::shared_ptr<void> &context);
-			void SetContext(int type, std::shared_ptr<void> &&context);
-			template <typename T> std::shared_ptr<T> GetContext(int type) const
-			{
-				auto iter = contexts_.find(type);
-				if (iter != contexts_.end())
-				{
-					return std::static_pointer_cast<T>(iter->second);
-				}
-				return std::shared_ptr<T>();
-			}
-			void ClearContext(int type);
-			void ClearContext();
-
+			
 			sigslot::signal1<TcpSession*> SignalOnClose;  
 			sigslot::signal2<TcpSession*, const rtc::CopyOnWriteBuffer&> SignalOnRecv;
 			sigslot::signal1<TcpSession*> SignalOnSent;
@@ -82,9 +60,7 @@ namespace  libmedia_transfer_protocol {
 			void OnWrite(rtc::Socket* socket);
 		public:
 		private:
-			std::unordered_map<int, std::shared_ptr<void>> contexts_;
-			rtc::Socket*  socket_;
-			rtc::Thread*  network_thread_;
+			rtc::Socket*  socket_; 
 			rtc::Buffer  recv_buffer_;
 			int32_t  recv_buffer_size_ = 0; 
 			std::atomic_bool         available_write  ;

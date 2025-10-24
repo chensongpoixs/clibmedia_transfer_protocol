@@ -50,7 +50,7 @@ data ：          数据 - ，比如说RTP包，总长度与上面的数据长�
 #include "rtc_base/physical_socket_server.h"
 #include "libp2p_peerconnection/connection_context.h"
 #include "libmedia_transfer_protocol/libnetwork/tcp_session.h"
- 
+#include "libmedia_transfer_protocol/libnetwork/connection.h"
 namespace  libmedia_transfer_protocol {
 	namespace libnetwork
 	{
@@ -64,13 +64,13 @@ namespace  libmedia_transfer_protocol {
 
 			bool Startup(const std::string &ip, uint16_t port); 
 
-			void CloseSession(TcpSession *conn);
+			void CloseSession(Connection *conn);
 			void Close(rtc::Socket *socket);
 		public: 
-			sigslot::signal1<TcpSession*> SignalOnNewConnection;
-			sigslot::signal2<TcpSession*, const rtc::CopyOnWriteBuffer&> SignalOnRecv;
-			sigslot::signal1<TcpSession*> SignalOnSent;
-			sigslot::signal1<TcpSession*> SignalOnDestory;
+			sigslot::signal1<Connection*> SignalOnNewConnection;
+			sigslot::signal2<Connection*, const rtc::CopyOnWriteBuffer&> SignalOnRecv;
+			sigslot::signal1<Connection*> SignalOnSent;
+			sigslot::signal1<Connection*> SignalOnDestory;
 			
 
 		public:
@@ -99,8 +99,8 @@ namespace  libmedia_transfer_protocol {
 	
 		public:
 			/// session
-			void OnSessionRecv(TcpSession*  conn, const rtc::CopyOnWriteBuffer & data);
-			void OnSessionClose(TcpSession*  conn);
+			void OnSessionRecv(Connection*  conn, const rtc::CopyOnWriteBuffer & data);
+			void OnSessionClose(Connection*  conn);
 		public:
 			void InitSocketSignals();
 			void OnConnect(rtc::Socket* socket);
@@ -117,7 +117,7 @@ namespace  libmedia_transfer_protocol {
 			rtc::AsyncResolver* resolver_;
 
 
-			std::map<rtc::Socket*, std::unique_ptr<libnetwork::TcpSession>>						tcp_sessions_; 
+			std::map<rtc::Socket*, std::unique_ptr<libnetwork::Connection>>						tcp_sessions_;
 			std::unordered_map<int, std::shared_ptr<void>> contexts_;
 
 		};
