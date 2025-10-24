@@ -33,6 +33,7 @@ namespace libmedia_transfer_protocol
 {
 	namespace libnetwork
 	{
+#if 0
 		TcpSession::TcpSession(rtc::Socket * socket )
 			: socket_(socket) 
 			, recv_buffer_(1024 * 1024 * 8)
@@ -104,6 +105,6 @@ namespace libmedia_transfer_protocol
 			LIBNETWORK_LOG_T_F(LS_INFO) << "";
 			available_write = true;
 		}
-		 
+#endif //
 	}
 }

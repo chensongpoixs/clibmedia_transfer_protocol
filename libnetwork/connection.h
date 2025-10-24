@@ -51,7 +51,7 @@ namespace  libmedia_transfer_protocol {
 			ProtocolUdp= 1,
 			ProtocolTcp
 		};
-		typedef    UdpServer    UdpSession;
+		//typedef    UdpServer    UdpSession;
 		class Connection : public   sigslot::has_slots<>
 		{
 		public:

@@ -18,6 +18,7 @@
  ******************************************************************************/
 #include "libmedia_transfer_protocol/libnetwork/tcp_server.h"
 #include "rtc_base/logging.h"
+#include "libmedia_transfer_protocol/libnetwork/connection.h"
 namespace  libmedia_transfer_protocol {
 	namespace libnetwork
 	{

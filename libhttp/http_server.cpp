@@ -19,6 +19,7 @@
 #include "libmedia_transfer_protocol/libhttp/http_server.h"
 #include "rtc_base/logging.h"
 #include "libmedia_transfer_protocol/libhttp/http_context.h"
+#include "libmedia_transfer_protocol/libnetwork/connection.h"
 namespace  libmedia_transfer_protocol {
 	namespace libhttp
 	{

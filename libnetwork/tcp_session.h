@@ -30,7 +30,7 @@ namespace  libmedia_transfer_protocol {
 	namespace libnetwork
 	{
 		
-
+#if 0
 		class TcpSession : public   sigslot::has_slots<>
 		{
 		public:
@@ -65,6 +65,7 @@ namespace  libmedia_transfer_protocol {
 			int32_t  recv_buffer_size_ = 0; 
 			std::atomic_bool         available_write  ;
 		};
+#endif //
 	}
 
 }

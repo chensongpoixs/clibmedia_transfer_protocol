@@ -49,11 +49,12 @@ data ：          数据 - ，比如说RTP包，总长度与上面的数据长�
 #include "rtc_base/thread.h"
 #include "rtc_base/physical_socket_server.h"
 #include "libp2p_peerconnection/connection_context.h"
-#include "libmedia_transfer_protocol/libnetwork/tcp_session.h"
-#include "libmedia_transfer_protocol/libnetwork/connection.h"
+//#include "libmedia_transfer_protocol/libnetwork/tcp_session.h"
+//#include "libmedia_transfer_protocol/libnetwork/connection.h"
 namespace  libmedia_transfer_protocol {
 	namespace libnetwork
 	{
+		class Connection;
 		class TcpServer : public sigslot::has_slots<>  //: public   TcpHandler
 		{
 		public:

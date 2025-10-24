@@ -50,6 +50,7 @@ data ：          数据 - ，比如说RTP包，总长度与上面的数据长�
 #include "libmedia_transfer_protocol/libhttp/packet.h"
 #include "libmedia_transfer_protocol/libhttp/msg_buffer.h"
 #include "libmedia_transfer_protocol/libhttp/http_parser.h"
+#include "libmedia_transfer_protocol/libnetwork/connection.h"
 namespace  libmedia_transfer_protocol {
 	namespace libhttp
 	{
