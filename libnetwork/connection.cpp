@@ -28,9 +28,8 @@
 namespace  libmedia_transfer_protocol {
 	namespace libnetwork
 	{
-		Connection::Connection(UdpSession * session, const rtc::SocketAddress& addr)
-			: udp_session_(session)
-			
+		Connection::Connection(rtc::AsyncPacketSocket * session, const rtc::SocketAddress& addr)
+			: udp_session_(session) 
 			, socket_(nullptr)
 			, remote_address_(addr)
 			, recv_buffer_(1024 * 1024 * 8)
