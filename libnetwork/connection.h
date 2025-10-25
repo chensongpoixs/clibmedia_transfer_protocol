@@ -56,16 +56,16 @@ namespace  libmedia_transfer_protocol {
 		{
 		public:
 			//explicit Connection();
-			 Connection(rtc::AsyncPacketSocket * session, const rtc::SocketAddress& addr);
-			  Connection(rtc::Socket * session);
+			 Connection(rtc::Thread* network_thread, rtc::AsyncPacketSocket * session, const rtc::SocketAddress& addr);
+			  Connection(rtc::Thread* network_thread, rtc::Socket * session);
 			virtual ~Connection();
 		public:
 
 			void  Close();
 
-			void Send(uint8_t *data, int32_t  size);
-
-
+			void AyncSend(const uint8_t *data, int32_t  size);
+		
+			void AsyncSend(rtc::CopyOnWriteBuffer &&data);
 			rtc::Socket*   GetSocket() const { return socket_; }
 
 
@@ -103,6 +103,7 @@ namespace  libmedia_transfer_protocol {
 			void OnRead(rtc::Socket* socket);
 			void OnWrite(rtc::Socket* socket);
 		private:
+			rtc::Thread        *   network_thread_;
 			//UdpSession *        udp_session_;
 			rtc::AsyncPacketSocket  * udp_session_;
 			//TcpSession*        tcp_session_;

@@ -28,34 +28,36 @@
 namespace  libmedia_transfer_protocol {
 	namespace libnetwork
 	{
-		Connection::Connection(rtc::AsyncPacketSocket * session, const rtc::SocketAddress& addr)
-			: udp_session_(session) 
+		Connection::Connection(rtc::Thread* network_thread, rtc::AsyncPacketSocket * session, const rtc::SocketAddress& addr)
+			: network_thread_(network_thread)
+			, udp_session_(session) 
 			, socket_(nullptr)
 			, remote_address_(addr)
 			, recv_buffer_(1024 * 1024 * 8)
 			, recv_buffer_size_(0)
-			, available_write(false)
+			, available_write(true)
 			, protocol_type_(ProtocolType::ProtocolUdp)
 		{
-			LIBRTC_LOG_T_F(LS_INFO) << "";
+			LIBNETWORK_LOG_T_F(LS_INFO) << "remote:" << remote_address_.ToString();
 			InitSocketSignals();
 		}
-		Connection::Connection(rtc::Socket * session)
-			: udp_session_(nullptr) 
+		Connection::Connection(rtc::Thread* network_thread, rtc::Socket * session)
+			: network_thread_(network_thread)
+			, udp_session_(nullptr)
 			, socket_(session)
 			, remote_address_(session->GetRemoteAddress())
 			, recv_buffer_(1024 * 1024 * 8)
 			, recv_buffer_size_(0)
-			, available_write(false)
+			, available_write(true)
 			, protocol_type_(ProtocolType::ProtocolTcp)
 		{
-			LIBRTC_LOG_T_F(LS_INFO) << "";
+			LIBNETWORK_LOG_T_F(LS_INFO) << "remote:" << remote_address_.ToString();
 			InitSocketSignals();
 		}
 		 
 		Connection::~Connection()
 		{
-			LIBRTC_LOG_T_F(LS_INFO) << "";
+			LIBNETWORK_LOG_T_F(LS_INFO) << "remote:" << remote_address_.ToString();
 			if (socket_)
 			{
 				socket_->SignalCloseEvent.disconnect(this);
@@ -66,15 +68,18 @@ namespace  libmedia_transfer_protocol {
 		}
 		void Connection::Close()
 		{
-			available_write = false;
-			if (socket_)
-			{
-				socket_->Close();
-			}
 			
+			network_thread_->PostTask(RTC_FROM_HERE, [this ]() {
+				available_write = false;
+				if (socket_)
+				{
+					socket_->Close();
+				}
+			});
 		}
-		void Connection::Send(uint8_t * data, int32_t size)
+		void Connection::AyncSend(const uint8_t * data, int32_t size)
 		{
+			 
 			if (protocol_type_ == ProtocolType::ProtocolUdp)
 			{
 				udp_session_->SendTo(data, size, remote_address_, rtc::PacketOptions());
@@ -83,6 +88,33 @@ namespace  libmedia_transfer_protocol {
 			{
 				socket_->Send(data, size);
 			}
+			 
+			
+		}
+		void Connection::AsyncSend(rtc::CopyOnWriteBuffer&&  data)
+		{
+			if (!available_write)
+			{
+				return;
+			}
+			network_thread_->PostTask(RTC_FROM_HERE, [this,  new_data = std::move(data)]() {
+				if (!available_write)
+				{
+					return;
+				}
+				if (protocol_type_ == ProtocolType::ProtocolUdp)
+				{
+					udp_session_->SendTo(new_data.data(), new_data.size(), remote_address_, rtc::PacketOptions());
+				}
+				else  if (socket_ && new_data.data())
+				{
+					socket_->Send(new_data.data(), new_data.size());
+				}
+				else
+				{
+					LIBNETWORK_LOG_T_F(LS_WARNING) << "ASYNC send data failed !!!";
+				}
+			});
 		}
 		void Connection::InitSocketSignals()
 		{
@@ -102,6 +134,7 @@ namespace  libmedia_transfer_protocol {
 		void Connection::OnClose(rtc::Socket* socket, int ret)
 		{
 			LIBNETWORK_LOG_T_F(LS_INFO) << "";
+			available_write = false;
 			SignalOnClose(this);
 		}
 		void Connection::OnRead(rtc::Socket* socket)

@@ -171,7 +171,7 @@ namespace  libmedia_transfer_protocol {
 				return;
 			}
 			LIBNETWORK_LOG_T_F(LS_INFO) << "tcp new client accept :  " << address.ToString();
-			std::unique_ptr<libnetwork::Connection>  tcp_session = std::make_unique<libnetwork::Connection>(client );
+			std::unique_ptr<libnetwork::Connection>  tcp_session = std::make_unique<libnetwork::Connection>(network_thread(),  client );
 			//http_session->RegisterDecodeCompleteCallback(callback_);
 			tcp_session->SignalOnRecv.connect(this, &TcpServer::OnSessionRecv);
 			tcp_session->SignalOnClose.connect(this, &TcpServer::OnSessionClose);

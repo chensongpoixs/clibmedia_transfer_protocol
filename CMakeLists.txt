@@ -83,7 +83,7 @@ rtp_rtcp/rtp_header_extension_map.cpp
 	 remote_bitrate_estimator/*.h 
 	 remote_bitrate_estimator/*.cc 
 	 remote_bitrate_estimator/*.cpp 
-	 
+	 librtsp/*.rtsp
 	 librtsp/*.h
 	 librtsp/*.cpp 
 	 libgb28181/*.h 
@@ -111,6 +111,10 @@ rtp_rtcp/rtp_header_extension_map.cpp
 	 libnetwork/*.cpp 
 	 
 
+	libflv/*.md
+	libflv/*.h 
+	libflv/*.c 
+	libflv/*.cpp 
 ) 
 
 

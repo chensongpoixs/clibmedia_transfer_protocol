@@ -91,7 +91,7 @@ namespace  libmedia_transfer_protocol {
 			}
 			header_ = header_and_body;
 			post_state_ = kHttpContextPostHttp;
-			connection_->Send((uint8_t*)header_.c_str(), header_.size());
+			connection_->AsyncSend(rtc::CopyOnWriteBuffer((uint8_t*)header_.c_str(), header_.size()));
 			return true;
 		}
 		bool HttpContext::PostRequest(const std::string &header, std::shared_ptr<Packet> &packet)
@@ -104,7 +104,7 @@ namespace  libmedia_transfer_protocol {
 			header_ = header;
 			out_pakcet_ = packet;
 			post_state_ = kHttpContextPostHttpHeader;
-			connection_->Send((uint8_t*)header_.c_str(), header_.size());
+			connection_->AsyncSend(rtc::CopyOnWriteBuffer((uint8_t*)header_.c_str(), header_.size()));
 			return true;
 		}
 		bool HttpContext::PostRequest(std::shared_ptr< HttpRequest>  &request)
@@ -132,7 +132,7 @@ namespace  libmedia_transfer_protocol {
 
 			header_ = header;
 			post_state_ = kHttpContextPostInit;
-			connection_->Send((uint8_t *)header_.c_str(), header_.size());
+			connection_->AsyncSend(rtc::CopyOnWriteBuffer((uint8_t *)header_.c_str(), header_.size()));
 			header_sent_ = true;
 			return true;
 		}
@@ -142,7 +142,7 @@ namespace  libmedia_transfer_protocol {
 			if (!header_sent_)
 			{
 				post_state_ = kHttpContextPostChunkHeader;
-				connection_->Send((uint8_t *)header_.c_str(), header_.size());
+				connection_->AsyncSend(rtc::CopyOnWriteBuffer((uint8_t *)header_.c_str(), header_.size()));
 				header_sent_ = true;
 			}
 			else
@@ -151,13 +151,13 @@ namespace  libmedia_transfer_protocol {
 				char buf[32] = { 0, };
 				sprintf(buf, "%X\r\n", out_pakcet_->PacketSize());
 				header_ = std::string(buf);
-				connection_->Send((uint8_t *)header_.c_str(), header_.size());
+				connection_->AsyncSend(rtc::CopyOnWriteBuffer((uint8_t *)header_.c_str(), header_.size()));
 			}
 		}
 		void HttpContext::PostEofChunk()
 		{
 			post_state_ = kHttpContextPostChunkEOF;
-			connection_->Send((uint8_t *)CHUNK_EOF.c_str(), CHUNK_EOF.size());
+			connection_->AsyncSend(rtc::CopyOnWriteBuffer((uint8_t *)CHUNK_EOF.c_str(), CHUNK_EOF.size()));
 		}
 		bool HttpContext::PostStreamHeader(const std::string &header)
 		{
@@ -168,7 +168,7 @@ namespace  libmedia_transfer_protocol {
 
 			header_ = header;
 			post_state_ = kHttpContextPostInit;
-			connection_->Send((uint8_t *)header_.c_str(), header_.size());
+			connection_->AsyncSend(rtc::CopyOnWriteBuffer((uint8_t *)header_.c_str(), header_.size()));
 			header_sent_ = true;
 			return true;
 		}
@@ -180,13 +180,13 @@ namespace  libmedia_transfer_protocol {
 				if (!header_sent_)
 				{
 					post_state_ = kHttpContextPostHttpStreamHeader;
-					connection_->Send((uint8_t *)header_.c_str(), header_.size());
+					connection_->AsyncSend(rtc::CopyOnWriteBuffer((uint8_t *)header_.c_str(), header_.size()));
 					header_sent_ = true;
 				}
 				else
 				{
 					post_state_ = kHttpContextPostHttpStreamChunk;
-					connection_->Send((uint8_t *)out_pakcet_->Data(), out_pakcet_->PacketSize());
+					connection_->AsyncSend(rtc::CopyOnWriteBuffer((uint8_t *)out_pakcet_->Data(), out_pakcet_->PacketSize()));
 				}
 				return true;
 			}
@@ -209,7 +209,7 @@ namespace  libmedia_transfer_protocol {
 				case kHttpContextPostHttpHeader:
 				{
 					post_state_ = kHttpContextPostHttpBody;
-					connection_->Send((uint8_t*)out_pakcet_->Data(), out_pakcet_->PacketSize());
+					connection_->AsyncSend(rtc::CopyOnWriteBuffer((uint8_t*)out_pakcet_->Data(), out_pakcet_->PacketSize()));
 					break;
 				}
 				case kHttpContextPostHttpBody:
@@ -229,7 +229,7 @@ namespace  libmedia_transfer_protocol {
 				case kHttpContextPostChunkLen:
 				{
 					post_state_ = kHttpContextPostChunkBody;
-					connection_->Send((uint8_t*)out_pakcet_->Data(), out_pakcet_->PacketSize());
+					connection_->AsyncSend(rtc::CopyOnWriteBuffer((uint8_t*)out_pakcet_->Data(), out_pakcet_->PacketSize()));
 					break;
 				}
 				case kHttpContextPostChunkBody:
