@@ -2,6 +2,7 @@
 
 # FLV
 
+![](img/flv_tag.png)
 
 1. FLV只是一种封装格式
 2. HTTP-FLV是通过HTTP传输的FLV文件
