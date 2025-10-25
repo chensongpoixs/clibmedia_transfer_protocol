@@ -78,6 +78,15 @@ namespace libmedia_transfer_protocol
 				write_flv_header_ = true;
 				flv_context_->SendFlvHeader(true, true);
 			}
+
+			static FILE  *out_file_ptr = fopen("test.h264", "wb+");
+			if (out_file_ptr)
+			{
+				fwrite(encoded_image->data(), 1, encoded_image->size(), out_file_ptr);
+				fflush(out_file_ptr);
+			}
+
+
 			flv_context_->SendFlvVideoFrame(rtc::CopyOnWriteBuffer(encoded_image->data(), encoded_image->size()), encoded_image->Timestamp());
 		}
 

@@ -44,7 +44,7 @@ namespace libmedia_transfer_protocol
 		
 
 
-		class FlvWriterFileTest
+		class FlvWriterFileTest : public sigslot::has_slots<>
 		{
 		public:
 			explicit FlvWriterFileTest(const char * out_file_name);

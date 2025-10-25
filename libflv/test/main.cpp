@@ -34,7 +34,7 @@
 
 #include <iostream>
 #include "libmedia_transfer_protocol/libflv/test/flv_write_file_test.h"
-
+#include "libmedia_transfer_protocol/libflv/test/test_flv.h"
 #include <thread>
 #include <chrono>
 
@@ -42,8 +42,9 @@ int32_t    simplest_flv_write(const char * file_name)
 {
 	libmedia_transfer_protocol::libflv_test::FlvWriterFileTest   flv_writer_file_test(file_name);
 
-	/// 采集5分钟视频画面写入flv文件中去
-	std::this_thread::sleep_for(std::chrono::minutes(5));
+	/// 采集30秒视频画面写入flv文件中去
+	std::this_thread::sleep_for(std::chrono::seconds(30));
+	return 0;
 }
 
 
@@ -51,8 +52,10 @@ int32_t    simplest_flv_write(const char * file_name)
 
 int main(int argc, char *argv[])
 {
+	  char * test_file_name = "test_flv.flv";
 
-	simplest_flv_write("test_flv.flv");
+	simplest_flv_write(test_file_name);
+	libmedia_transfer_protocol::libflv_test::simplest_flv_parser(test_file_name);
 
 	return EXIT_SUCCESS;
 }

@@ -283,6 +283,38 @@ namespace libmedia_transfer_protocol
 			send_buffer[index_size++] = 0; 
 			{
 				// vido type
+				// VIDEODATA Tag第一个字节的高4位描述视频帧的类型，低4位描述视频编码器ID，VIDEODATA Tag的结构如下：
+				// 一、FrameType	4	帧类型 FrameType：视频帧的类型。一般keyframe是指IDR帧，而inter frame是指普通I帧。
+				//	 
+				//			1	key frame(for AVC, a seekable frame)
+				//			2	inter frame(for AVC, a non - seekable frame)
+				//			3	disposable inter frame(H.263 only)
+				//			4	generated key frame(reserved for server use only)
+				//			5	video info / command frame
+				//二、	CodecID	4	视频编码ID
+				//		 
+				//			2	Sorenson H.263
+				//			3	Screen video
+				//			4	On2 VP6
+				//			5	On2 VP6 with alpha channel
+				//			6	Screen video version 2
+				//			7	AVC
+				//    当CodecID 为7时，即为AVC视频，第一个字节为AvcPacketType，第二三四个字节为CompositionTime。当AvcPacketType=0，第5个字节开始为AVCDecoderConfigurationRecord；否则VideoData为Avc Raw数据。
+				// 三、  AVCDecoderConfigurationRecord的结构：
+				//		configurationVersion	8	版本号，总是1
+				//		AVCProfileIndication	8	sps[1]
+				//		profile_compatibility	8	sps[2]
+				//		AVCLevelIndication	8	sps[3]
+				//			 configurationVersion, AVCProfileIndication, profile_compatibility, AVCLevelIndication：都是一个字节，具体的内容由解码器去理解。
+				//			 	lengthSizeMinusOne：unit_length长度所占的字节数减1，也即lengthSizeMinusOne的值 + 1才是unit_length所占用的字节数。
+				//			 	numOfSequenceParameterSets：sps的个数
+				//			 	sequenceParameterSetLength：sps内容的长度
+				//			 	sequenceParameterSetNALUnit：sps的内容
+				//			 	numOfPictureParameterSets：pps的个数
+				//			 	pictureParameterSetLength：pps内容的长度
+				//			 	pictureParameterSetNALUnit：pps的内容
+				//	VideoData	N * 8	视频数据
+				// 当VideoData为AVC RAW时，AVC RAW的结构是avcc的 ===> H264码流分两种组织方式，一种是AnnexB格式，一种是AVCC格式
 				send_buffer[index_size++] = 0x17;
 				send_buffer[index_size++] = 0;
 			}
