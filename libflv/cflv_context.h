@@ -32,8 +32,8 @@ purpose:		http_parser
 安静，淡然，代码就是我的一切，写代码就是我本心回归的最好方式，我还没找到本心猎手，但我相信，顺着这个线索，我一定能顺藤摸瓜，把他揪出来。
 ************************************************************************************************/
 
-#ifndef _C_FLV_CONTEXT_
-#define _C_FLV_CONTEXT_
+#ifndef _C_FLV_CONTEXT______
+#define _C_FLV_CONTEXT______
 
 
 #include <cstdint>
@@ -92,11 +92,12 @@ namespace libmedia_transfer_protocol
 			//std::string					http_header_;
 			uint8_t out_buffer_[1024*1024] = { 0 };
 			uint8_t * current_{ nullptr }; 
-			FILE *out_file_ptr;
-
+ 
+		//	FILE *out_file_ptr;
+ 
 		//	MMediaHandler*   handler_;
 		};
 	}
 }
 
-#endif // libflv
+#endif  

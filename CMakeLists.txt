@@ -121,7 +121,7 @@ rtp_rtcp/rtp_header_extension_map.cpp
  
 add_library(${PROJECT_NAME}   STATIC  ${libmedia_transfer_protocol_source})
  
-
+add_subdirectory(libflv/test)
  
 
 

@@ -102,7 +102,9 @@ namespace libmedia_transfer_protocol
 		}
 		FlvContext::FlvContext(  libnetwork::Connection* conn )
 			:connection_(conn) 
+#if TEST_HTTP_FLV
 			, out_file_ptr(nullptr)
+#endif  
 		{
 			current_ = out_buffer_;
 			prev_packet_size_ = 0;
@@ -118,9 +120,10 @@ namespace libmedia_transfer_protocol
 			//rtc::CopyOnWriteBuffer   tem_flv_header;
 			//tem_flv_header.AppendData(ss.str());
 			connection_->AsyncSend(ss.str());
+#if TEST_HTTP_FLV
 			std::string file_name_flv = "test.flv.flv";
 			out_file_ptr = fopen(file_name_flv.c_str(), "wb+");
-			 
+#endif 
 		}
 
 
@@ -194,12 +197,13 @@ namespace libmedia_transfer_protocol
 			metadata[4+2] = (meta_data_length % 65536) /256; // length;
 			metadata[4+3] = meta_data_length%256; // length;
 			connection_->AsyncSend(rtc::CopyOnWriteBuffer(current_,   ptr - current_));
-
+#if TEST_HTTP_FLV
 			if (out_file_ptr)
 			{
 				fwrite(current_, 1, ptr - current_, out_file_ptr);
 				fflush(out_file_ptr);
 			}
+#endif //#if TEST_HTTP_FLV
 			//uint8_t* ptr, *end;
 			//	uint32_t count;
 			//
@@ -324,6 +328,7 @@ namespace libmedia_transfer_protocol
 			 
 
 			 connection_->AsyncSend(rtc::CopyOnWriteBuffer(frame));
+#if TEST_HTTP_FLV
 			 if (out_file_ptr)
 			 {
 				 fwrite(current_, 1, index_size, out_file_ptr);
@@ -331,7 +336,7 @@ namespace libmedia_transfer_protocol
 
 				 fflush(out_file_ptr);
 			 }
-
+#endif //#if TEST_HTTP_FLV
 			return true;
 		}
 		bool FlvContext::SendFlvAudioFrame(const rtc::CopyOnWriteBuffer & frame, uint32_t timestamp)
@@ -396,6 +401,7 @@ namespace libmedia_transfer_protocol
 
 
 			 connection_->AsyncSend(rtc::CopyOnWriteBuffer(frame));
+#if TEST_HTTP_FLV
 			 if (out_file_ptr)
 			 {
 				 fwrite(current_, 1, index_size, out_file_ptr);
@@ -403,6 +409,7 @@ namespace libmedia_transfer_protocol
 
 				 fflush(out_file_ptr);
 			 }
+#endif //#if TEST_HTTP_FLV
 			return true;
 		}
 		 
