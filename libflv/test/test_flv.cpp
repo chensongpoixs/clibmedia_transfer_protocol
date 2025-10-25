@@ -40,7 +40,7 @@
 
 namespace libmedia_transfer_protocol
 {
-namespace  libflv {
+namespace  libflv_test {
  //Important!
 #pragma pack(1)
 

@@ -10,7 +10,7 @@
  *  be found in the AUTHORS file in the root of the source tree.
  ******************************************************************************/
  /***********************************************************************************************
- created: 		2025-04-29
+ created: 		2025-10-25
 
  author:			chensong
 
@@ -32,14 +32,45 @@
  安静，淡然，代码就是我的一切，写代码就是我本心回归的最好方式，我还没找到本心猎手，但我相信，顺着这个线索，我一定能顺藤摸瓜，把他揪出来。
  ************************************************************************************************/
 
-#ifndef _TEST__flv_writer_h_
-#define _TEST__flv_writer_h_ 
-
+#ifndef _C_FLV_WRITER_FILE_TEST_h_
+#define _C_FLV_WRITER_FILE_TEST_h_ 
+#include "libmedia_transfer_protocol/libflv/cflv_context.h"
+#include "libmedia_codec/x264_encoder.h"
+#include "libcross_platform_collection_render/track_capture/ctrack_capture.h"
 namespace libmedia_transfer_protocol
 {
-namespace  libflv_test {
-	int simplest_flv_parser(char *url);
-}}
+	namespace  libflv_test {
+
+		
 
 
-#endif  // 
+		class FlvWriterFileTest
+		{
+		public:
+			explicit FlvWriterFileTest(const char * out_file_name);
+			~FlvWriterFileTest();
+
+
+		public:
+
+			void   OnVideoEncode(std::shared_ptr<libmedia_codec::EncodedImage> encoded_image);
+		private:
+
+			bool         write_flv_header_;
+			std::unique_ptr<libmedia_transfer_protocol::libflv::FlvContext>        flv_context_;
+
+
+
+			std::unique_ptr< rtc::Thread>        video_encoder_thread_;
+			std::unique_ptr< libmedia_codec::X264Encoder>                          x264_encoder_;
+			rtc::scoped_refptr<libcross_platform_collection_render::CapturerTrackSource>     capturer_track_source_;
+
+		};
+
+		 
+
+	}
+}
+
+
+#endif  // _C_FLV_WRITER_FILE_TEST_h_

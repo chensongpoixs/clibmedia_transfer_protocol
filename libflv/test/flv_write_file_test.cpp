@@ -10,7 +10,7 @@
  *  be found in the AUTHORS file in the root of the source tree.
  ******************************************************************************/
  /***********************************************************************************************
- created: 		2025-04-29
+ created: 		2025-10-25
 
  author:			chensong
 
@@ -31,15 +31,57 @@
  沿着自己的回忆，一个个的场景忽闪而过，最后发现，我的本心，在我写代码的时候，会回来。
  安静，淡然，代码就是我的一切，写代码就是我本心回归的最好方式，我还没找到本心猎手，但我相信，顺着这个线索，我一定能顺藤摸瓜，把他揪出来。
  ************************************************************************************************/
-
-#ifndef _TEST__flv_writer_h_
-#define _TEST__flv_writer_h_ 
+#include "libmedia_transfer_protocol/libflv/test/flv_write_file_test.h"
+ 
 
 namespace libmedia_transfer_protocol
 {
-namespace  libflv_test {
-	int simplest_flv_parser(char *url);
-}}
+	namespace  libflv_test {
 
 
-#endif  // 
+
+
+		FlvWriterFileTest::FlvWriterFileTest(const char * out_file_name)
+			: write_flv_header_(false)
+			, flv_context_(new  libmedia_transfer_protocol::libflv::FlvContext(nullptr, out_file_name))
+		{
+			x264_encoder_ = std::make_unique<libmedia_codec::X264Encoder>();
+			x264_encoder_->SignalVideoEncodedImage.connect(this, &FlvWriterFileTest::OnVideoEncode);
+			x264_encoder_->Start();
+			video_encoder_thread_ = rtc::Thread::Create();
+			video_encoder_thread_->SetName("video_encoder_thread", NULL);
+			video_encoder_thread_->Start();
+
+			capturer_track_source_ = libcross_platform_collection_render::CapturerTrackSource::Create(false);
+			capturer_track_source_->set_catprue_callback(x264_encoder_.get(), video_encoder_thread_.get());
+			capturer_track_source_->StartCapture();
+		}
+
+		FlvWriterFileTest::~FlvWriterFileTest()
+		{
+			video_encoder_thread_->Invoke<void>(RTC_FROM_HERE, [this]() {
+				capturer_track_source_->Stop();
+				x264_encoder_->SignalVideoEncodedImage.disconnect_all();
+				x264_encoder_->Stop();
+			});
+			video_encoder_thread_->Stop();
+
+			flv_context_.reset();
+		}
+
+
+		void   FlvWriterFileTest::OnVideoEncode(std::shared_ptr<libmedia_codec::EncodedImage> encoded_image)
+		{
+		
+			if (!write_flv_header_)
+			{
+				write_flv_header_ = true;
+				flv_context_->SendFlvHeader(true, true);
+			}
+			flv_context_->SendFlvVideoFrame(rtc::CopyOnWriteBuffer(encoded_image->data(), encoded_image->size()), encoded_image->Timestamp());
+		}
+
+	}
+}
+
+ 

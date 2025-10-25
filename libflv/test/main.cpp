@@ -10,11 +10,11 @@
  *  be found in the AUTHORS file in the root of the source tree.
  ******************************************************************************/
  /***********************************************************************************************
- created: 		2025-04-29
+ created: 		2025-10-25
 
  author:			chensong
 
- purpose:		http_parser
+ purpose:		test flv 
  输赢不重要，答案对你们有什么意义才重要。
 
  光阴者，百代之过客也，唯有奋力奔跑，方能生风起时，是时代造英雄，英雄存在于时代。或许世人道你轻狂，可你本就年少啊。 看护好，自己的理想和激情。
@@ -32,14 +32,27 @@
  安静，淡然，代码就是我的一切，写代码就是我本心回归的最好方式，我还没找到本心猎手，但我相信，顺着这个线索，我一定能顺藤摸瓜，把他揪出来。
  ************************************************************************************************/
 
-#ifndef _TEST__flv_writer_h_
-#define _TEST__flv_writer_h_ 
+#include <iostream>
+#include "libmedia_transfer_protocol/libflv/test/flv_write_file_test.h"
 
-namespace libmedia_transfer_protocol
+#include <thread>
+#include <chrono>
+
+int32_t    simplest_flv_write(const char * file_name)
 {
-namespace  libflv_test {
-	int simplest_flv_parser(char *url);
-}}
+	libmedia_transfer_protocol::libflv_test::FlvWriterFileTest   flv_writer_file_test(file_name);
+
+	/// 采集5分钟视频画面写入flv文件中去
+	std::this_thread::sleep_for(std::chrono::minutes(5));
+}
 
 
-#endif  // 
+
+
+int main(int argc, char *argv[])
+{
+
+	simplest_flv_write("test_flv.flv");
+
+	return EXIT_SUCCESS;
+}

@@ -71,8 +71,13 @@ namespace libmedia_transfer_protocol
 		class FlvContext
 		{
 		public:
-		  explicit	FlvContext(  libnetwork::Connection* conn);
-			virtual ~FlvContext(){}
+
+		  explicit	FlvContext(  
+			  libnetwork::Connection* conn, const char * out_flv_file_name  = nullptr);
+ 
+			
+
+		  virtual ~FlvContext();
 
 
 		public:
@@ -87,13 +92,17 @@ namespace libmedia_transfer_protocol
 
 			
 		private: 
+
+			
 			libnetwork::Connection *          connection_;
+			FILE *out_file_ptr_;
+
 			uint32_t                  prev_packet_size_; //记录上一个tag的包的大小
 			//std::string					http_header_;
 			uint8_t out_buffer_[1024*1024] = { 0 };
 			uint8_t * current_{ nullptr }; 
  
-		//	FILE *out_file_ptr;
+		 	
  
 		//	MMediaHandler*   handler_;
 		};

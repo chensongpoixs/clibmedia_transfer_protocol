@@ -36,6 +36,7 @@ purpose:		http_parser
 #include <cstdlib>
 #include <stdint.h>
 #include <cstdalign>
+#include "rtc_base/logging.h"
 #include "libmedia_transfer_protocol/libflv/amf0.h"
 namespace libmedia_transfer_protocol
 {
@@ -100,12 +101,11 @@ namespace libmedia_transfer_protocol
 
 			static const char   kflv_muxer[] = "libflv_rtc";
 		}
-		FlvContext::FlvContext(  libnetwork::Connection* conn )
+		FlvContext::FlvContext(  libnetwork::Connection* conn, const char * out_flv_file_name)
 			:connection_(conn) 
-#if TEST_HTTP_FLV
-			, out_file_ptr(nullptr)
-#endif  
+   
 		{
+			LIBFLV_LOG_T_F(LS_INFO);
 			current_ = out_buffer_;
 			prev_packet_size_ = 0;
 			// http header
@@ -116,17 +116,32 @@ namespace libmedia_transfer_protocol
 			ss << "Content-Type: video/x-flv; charset=utf-8\r\n";
 			ss << "Connection: Keep-Alive\r\n";
 			ss << "\r\n";
-			//connection_->AsyncSend());
-			//rtc::CopyOnWriteBuffer   tem_flv_header;
-			//tem_flv_header.AppendData(ss.str());
-			connection_->AsyncSend(ss.str());
-#if TEST_HTTP_FLV
-			std::string file_name_flv = "test.flv.flv";
-			out_file_ptr = fopen(file_name_flv.c_str(), "wb+");
-#endif 
+			
+		 
+			if (out_flv_file_name)
+			{
+				out_file_ptr_ = fopen(out_flv_file_name, "wb+");
+			}
+			
+ 
+			if (connection_)
+			{
+				connection_->AsyncSend(ss.str());
+			}
+			
+
 		}
 
-
+		FlvContext::~FlvContext()
+		{
+			LIBFLV_LOG_T_F(LS_INFO);
+			if (out_file_ptr_)
+			{
+				fflush(out_file_ptr_);
+				fclose(out_file_ptr_);
+				out_file_ptr_ = nullptr;
+			}
+		}
 
 		
 		void FlvContext::SendFlvHeader(bool has_auido, bool has_video)
@@ -196,73 +211,23 @@ namespace libmedia_transfer_protocol
 			metadata[4+1] = meta_data_length/65536; // length;
 			metadata[4+2] = (meta_data_length % 65536) /256; // length;
 			metadata[4+3] = meta_data_length%256; // length;
-			connection_->AsyncSend(rtc::CopyOnWriteBuffer(current_,   ptr - current_));
-#if TEST_HTTP_FLV
-			if (out_file_ptr)
+			
+ 
+			if (out_file_ptr_)
 			{
-				fwrite(current_, 1, ptr - current_, out_file_ptr);
-				fflush(out_file_ptr);
+				fwrite(current_, 1, ptr - current_, out_file_ptr_);
+				fflush(out_file_ptr_);
 			}
-#endif //#if TEST_HTTP_FLV
-			//uint8_t* ptr, *end;
-			//	uint32_t count;
-			//
-			//	if (!metadata) return -1;
-			//
-			//	if (flv->capacity < 1024)
-			//	{
-			//		if (0 != flv_muxer_alloc(flv, 1024))
-			//			return -ENOMEM;
-			//	}
-			//
-			//	ptr = flv->ptr;
-			//	end = flv->ptr + flv->capacity;
-			//	count = (metadata->audiocodecid ? 5 : 0) + (metadata->videocodecid ? 7 : 0) + 1;
-			//
-			//	// ScriptTagBody
-			//
-			//	// name
-			//	ptr = AMFWriteString(ptr, end, "onMetaData", 10);
-			//
-			//	// value: SCRIPTDATAECMAARRAY
-			//	ptr[0] = AMF_ECMA_ARRAY;
-			//	ptr[1] = (uint8_t)((count >> 24) & 0xFF);;
-			//	ptr[2] = (uint8_t)((count >> 16) & 0xFF);;
-			//	ptr[3] = (uint8_t)((count >> 8) & 0xFF);
-			//	ptr[4] = (uint8_t)(count & 0xFF);
-			//	ptr += 5;
-			//
-			//	if (metadata->audiocodecid)
-			//	{
-			//		ptr = AMFWriteNamedDouble(ptr, end, "audiocodecid", 12, metadata->audiocodecid);
-			//		ptr = AMFWriteNamedDouble(ptr, end, "audiodatarate", 13, metadata->audiodatarate /* / 1024.0*/);
-			//		ptr = AMFWriteNamedDouble(ptr, end, "audiosamplerate", 15, metadata->audiosamplerate);
-			//		ptr = AMFWriteNamedDouble(ptr, end, "audiosamplesize", 15, metadata->audiosamplesize);
-			//		ptr = AMFWriteNamedBoolean(ptr, end, "stereo", 6, (uint8_t)metadata->stereo);
-			//	}
-			//
-			//	if (metadata->videocodecid)
-			//	{
-			//		ptr = AMFWriteNamedDouble(ptr, end, "duration", 8, metadata->duration);
-			//		ptr = AMFWriteNamedDouble(ptr, end, "interval", 8, metadata->interval);
-			//		ptr = AMFWriteNamedDouble(ptr, end, "videocodecid", 12, metadata->videocodecid);
-			//		ptr = AMFWriteNamedDouble(ptr, end, "videodatarate", 13, metadata->videodatarate /* / 1024.0*/);
-			//		ptr = AMFWriteNamedDouble(ptr, end, "framerate", 9, metadata->framerate);
-			//		ptr = AMFWriteNamedDouble(ptr, end, "height", 6, metadata->height);
-			//		ptr = AMFWriteNamedDouble(ptr, end, "width", 5, metadata->width);
-			//	}
-			//
-			//	ptr = AMFWriteNamedString(ptr, end, "encoder", 7, FLV_MUXER, strlen(FLV_MUXER));
-			//	ptr = AMFWriteObjectEnd(ptr, end);
-			//
-			//	return flv->handler(flv->param, FLV_TYPE_SCRIPT, flv->ptr, ptr - flv->ptr, 0);
+ 
+			if (connection_)
+			{
+				connection_->AsyncSend(rtc::CopyOnWriteBuffer(current_, ptr - current_));
 
 
-
-
-
-
-
+			}
+			
+			 
+			 
 		}
 		 
 		/*
@@ -324,19 +289,23 @@ namespace libmedia_transfer_protocol
 			//记录tag的包的大小给下一个包使用
 			prev_packet_size_ = packet_size + 11  ;
 
-			 connection_->AsyncSend(rtc::CopyOnWriteBuffer(current_, index_size));
-			 
-
-			 connection_->AsyncSend(rtc::CopyOnWriteBuffer(frame));
-#if TEST_HTTP_FLV
-			 if (out_file_ptr)
+	 
+			 if (out_file_ptr_)
 			 {
-				 fwrite(current_, 1, index_size, out_file_ptr);
-				 fwrite(frame.data(), 1, frame.size(), out_file_ptr);
+				 fwrite(current_, 1, index_size, out_file_ptr_);
+				 fwrite(frame.data(), 1, frame.size(), out_file_ptr_);
 
-				 fflush(out_file_ptr);
+				 fflush(out_file_ptr_);
 			 }
-#endif //#if TEST_HTTP_FLV
+  
+			 if (connection_)
+			 {
+
+				 connection_->AsyncSend(rtc::CopyOnWriteBuffer(current_, index_size));
+
+
+				 connection_->AsyncSend(rtc::CopyOnWriteBuffer(frame));
+			 }
 			return true;
 		}
 		bool FlvContext::SendFlvAudioFrame(const rtc::CopyOnWriteBuffer & frame, uint32_t timestamp)
@@ -397,19 +366,24 @@ namespace libmedia_transfer_protocol
 			//记录tag的包的大小给下一个包使用
 			prev_packet_size_ = packet_size + 11;
 
-			 connection_->AsyncSend(rtc::CopyOnWriteBuffer(current_, index_size));
-
-
-			 connection_->AsyncSend(rtc::CopyOnWriteBuffer(frame));
-#if TEST_HTTP_FLV
-			 if (out_file_ptr)
+		 
+			 if (out_file_ptr_)
 			 {
-				 fwrite(current_, 1, index_size, out_file_ptr);
-				 fwrite(frame.data(), 1, frame.size(), out_file_ptr);
+				 fwrite(current_, 1, index_size, out_file_ptr_);
+				 fwrite(frame.data(), 1, frame.size(), out_file_ptr_);
 
-				 fflush(out_file_ptr);
+				 fflush(out_file_ptr_);
 			 }
-#endif //#if TEST_HTTP_FLV
+ 
+			 if (connection_)
+			 { 
+				 connection_->AsyncSend(rtc::CopyOnWriteBuffer(current_, index_size));
+
+
+				 connection_->AsyncSend(rtc::CopyOnWriteBuffer(frame));
+			 }
+			
+ 
 			return true;
 		}
 		 
