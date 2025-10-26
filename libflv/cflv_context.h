@@ -47,6 +47,7 @@ purpose:		http_parser
 #include <memory>
 #include "libmedia_transfer_protocol/libnetwork/connection.h"
 #include "rtc_base/copy_on_write_buffer.h"
+#include "rtc_base/system/arch.h"
 namespace libmedia_transfer_protocol
 {
 	namespace libflv
@@ -68,6 +69,101 @@ namespace libmedia_transfer_protocol
 			kFlvMsgTypeAMFMessage,
 			kFlvMsgTypeMetadata = 22,
 		};
+
+
+
+
+
+
+
+
+
+#pragma pack(push, 1)
+
+		class FLVHeader {
+		public:
+			static constexpr uint8_t kFlvVersion = 1;
+			static constexpr uint8_t kFlvHeaderLength = 9;
+			//FLV
+			char flv[3];
+			//File version (for example, 0x01 for FLV version 1)
+			uint8_t version;
+#if defined( WEBRTC_ARCH_LITTLE_ENDIAN   )
+
+
+			// 保留,置0  [AUTO-TRANSLATED:46985374]
+			// Preserve, set to 0
+			uint8_t : 5;
+			// 是否有音频  [AUTO-TRANSLATED:9467870a]
+			// Whether there is audio
+			uint8_t have_audio : 1;
+			// 保留,置0  [AUTO-TRANSLATED:46985374]
+			// Preserve, set to 0
+			uint8_t : 1;
+					// 是否有视频  [AUTO-TRANSLATED:42d0ed81]
+					// Whether there is video
+					uint8_t have_video : 1;
+#elif  defined(  WEBRTC_ARCH_BIG_ENDIAN)
+			// 是否有视频  [AUTO-TRANSLATED:42d0ed81]
+			// Whether there is video
+			uint8_t have_video : 1;
+			// 保留,置0  [AUTO-TRANSLATED:46985374]
+			// Preserve, set to 0
+			uint8_t : 1;
+					  // 是否有音频  [AUTO-TRANSLATED:9467870a]
+					  // Whether there is audio
+					  uint8_t have_audio : 1;
+					  // 保留,置0  [AUTO-TRANSLATED:46985374]
+					  // Preserve, set to 0
+					  uint8_t : 5;
+#endif
+								// The length of this header in bytes,固定为9  [AUTO-TRANSLATED:126988fc]
+								// The length of this header in bytes, fixed to 9
+								uint32_t length;
+								// 固定为0  [AUTO-TRANSLATED:d266c0a7]
+								// Fixed to 0
+								uint32_t previous_tag_size0;
+		};
+
+
+		class FlvTagHeader {
+		public:
+			uint8_t type = 0;
+			uint8_t data_size[3] = { 0 };
+			uint8_t timestamp[3] = { 0 };
+			uint8_t timestamp_ex = 0;
+			uint8_t streamid[3] = { 0 }; /* Always 0. */
+		};
+		struct RtmpVideoHeaderEnhanced {
+#if defined( WEBRTC_ARCH_LITTLE_ENDIAN   )
+			uint8_t enhanced : 1;
+			uint8_t frame_type : 3;
+			uint8_t pkt_type : 4;
+			uint32_t fourcc;
+#elif defined( WEBRTC_ARCH_BIG_ENDIAN   )
+			uint8_t pkt_type : 4;
+			uint8_t frame_type : 3;
+			uint8_t enhanced : 1;
+			uint32_t fourcc;
+#endif
+		};
+
+		struct RtmpVideoHeaderClassic {
+#if defined( WEBRTC_ARCH_LITTLE_ENDIAN   )
+			uint8_t frame_type : 4;
+			uint8_t codec_id : 4;
+			uint8_t h264_pkt_type;
+#elif defined( WEBRTC_ARCH_BIG_ENDIAN   )
+			uint8_t codec_id : 4;
+			uint8_t frame_type : 4;
+			uint8_t h264_pkt_type;
+#endif
+		};
+
+#pragma pack(pop)
+
+
+
 		class FlvContext
 		{
 		public:

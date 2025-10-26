@@ -37,6 +37,10 @@
 #include "libmedia_transfer_protocol/libflv/cflv_context.h"
 #include "libmedia_codec/x264_encoder.h"
 #include "libcross_platform_collection_render/track_capture/ctrack_capture.h"
+#include "libmedia_transfer_protocol/libflv/FlvEncoder.h"
+#include "libmedia_transfer_protocol/libflv/BaseWriter.h"
+
+
 namespace libmedia_transfer_protocol
 {
 	namespace  libflv_test {
@@ -50,21 +54,44 @@ namespace libmedia_transfer_protocol
 			explicit FlvWriterFileTest(const char * out_file_name);
 			~FlvWriterFileTest();
 
-
+			
 		public:
 
 			void   OnVideoEncode(std::shared_ptr<libmedia_codec::EncodedImage> encoded_image);
+
+
+
+
+
+		private:
+
+			void WriteFlvHeader();
+			void WriteFlvTag(uint8_t type, const uint8_t * data, int32_t size, int64_t timestamp);
+			void WriteMetaData();
+			void WriteConfigPacket();
+			void  Writer(const uint8_t * data, int32_t size);
 		private:
 
 			bool         write_flv_header_;
 			std::unique_ptr<libmedia_transfer_protocol::libflv::FlvContext>        flv_context_;
 
-
+			std::string              sps_; //视频的宽度、高度， 。。。
+			std::string              pps_;//视频编码 参数  宏块。。。
 
 			std::unique_ptr< rtc::Thread>        video_encoder_thread_;
 			std::unique_ptr< libmedia_codec::X264Encoder>                          x264_encoder_;
 			rtc::scoped_refptr<libcross_platform_collection_render::CapturerTrackSource>     capturer_track_source_;
 
+
+			std::unique_ptr< BrightLib::Media::StreamWriter>           stream_writer_;
+			std::unique_ptr< BrightLib ::Media::Flv::H264FlvEncoder>     h264_flv_encoder_;
+
+
+
+			FILE * out_flv_file_ptr_;
+
+
+			
 		};
 
 		 

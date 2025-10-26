@@ -300,6 +300,7 @@ int simplest_flv_parser(char *url){
 
 			//TagData + Previous Tag Size
 			int data_size=reverse_bytes((uint8_t *)&tagheader.DataSize, sizeof(tagheader.DataSize))+4;
+#if 0
 			if(output_v!=0){
 				//TagHeader
 				fwrite((char *)&tagheader,1, sizeof(tagheader),vfh);
@@ -310,6 +311,16 @@ int simplest_flv_parser(char *url){
 				for (int i=0; i<data_size; i++)
 					fgetc(ifh);
 			}
+#else 
+
+			{
+				uint8_t  * read_ddd = new uint8_t[1024 * 1024];
+				fread((void *)read_ddd, data_size, 1, ifh);
+				std::string hex = hexmem(read_ddd, data_size);
+				fprintf(myout, "\nvideo :hex:%s\n", hex.c_str());
+				delete[]read_ddd;
+			}
+#endif //
 			//rewind 4 bytes, because we need to read the previoustagsize again for the loop's sake
 			fseek(ifh, -4, SEEK_CUR);
 
