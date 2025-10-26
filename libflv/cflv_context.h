@@ -54,20 +54,9 @@ namespace libmedia_transfer_protocol
 	{
 		enum FlvMsgType
 		{
-			kFlvMsgTypeChunkSize = 1,
-			kFlvMsgTypeBytesRead = 3,
-			kFlvMsgTypeUserControl,
-			kFlvMsgTypeWindowACKSize,
-			kFlvMsgTypeSetPeerBW,
 			kFlvMsgTypeAudio = 8,
-			kFlvMsgTypeVideo,
-			kFlvMsgTypeAMF3Meta = 15,
-			kFlvMsgTypeAMF3Shared,
-			kFlvMsgTypeAMF3Message,
-			kFlvMsgTypeAMFMeta,
-			kFlvMsgTypeAMFShared,
-			kFlvMsgTypeAMFMessage,
-			kFlvMsgTypeMetadata = 22,
+			kFlvMsgTypeVideo = 9, 
+			kFlvMsgTypeAMFMeta = 18, 
 		};
 
 
@@ -179,6 +168,9 @@ namespace libmedia_transfer_protocol
 		public:
 			void SendFlvHeader(bool has_auido, bool has_video);
 			
+			//void SetSps(const std::string & sps);
+			//void SetPps(const std::string & pps);
+		//	void SendFlvOnMetaHeader();
 			bool SendFlvVideoFrame(const rtc::CopyOnWriteBuffer & frame, uint32_t timestamp);
 			bool SendFlvAudioFrame(const rtc::CopyOnWriteBuffer & frame, uint32_t timestamp);
 			
@@ -186,7 +178,11 @@ namespace libmedia_transfer_protocol
 
 		private:
 
-			
+			//void WriteFlvHeader();
+			void WriteFlvTag(uint8_t type, const uint8_t * data, int32_t size, int64_t timestamp);
+			//void WriteMetaData();
+			void WriteConfigPacket();
+			void Writer(const uint8_t * data, int32_t size);
 		private: 
 
 			
@@ -195,10 +191,15 @@ namespace libmedia_transfer_protocol
 
 			uint32_t                  prev_packet_size_; //记录上一个tag的包的大小
 			//std::string					http_header_;
-			uint8_t out_buffer_[1024*1024] = { 0 };
+			uint8_t *out_buffer_  { nullptr };
 			uint8_t * current_{ nullptr }; 
  
 		 	
+			bool                  send_sps_;
+			std::string            sps_;
+			std::string            pps_;
+
+			uint32_t               start_timestamp_;
  
 		//	MMediaHandler*   handler_;
 		};

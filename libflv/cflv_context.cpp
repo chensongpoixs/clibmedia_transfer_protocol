@@ -38,6 +38,9 @@ purpose:		http_parser
 #include <cstdalign>
 #include "rtc_base/logging.h"
 #include "libmedia_transfer_protocol/libflv/amf0.h"
+#include "common_video/h264/h264_common.h"
+#include "modules/video_coding/include/video_coding.h"
+#include "modules/video_coding/codecs/h264/include/h264_globals.h"
 namespace libmedia_transfer_protocol
 {
 	namespace libflv
@@ -97,13 +100,51 @@ namespace libmedia_transfer_protocol
 				//0x00
 			};
 
-
-
+			static void set_be24(void *p, uint32_t val)
+			{
+				uint8_t *data = (uint8_t *)p;
+				data[0] = val >> 16;
+				data[1] = val >> 8;
+				data[2] = val;
+			}
+			static void set_be32(void *p, uint32_t val)
+			{
+				uint8_t *data = (uint8_t *)p;
+				data[0] = val >> 24;
+				data[1] = val >> 16;
+				data[2] = val >> 8;
+				data[3] = val;
+			}
 			static const char   kflv_muxer[] = "libflv_rtc";
+
+
+#define FLV_VIDEO_FRAMETYPE_OFFSET   4
+
+			enum {
+				FLV_FRAME_KEY = 1 << FLV_VIDEO_FRAMETYPE_OFFSET, ///< key frame (for AVC, a seekable frame)
+				FLV_FRAME_INTER = 2 << FLV_VIDEO_FRAMETYPE_OFFSET, ///< inter frame (for AVC, a non-seekable frame)
+				FLV_FRAME_DISP_INTER = 3 << FLV_VIDEO_FRAMETYPE_OFFSET, ///< disposable inter frame (H.263 only)
+				FLV_FRAME_GENERATED_KEY = 4 << FLV_VIDEO_FRAMETYPE_OFFSET, ///< generated key frame (reserved for server use only)
+				FLV_FRAME_VIDEO_INFO_CMD = 5 << FLV_VIDEO_FRAMETYPE_OFFSET, ///< video info/command frame
+			};
+			enum {
+				FLV_CODECID_H263 = 2,
+				FLV_CODECID_SCREEN = 3,
+				FLV_CODECID_VP6 = 4,
+				FLV_CODECID_VP6A = 5,
+				FLV_CODECID_SCREEN2 = 6,
+				FLV_CODECID_H264 = 7,
+				FLV_CODECID_REALH263 = 8,
+				FLV_CODECID_MPEG4 = 9,
+			};
+			// const char   kflv_muxerl[] = "libflv_rtc";
 		}
 		FlvContext::FlvContext(  libnetwork::Connection* conn, const char * out_flv_file_name)
 			:connection_(conn) 
-   
+			, out_file_ptr_(NULL)
+			, out_buffer_(new uint8_t[1024 * 1024 * 8])
+			, start_timestamp_(0)
+			, send_sps_(false)
 		{
 			LIBFLV_LOG_T_F(LS_INFO);
 			current_ = out_buffer_;
@@ -135,6 +176,12 @@ namespace libmedia_transfer_protocol
 		FlvContext::~FlvContext()
 		{
 			LIBFLV_LOG_T_F(LS_INFO);
+			if (out_buffer_)
+			{
+				delete out_buffer_;
+				out_buffer_ = NULL;
+			}
+
 			if (out_file_ptr_)
 			{
 				fflush(out_file_ptr_);
@@ -150,6 +197,7 @@ namespace libmedia_transfer_protocol
 			uint8_t * header = current_;
 			//uint8_t   send_buffer[1024] = { 0 };
 			int32_t  index = 0;
+#if 0
 			if (!has_auido)
 			{
 				memcpy(header+ index, flv_video_only_header, sizeof(flv_video_only_header));
@@ -165,11 +213,25 @@ namespace libmedia_transfer_protocol
 				memcpy(header+ index, flv_header, sizeof(flv_header));
 				index +=  sizeof(flv_header);
 			}
+#else 
+			libflv::FLVHeader flv_header = { 0 };
+
+			flv_header.flv[0] = 'F';
+			flv_header.flv[1] = 'L';
+			flv_header.flv[2] = 'V';
+			flv_header.version = libflv::FLVHeader::kFlvVersion;
+			flv_header.length = htonl(libflv::FLVHeader::kFlvHeaderLength);
+			flv_header.have_video = has_video;
+			flv_header.have_audio = has_auido;
+
+
+			Writer((const uint8_t *)&flv_header, sizeof(libflv::FLVHeader));
+#endif 
 			//connection_->AsyncSend( rtc::CopyOnWriteBuffer( current_, index ));
 
 			//prev_packet_size_ = index;
-			uint8_t * metadata = current_ + index;
-			uint8_t * ptr = current_ + index +13;
+			uint8_t * metadata = current_ ;
+			uint8_t * ptr = metadata;
 			uint8_t *end = ptr + (1024 * 1023);
 
 			uint8_t count = (has_auido ? 5 : 0) + (has_video ? 7 : 0) + 1;
@@ -204,32 +266,18 @@ namespace libmedia_transfer_protocol
 			}
 			ptr = AMFWriteNamedString(ptr, end, "encoder", 7, kflv_muxer, strlen(kflv_muxer));
 			ptr = AMFWriteObjectEnd(ptr, end);
-			uint32_t meta_data_length = ptr - metadata -13  -2;
-			// tag meta header data 
-			memset(metadata, '\0', 13);
-			metadata[4+0] = kFlvMsgTypeAMFMeta; // tag type 
-			metadata[4+1] = meta_data_length/65536; // length;
-			metadata[4+2] = (meta_data_length % 65536) /256; // length;
-			metadata[4+3] = meta_data_length%256; // length;
-			
+			 
+			WriteFlvTag(libflv::kFlvMsgTypeAMFMeta, metadata, ptr - metadata, 0);
  
-			if (out_file_ptr_)
-			{
-				fwrite(current_, 1, ptr - current_, out_file_ptr_);
-				fflush(out_file_ptr_);
-			}
- 
-			if (connection_)
-			{
-				connection_->AsyncSend(rtc::CopyOnWriteBuffer(current_, ptr - current_));
-
-
-			}
-			
+			 
 			 
 			 
 		}
 		 
+		//void FlvContext::SendFlvOnMetaHeader()
+		//{
+		//}
+
 		/*
 		
 		# 二、 FLV文件头
@@ -241,103 +289,140 @@ namespace libmedia_transfer_protocol
 		*/
 		bool FlvContext::SendFlvVideoFrame(const rtc::CopyOnWriteBuffer & frame, uint32_t timestamp)
 		{
-			uint32_t packet_size = frame.size()+2;
-			uint8_t * send_buffer = current_; 
-			uint32_t   index_size = 0;
-			uint8_t * p = (uint8_t *)&prev_packet_size_;
-			//  << "flv  header previous size: " << prev_packet_size_;
-			//  << "flv  header hex : " <<  
-
-			// (大端对齐)
-			/*memcpy(current_, p, sizeof(uint32_t));
-			current_ += 4;*/
-			send_buffer[index_size++] = p[3];
-			//current_++;
-			send_buffer[index_size++] = p[2];
-			//current_++;
-			send_buffer[index_size++] = p[1];
-			//current_++;
-			send_buffer[index_size++] = p[0];
-			//current_++;
-			// 包类型 
-			send_buffer[index_size++] = kFlvMsgTypeVideo;// 
-
-			//包长度 3个字节
 			
-			
-			p = (uint8_t *)&packet_size;
-			send_buffer[index_size++] = p[2];
-			send_buffer[index_size++] = p[1];
-			send_buffer[index_size++] = p[0];
-		//	(void)(packet_size);
-			 
-			p = (uint8_t *)&timestamp;
-			send_buffer[index_size++] = p[2];
-			send_buffer[index_size++] = p[1];
-			send_buffer[index_size++] = p[0];
-			send_buffer[index_size++] = 0; //固定输入 '0';
-
-
-			send_buffer[index_size++] = 0;
-			send_buffer[index_size++] = 0;
-			send_buffer[index_size++] = 0; 
+			std::vector<webrtc::H264::NaluIndex> nalus = webrtc::H264::FindNaluIndices(
+				frame.data(), frame.size());
+			for (int32_t nal_index = 0; nal_index < nalus.size(); ++nal_index)
 			{
-				// vido type
-				// VIDEODATA Tag第一个字节的高4位描述视频帧的类型，低4位描述视频编码器ID，VIDEODATA Tag的结构如下：
-				// 一、FrameType	4	帧类型 FrameType：视频帧的类型。一般keyframe是指IDR帧，而inter frame是指普通I帧。
-				//	 
-				//			1	key frame(for AVC, a seekable frame)
-				//			2	inter frame(for AVC, a non - seekable frame)
-				//			3	disposable inter frame(H.263 only)
-				//			4	generated key frame(reserved for server use only)
-				//			5	video info / command frame
-				//二、	CodecID	4	视频编码ID
-				//		 
-				//			2	Sorenson H.263
-				//			3	Screen video
-				//			4	On2 VP6
-				//			5	On2 VP6 with alpha channel
-				//			6	Screen video version 2
-				//			7	AVC
-				//    当CodecID 为7时，即为AVC视频，第一个字节为AvcPacketType，第二三四个字节为CompositionTime。当AvcPacketType=0，第5个字节开始为AVCDecoderConfigurationRecord；否则VideoData为Avc Raw数据。
-				// 三、  AVCDecoderConfigurationRecord的结构：
-				//		configurationVersion	8	版本号，总是1
-				//		AVCProfileIndication	8	sps[1]
-				//		profile_compatibility	8	sps[2]
-				//		AVCLevelIndication	8	sps[3]
-				//			 configurationVersion, AVCProfileIndication, profile_compatibility, AVCLevelIndication：都是一个字节，具体的内容由解码器去理解。
-				//			 	lengthSizeMinusOne：unit_length长度所占的字节数减1，也即lengthSizeMinusOne的值 + 1才是unit_length所占用的字节数。
-				//			 	numOfSequenceParameterSets：sps的个数
-				//			 	sequenceParameterSetLength：sps内容的长度
-				//			 	sequenceParameterSetNALUnit：sps的内容
-				//			 	numOfPictureParameterSets：pps的个数
-				//			 	pictureParameterSetLength：pps内容的长度
-				//			 	pictureParameterSetNALUnit：pps的内容
-				//	VideoData	N * 8	视频数据
-				// 当VideoData为AVC RAW时，AVC RAW的结构是avcc的 ===> H264码流分两种组织方式，一种是AnnexB格式，一种是AVCC格式
-				send_buffer[index_size++] = 0x17;
-				send_buffer[index_size++] = 0;
+				webrtc::NaluInfo nalu;
+				nalu.type = frame.data()[nalus[nal_index].payload_start_offset] & 0x1F;
+				nalu.sps_id = -1;
+				nalu.pps_id = -1;
+				switch (nalu.type) {
+				case webrtc::H264::NaluType::kSps: {
+					sps_ = (std::string((char *)(frame.data() + nalus[nal_index].payload_start_offset),
+						nalus[nal_index].payload_size));
+					 
+					break;
+				}
+				case webrtc::H264::NaluType::kPps: {
+
+					pps_ = (std::string((char *)(frame.data() + nalus[nal_index].payload_start_offset),
+						nalus[nal_index].payload_size));
+					break;
+				}
+				case webrtc::H264::NaluType::kIdr:
+				{
+
+
+					if (!send_sps_)
+					{
+						send_sps_ = true;
+						WriteConfigPacket();
+						start_timestamp_ = timestamp;
+					}
+					uint8_t * buffer = out_buffer_;
+
+					uint8_t *ptr = buffer;
+					*ptr = FLV_CODECID_H264;
+					*ptr++ |= FLV_FRAME_KEY;
+					//auto flags = (uint8_t)7;
+					//flags |= ((uint8_t)1 << 4);
+					//std::string  packet;
+
+					// header
+					//uint8_t dd = 0;
+					//packet.append((char)flags);
+					//packet.append((char)dd);
+					// avio_w8(pb, par->codec_tag | FLV_FRAME_KEY); // flags
+					// avio_w8(pb, 0); // AVC sequence header
+					// avio_wb24(pb, 0); // composition time
+					*ptr++ = 1;
+					*ptr++ = 0;
+					*ptr++ = 0;
+					*ptr++ = 0;
+
+
+
+					// avcc
+					// sps
+					set_be32(ptr, sps_.size());
+					ptr += 4;
+					memcpy(ptr, sps_.c_str(), sps_.size());
+					ptr += sps_.size();
+					// pps
+					set_be32(ptr, pps_.size());
+					ptr += 4;
+					memcpy(ptr, pps_.c_str(), pps_.size());
+					ptr += pps_.size();
+
+					// idr
+					set_be32(ptr, nalus[nal_index].payload_size);
+					ptr += 4;
+					memcpy(ptr, frame.data() + nalus[nal_index].payload_start_offset, nalus[nal_index].payload_size);
+					ptr += nalus[nal_index].payload_size;
+					//uint8_t  * new_data = (uint8_t*)(encoded_image->data() + nalus[nal_index].payload_start_offset - 2) ;
+					//new_data[0] = 2;
+					//new_data[1] = 1;
+					WriteFlvTag(libflv::kFlvMsgTypeVideo, buffer,
+						ptr - buffer, timestamp - start_timestamp_);
+					 
+					break;
+				}
+				case webrtc::H264::NaluType::kSlice:  						 // Slices below don't contain SPS or PPS ids.
+				case webrtc::H264::NaluType::kAud:
+				case webrtc::H264::NaluType::kEndOfSequence:
+				case webrtc::H264::NaluType::kEndOfStream:
+				case webrtc::H264::NaluType::kFiller:
+				case webrtc::H264::NaluType::kSei:
+				case webrtc::H264::NaluType::kStapA:
+				case webrtc::H264::NaluType::kFuA:
+				{
+					uint8_t * buffer = out_buffer_;
+
+					uint8_t *ptr = buffer;
+					*ptr = FLV_CODECID_H264;
+					*ptr++ |= FLV_FRAME_INTER;
+
+
+
+					//auto flags = (uint8_t)7;
+					//flags |= ((uint8_t)1 << 4);
+					//std::string  packet;
+
+					// header
+					//uint8_t dd = 0;
+					//packet.append((char)flags);
+					//packet.append((char)dd);
+					// avio_w8(pb, par->codec_tag | FLV_FRAME_KEY); // flags
+					// avio_w8(pb, 0); // AVC sequence header
+					// avio_wb24(pb, 0); // composition time
+					//avio_w8(pb, 1); // AVC NALU
+					//avio_wb24(pb, pkt->pts - pkt->dts);
+					*ptr++ = 1;
+					*ptr++ = 0;
+					*ptr++ = 0;
+					*ptr++ = 0;
+					// idr
+					set_be32(ptr, nalus[nal_index].payload_size);
+					ptr += 4;
+					memcpy(ptr, frame.data() + nalus[nal_index].payload_start_offset, nalus[nal_index].payload_size);
+					ptr += nalus[nal_index].payload_size;
+					//uint8_t  * new_data = (uint8_t*)(encoded_image->data() + nalus[nal_index].payload_start_offset - 2) ;
+					//new_data[0] = 2;
+					//new_data[1] = 1;
+					WriteFlvTag(libflv::kFlvMsgTypeVideo, buffer,
+						ptr - buffer, timestamp - start_timestamp_);
+					 
+					break;
+				}
+				default: {
+					break;
+				}
+
+				}
 			}
-			//记录tag的包的大小给下一个包使用
-			prev_packet_size_ = packet_size + 11  ;
 
-	 
-			 if (out_file_ptr_)
-			 {
-				 fwrite(current_, 1, index_size, out_file_ptr_);
-				 fwrite(frame.data(), 1, frame.size(), out_file_ptr_);
-
-				 fflush(out_file_ptr_);
-			 }
-  
-			 if (connection_)
-			 {
-
-				 connection_->AsyncSend(rtc::CopyOnWriteBuffer(current_, index_size));
-
-
-				 connection_->AsyncSend(rtc::CopyOnWriteBuffer(frame));
-			 }
 			return true;
 		}
 		bool FlvContext::SendFlvAudioFrame(const rtc::CopyOnWriteBuffer & frame, uint32_t timestamp)
@@ -417,6 +502,100 @@ namespace libmedia_transfer_protocol
 			
  
 			return true;
+		}
+
+		
+
+		void FlvContext::WriteConfigPacket()
+		{
+
+			uint8_t * buffer = out_buffer_;
+
+			uint8_t *ptr = buffer;
+			*ptr = 7;
+			*ptr++ |= (uint8_t)1 << 4; 
+			//config 编码信息设置为0 
+			*ptr++ = 0;
+			*ptr++ = 0;
+			*ptr++ = 0;
+			*ptr++ = 0;
+			// cts 
+			// AVCDecoderConfigurationRecord start
+			std::string extra_data;
+			{
+
+
+				// AVCDecoderConfigurationRecord start
+				extra_data.push_back(1); // version
+				extra_data.push_back(sps_[1]); // profile
+				extra_data.push_back(sps_[2]); // compat
+				extra_data.push_back(sps_[3]); // level
+				extra_data.push_back((char)0xff); // 6 bits reserved + 2 bits nal size length - 1 (11)
+				extra_data.push_back((char)0xe1); // 3 bits reserved + 5 bits number of sps (00001)
+				// sps
+				uint16_t size = (uint16_t)sps_.size();
+				size = htons(size);
+				extra_data.append((char *)&size, 2);
+				extra_data.append(sps_);
+				// pps
+				extra_data.push_back(1); // version
+				size = (uint16_t)pps_.size();
+				size = htons(size);
+				extra_data.append((char *)&size, 2);
+				extra_data.append(pps_);
+
+			}
+
+			// memcpy()
+			//packet.append(extra_data);
+			memcpy(ptr, extra_data.c_str(), extra_data.size());
+			ptr += extra_data.size();
+			WriteFlvTag(libflv::kFlvMsgTypeVideo, buffer, ptr - buffer, 0);
+			 
+		}
+
+
+		void FlvContext::WriteFlvTag(uint8_t type, const uint8_t * data, int32_t size, int64_t time_stamp)
+		{
+
+			
+			libflv::FlvTagHeader header;
+			header.type = type;
+			set_be24(header.data_size, (uint32_t)size);
+			header.timestamp_ex = (time_stamp >> 24) & 0xff;
+			set_be24(header.timestamp, time_stamp & 0xFFFFFF);
+
+
+			//tag header
+			std::string tag_header;
+			tag_header.append((char *)&header, sizeof(header));
+			Writer((const uint8_t *)tag_header.c_str(), tag_header.size()); ///
+
+			//tag data
+			Writer(data, size);
+
+			//PreviousTagSize
+			uint32_t PreviousTag_Size = htonl((uint32_t)(size + sizeof(header)));
+			std::string PreviousTagSize;
+			PreviousTagSize.append((char *)&PreviousTag_Size, 4);
+			Writer((const uint8_t *)PreviousTagSize.c_str(), PreviousTagSize.size()); /// (obtainBuffer(), false);
+
+		}
+
+		void FlvContext::Writer(const uint8_t * data, int32_t size)
+		{
+			if (connection_)
+			{
+				connection_->AsyncSend(rtc::CopyOnWriteBuffer(data, size));
+				 
+			}
+			if (out_file_ptr_)
+			{
+				fwrite(data, 1, size, out_file_ptr_);
+				 
+
+				fflush(out_file_ptr_);
+			}
 		}
 		 
 	}

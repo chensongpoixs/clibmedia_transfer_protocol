@@ -61,21 +61,10 @@ namespace libmedia_transfer_protocol
 
 
 
-
-		private:
-
-			void WriteFlvHeader();
-			void WriteFlvTag(uint8_t type, const uint8_t * data, int32_t size, int64_t timestamp);
-			void WriteMetaData();
-			void WriteConfigPacket();
-			void  Writer(const uint8_t * data, int32_t size);
-		private:
-
-			bool         write_flv_header_;
+ 
+		private: 
 			std::unique_ptr<libmedia_transfer_protocol::libflv::FlvContext>        flv_context_;
-
-			std::string              sps_; //视频的宽度、高度， 。。。
-			std::string              pps_;//视频编码 参数  宏块。。。
+ 
 
 			std::unique_ptr< rtc::Thread>        video_encoder_thread_;
 			std::unique_ptr< libmedia_codec::X264Encoder>                          x264_encoder_;
@@ -86,9 +75,7 @@ namespace libmedia_transfer_protocol
 
 
 
-			FILE * out_flv_file_ptr_;
-
-			uint32_t        start_timestamp_;
+			 
 			
 		};
 
