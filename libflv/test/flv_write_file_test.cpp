@@ -46,8 +46,27 @@ namespace libmedia_transfer_protocol
 				data[1] = val >> 8;
 				data[2] = val;
 			}
-
+			static void set_be32(void *p, uint32_t val)
+			{
+				uint8_t *data = (uint8_t *)p;
+				data[0] = val >> 24;
+				data[1] = val >> 16;
+				data[2] = val >> 8;
+				data[3] = val;
+			}
 			static const char   kflv_muxer[] = "libflv_rtc";
+
+
+#define FLV_VIDEO_FRAMETYPE_OFFSET   4
+
+			enum {
+				FLV_FRAME_KEY = 1 << FLV_VIDEO_FRAMETYPE_OFFSET, ///< key frame (for AVC, a seekable frame)
+				FLV_FRAME_INTER = 2 << FLV_VIDEO_FRAMETYPE_OFFSET, ///< inter frame (for AVC, a non-seekable frame)
+				FLV_FRAME_DISP_INTER = 3 << FLV_VIDEO_FRAMETYPE_OFFSET, ///< disposable inter frame (H.263 only)
+				FLV_FRAME_GENERATED_KEY = 4 << FLV_VIDEO_FRAMETYPE_OFFSET, ///< generated key frame (reserved for server use only)
+				FLV_FRAME_VIDEO_INFO_CMD = 5 << FLV_VIDEO_FRAMETYPE_OFFSET, ///< video info/command frame
+			};
+
 		}
 
 
@@ -133,11 +152,58 @@ namespace libmedia_transfer_protocol
 						ssp_f = true;
 						WriteConfigPacket();
 					} 
-					uint8_t  * new_data = (uint8_t*)(encoded_image->data() + nalus[nal_index].payload_start_offset - 2) ;
-					new_data[0] = 2;
-					new_data[1] = 1;
-					WriteFlvTag(9, new_data,
-						nalus[nal_index].payload_size+2, encoded_image->Timestamp());
+
+					uint8_t * buffer = new uint8_t[1024 * 1024];
+
+					uint8_t *ptr = buffer;
+					*ptr = 7;
+					*ptr++ |= FLV_FRAME_KEY;
+					//auto flags = (uint8_t)7;
+					//flags |= ((uint8_t)1 << 4);
+					//std::string  packet;
+
+					// header
+					//uint8_t dd = 0;
+					//packet.append((char)flags);
+					//packet.append((char)dd);
+					// avio_w8(pb, par->codec_tag | FLV_FRAME_KEY); // flags
+					// avio_w8(pb, 0); // AVC sequence header
+					// avio_wb24(pb, 0); // composition time
+					*ptr++ = 1;
+					*ptr++ = 0;
+					*ptr++ = 0;
+					*ptr++ = 0;
+
+
+
+					// avcc
+					// sps
+					set_be32(ptr, sps_.size());
+					ptr += 4;
+					memcpy(ptr, sps_.c_str(), sps_.size());
+					ptr += sps_.size();
+					// pps
+					set_be32(ptr, pps_.size());
+					ptr += 4;
+					memcpy(ptr, pps_.c_str(), pps_.size());
+					ptr += pps_.size();
+
+					// idr
+					set_be32(ptr, nalus[nal_index].payload_size);
+					ptr += 4;
+					memcpy(ptr, encoded_image->data() + nalus[nal_index].payload_start_offset, nalus[nal_index].payload_size);
+					ptr += nalus[nal_index].payload_size;
+					//uint8_t  * new_data = (uint8_t*)(encoded_image->data() + nalus[nal_index].payload_start_offset - 2) ;
+					//new_data[0] = 2;
+					//new_data[1] = 1;
+					WriteFlvTag(9, buffer,
+						ptr - buffer, encoded_image->Timestamp());
+					if (buffer)
+					{
+						delete[] buffer;
+						buffer = nullptr;
+					}
+					
 					break;
 				}
 				case webrtc::H264::NaluType::kSlice:  						 // Slices below don't contain SPS or PPS ids.
@@ -149,11 +215,46 @@ namespace libmedia_transfer_protocol
 				case webrtc::H264::NaluType::kStapA:
 				case webrtc::H264::NaluType::kFuA:
 				{
-					uint8_t  * new_data = (uint8_t*)(encoded_image->data() + nalus[nal_index].payload_start_offset - 2);
-					new_data[0] = 2;
-					new_data[1] = 1;
-					WriteFlvTag(9, new_data,
-						nalus[nal_index].payload_size + 2, encoded_image->Timestamp());
+					uint8_t * buffer = new uint8_t[1024 * 1024];
+
+					uint8_t *ptr = buffer;
+					*ptr = 7;
+					*ptr++ |= FLV_FRAME_INTER;
+
+
+
+					//auto flags = (uint8_t)7;
+					//flags |= ((uint8_t)1 << 4);
+					//std::string  packet;
+
+					// header
+					//uint8_t dd = 0;
+					//packet.append((char)flags);
+					//packet.append((char)dd);
+					// avio_w8(pb, par->codec_tag | FLV_FRAME_KEY); // flags
+					// avio_w8(pb, 0); // AVC sequence header
+					// avio_wb24(pb, 0); // composition time
+					//avio_w8(pb, 1); // AVC NALU
+					//avio_wb24(pb, pkt->pts - pkt->dts);
+					*ptr++ = 1;
+					*ptr++ = 0;
+					*ptr++ = 0;
+					*ptr++ = 0;
+					// idr
+					set_be32(ptr, nalus[nal_index].payload_size);
+					ptr += 4;
+					memcpy(ptr, encoded_image->data() + nalus[nal_index].payload_start_offset, nalus[nal_index].payload_size);
+					ptr += nalus[nal_index].payload_size;
+					//uint8_t  * new_data = (uint8_t*)(encoded_image->data() + nalus[nal_index].payload_start_offset - 2) ;
+					//new_data[0] = 2;
+					//new_data[1] = 1;
+					WriteFlvTag(9, buffer,
+						ptr - buffer, encoded_image->Timestamp());
+					if (buffer)
+					{
+						delete[] buffer;
+						buffer = nullptr;
+					}
 					break;
 				}
 				default: { 
@@ -284,7 +385,10 @@ namespace libmedia_transfer_protocol
 			//uint8_t dd = 0;
 			//packet.append((char)flags);
 			//packet.append((char)dd);
-			 
+			// avio_w8(pb, par->codec_tag | FLV_FRAME_KEY); // flags
+			// avio_w8(pb, 0); // AVC sequence header
+			// avio_wb24(pb, 0); // composition time
+			//config 编码信息设置为0 
 			*ptr++ = 0;
 			*ptr++ = 0;
 			*ptr++ = 0;
