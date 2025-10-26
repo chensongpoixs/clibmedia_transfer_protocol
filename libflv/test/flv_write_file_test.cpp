@@ -42,19 +42,21 @@ namespace libmedia_transfer_protocol
 
 
 		FlvWriterFileTest::FlvWriterFileTest(const char * out_file_name)
-			 
-			 
+			:flv_context_(new libmedia_transfer_protocol::libflv::FlvContext(nullptr, out_file_name))
+			 , video_encoder_thread_(rtc::Thread::Create())
+			, x264_encoder_(new libmedia_codec::X264Encoder)
+			, capturer_track_source_(libcross_platform_collection_render::CapturerTrackSource::Create(false))
 		{
-			x264_encoder_ = std::make_unique<libmedia_codec::X264Encoder>();
+			 
 			x264_encoder_->SignalVideoEncodedImage.connect(this, &FlvWriterFileTest::OnVideoEncode);
 			x264_encoder_->Start();
-			video_encoder_thread_ = rtc::Thread::Create();
+			 
 			video_encoder_thread_->SetName("video_encoder_thread", NULL);
 			video_encoder_thread_->Start();
-
-			capturer_track_source_ = libcross_platform_collection_render::CapturerTrackSource::Create(false);
+			 
 			capturer_track_source_->set_catprue_callback(x264_encoder_.get(), video_encoder_thread_.get());
 			capturer_track_source_->StartCapture(); 
+			flv_context_->SendFlvHeader(true, true);
 		}
 
 		FlvWriterFileTest::~FlvWriterFileTest()

@@ -16,10 +16,10 @@ MESSAGE(STATUS  "####################################")
 #)
 
  
- add_definitions(
+ #add_definitions(
  
-	-DTEST_HTTP_FLV=1
- )
+#	-DTEST_HTTP_FLV=1
+# )
 
 include_directories(
 	../

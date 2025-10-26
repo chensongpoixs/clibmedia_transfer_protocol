@@ -182,7 +182,7 @@ namespace libmedia_transfer_protocol
 			void WriteFlvTag(uint8_t type, const uint8_t * data, int32_t size, int64_t timestamp);
 			//void WriteMetaData();
 			void WriteConfigPacket();
-			void Writer(const uint8_t * data, int32_t size);
+			void Writer(const uint8_t * data, int32_t size, bool fflsh = false);
 		private: 
 
 			
@@ -196,10 +196,15 @@ namespace libmedia_transfer_protocol
  
 		 	
 			bool                  send_sps_;
+			//rtc::CopyOnWriteBuffer  sps_;
+			//rtc::CopyOnWriteBuffer  pps_;
 			std::string            sps_;
 			std::string            pps_;
 
 			uint32_t               start_timestamp_;
+
+			uint8_t * send_buffer_{nullptr};
+			int32_t   send_size_;
  
 		//	MMediaHandler*   handler_;
 		};
