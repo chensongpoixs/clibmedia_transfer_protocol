@@ -171,8 +171,8 @@ namespace libmedia_transfer_protocol
 			//void SetSps(const std::string & sps);
 			//void SetPps(const std::string & pps);
 		//	void SendFlvOnMetaHeader();
-			bool SendFlvVideoFrame(const rtc::CopyOnWriteBuffer & frame, uint32_t timestamp);
-			bool SendFlvAudioFrame(const rtc::CopyOnWriteBuffer & frame, uint32_t timestamp);
+			bool SendFlvVideoFrame(const rtc::CopyOnWriteBuffer & frame, uint64_t timestamp);
+			bool SendFlvAudioFrame(const rtc::CopyOnWriteBuffer & frame, uint64_t timestamp);
 			
 			 
 
@@ -201,7 +201,7 @@ namespace libmedia_transfer_protocol
 			std::string            sps_;
 			std::string            pps_;
 
-			uint32_t               start_timestamp_;
+			uint64_t               start_timestamp_;
 
 			uint8_t * send_buffer_{nullptr};
 			int32_t   send_size_;

@@ -95,7 +95,7 @@ namespace libmedia_transfer_protocol {
 		
 
 		MpegDecoder::MpegDecoder()
-			: h264_stream_((new uint8_t[1024 * 1024 * 8]))
+			: byte_stream_((new uint8_t[1024 * 1024 * 8]))
 			, stream_len_(0)
 			, read_byte_(0)
 			//, callback_(nullptr)
@@ -120,7 +120,7 @@ namespace libmedia_transfer_protocol {
 					//fwrite(ps, 1, read_byte_, out_file_ptr);
 					//fflush(out_file_ptr);
 					//read_byte_ = payload_size - avil_read_byte;
-					memcpy(h264_stream_ + stream_len_, ps, read_byte_);
+					memcpy(byte_stream_ + stream_len_, ps, read_byte_);
 					stream_len_ += read_byte_;
 					ps += read_byte_;
 					len = read_byte_;
@@ -132,7 +132,7 @@ namespace libmedia_transfer_protocol {
 					//不足够一个包
 					//fwrite(ps, 1, size, out_file_ptr);
 					//fflush(out_file_ptr);
-					memcpy(h264_stream_ + stream_len_, ps, size);
+					memcpy(byte_stream_ + stream_len_, ps, size);
 					stream_len_ += size;
 					read_byte_ -= size;
 					len = size;
@@ -269,7 +269,7 @@ namespace libmedia_transfer_protocol {
 									libmedia_codec::EncodedImage encode_image;
 									encode_image.SetEncodedData(
 										libmedia_codec::EncodedImageBuffer::Create(
-											h264_stream_,
+											byte_stream_,
 											stream_len_
 										));
 									encode_image.SetTimestamp(video_pts_);
@@ -295,7 +295,8 @@ namespace libmedia_transfer_protocol {
 									pts += ps[13];
 									pts <<= 8;// sizeof(char);
 									//pts <<= 8;// sizeof(char);
-									//LIBMPEG_LOG(LS_INFO) << "pts :" << pts;
+									//LIBMPEG_LOG_T_F(LS_INFO) << "pts :" << pts;
+									video_pts_ = pts / 90000;
 								}
 								if ((PSEPack->PackInfo1[1] & 0xe0) == 0x20) {
 									//dts =
@@ -315,8 +316,8 @@ namespace libmedia_transfer_protocol {
 									pts <<= 8;// sizeof(char);
 									pts += ps[13];
 									pts <<= 8;// sizeof(char);
-									//LIBMPEG_LOG(LS_INFO) << "===========>pts :" << pts;
-									video_pts_ = pts / 90;
+									//LIBMPEG_LOG_T_F(LS_INFO) << "===========>pts :" << pts;
+									video_pts_ = pts / 90000;
 								}
 								else if ((PSEPack->PackInfo1[1] & 0xc0) == 0x80) {
 									/* mpeg 2 PES */
@@ -344,8 +345,8 @@ namespace libmedia_transfer_protocol {
 									pts <<= 8;// sizeof(char);
 									pts += ps[13];
 									pts <<= 8;// sizeof(char);
-									//LIBMPEG_LOG(LS_INFO) << "===========>pts :" << pts;
-									video_pts_ = pts / 90;
+									//LIBMPEG_LOG_T_F(LS_INFO) << "===========>pts :" << pts;
+									video_pts_ = pts / 90000;
 								}
 								
 								// 一帧数据大于 mtu的大小  rtp hreader 12  , rtp payload 1400  就会多个包传输 
@@ -356,7 +357,7 @@ namespace libmedia_transfer_protocol {
 								{
 									//fwrite(payload, 1, avil_read_byte, out_file_ptr);
 									//fflush(out_file_ptr);
-									memcpy(h264_stream_ + stream_len_, payload, avil_read_byte);
+									memcpy(byte_stream_ + stream_len_, payload, avil_read_byte);
 									stream_len_ += avil_read_byte;
 									read_byte_ = payload_size - avil_read_byte;
 
@@ -369,7 +370,7 @@ namespace libmedia_transfer_protocol {
 								
 								//fwrite(payload, 1, payload_size, out_file_ptr);
 								//fflush(out_file_ptr);
-								memcpy(h264_stream_ + stream_len_, payload, payload_size);
+								memcpy(byte_stream_ + stream_len_, payload, payload_size);
 								stream_len_ += payload_size;
 
 

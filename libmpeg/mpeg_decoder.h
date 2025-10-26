@@ -67,7 +67,7 @@ namespace  libmedia_transfer_protocol {
 			//}
 		public:
 
-			uint8_t*                h264_stream_;
+			uint8_t*                byte_stream_;
 			int32_t									stream_len_;
 			int32_t                 read_byte_;
 			// VideoReceiveStream *     callback_ ;

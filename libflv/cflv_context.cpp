@@ -295,7 +295,7 @@ namespace libmedia_transfer_protocol
 		2. 音视频有三种组合： 只有音频、只有视频或者音视频都有
 		3. FLV文件头总是作为第一个数据先发送
 		*/
-		bool FlvContext::SendFlvVideoFrame(const rtc::CopyOnWriteBuffer & frame, uint32_t timestamp)
+		bool FlvContext::SendFlvVideoFrame(const rtc::CopyOnWriteBuffer & frame, uint64_t timestamp)
 		{
 			
 			std::vector<webrtc::H264::NaluIndex> nalus = webrtc::H264::FindNaluIndices(
@@ -442,7 +442,7 @@ namespace libmedia_transfer_protocol
 
 			return true;
 		}
-		bool FlvContext::SendFlvAudioFrame(const rtc::CopyOnWriteBuffer & frame, uint32_t timestamp)
+		bool FlvContext::SendFlvAudioFrame(const rtc::CopyOnWriteBuffer & frame, uint64_t timestamp)
 		{
 
 
