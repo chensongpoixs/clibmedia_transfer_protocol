@@ -37,8 +37,7 @@
 #include "libmedia_transfer_protocol/libflv/cflv_context.h"
 #include "libmedia_codec/x264_encoder.h"
 #include "libcross_platform_collection_render/track_capture/ctrack_capture.h"
-#include "libmedia_transfer_protocol/libflv/FlvEncoder.h"
-#include "libmedia_transfer_protocol/libflv/BaseWriter.h"
+ 
 
 
 namespace libmedia_transfer_protocol
@@ -83,8 +82,7 @@ namespace libmedia_transfer_protocol
 			rtc::scoped_refptr<libcross_platform_collection_render::CapturerTrackSource>     capturer_track_source_;
 
 
-			std::unique_ptr< BrightLib::Media::StreamWriter>           stream_writer_;
-			std::unique_ptr< BrightLib ::Media::Flv::H264FlvEncoder>     h264_flv_encoder_;
+			
 
 
 

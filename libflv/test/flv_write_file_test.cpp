@@ -55,8 +55,7 @@ namespace libmedia_transfer_protocol
 		FlvWriterFileTest::FlvWriterFileTest(const char * out_file_name)
 			: write_flv_header_(false)
 			, flv_context_(new  libmedia_transfer_protocol::libflv::FlvContext(nullptr, out_file_name))
-			, stream_writer_(new BrightLib::Media::StreamWriter("test___fff.flv"))
-			, h264_flv_encoder_(new  BrightLib::Media::Flv::H264FlvEncoder(stream_writer_.get()))
+			 
 			, out_flv_file_ptr_(nullptr)
 		{
 			x264_encoder_ = std::make_unique<libmedia_codec::X264Encoder>();
@@ -95,7 +94,7 @@ namespace libmedia_transfer_protocol
 				WriteFlvHeader();
 				WriteMetaData();
 			}
-#if 0
+#if 1
 			static FILE  *out_file_ptr = fopen("test.h264", "wb+");
 			if (out_file_ptr)
 			{
@@ -271,16 +270,27 @@ namespace libmedia_transfer_protocol
 
 		void FlvWriterFileTest::WriteConfigPacket()
 		{
-			auto flags = (uint8_t)7;
-			flags |= ((uint8_t)1 << 4);
-			std::string  packet;
+
+			uint8_t * buffer = new uint8_t [1024 * 1024];
+
+			uint8_t *ptr = buffer;
+			*ptr = 7;
+			*ptr++ |= (uint8_t)1 << 4;
+			//auto flags = (uint8_t)7;
+			//flags |= ((uint8_t)1 << 4);
+			//std::string  packet;
 			
 			// header
-			packet.append((uint8_t)flags, 1);
-			packet.append((uint8_t)1, 1);
+			//uint8_t dd = 0;
+			//packet.append((char)flags);
+			//packet.append((char)dd);
 			 
+			*ptr++ = 0;
+			*ptr++ = 0;
+			*ptr++ = 0;
+			*ptr++ = 0;
 			// cts
-			packet.append("\x0\x0\x0", 3);
+			//packet.append("\x0\x0\x0", 3);
 			// AVCDecoderConfigurationRecord start
 			std::string extra_data;
 			{
@@ -307,11 +317,12 @@ namespace libmedia_transfer_protocol
 		 
 			}
 
-			 
-			packet.append(extra_data);
-
-			WriteFlvTag(9, (const uint8_t *)packet.c_str(), packet.size(), 0);
-
+			// memcpy()
+			//packet.append(extra_data);
+			memcpy(ptr, extra_data.c_str(), extra_data.size());
+			ptr += extra_data.size();
+			WriteFlvTag(9, buffer, ptr - buffer, 0);
+			delete []buffer;
 		}
 
 		void FlvWriterFileTest::Writer(const uint8_t * data, int32_t size)
