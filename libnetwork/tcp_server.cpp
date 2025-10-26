@@ -175,9 +175,9 @@ namespace  libmedia_transfer_protocol {
 			//http_session->RegisterDecodeCompleteCallback(callback_);
 			tcp_session->SignalOnRecv.connect(this, &TcpServer::OnSessionRecv);
 			tcp_session->SignalOnClose.connect(this, &TcpServer::OnSessionClose);
-			if (contexts_[kUserContext])
+			if (contexts_[kShareResourceContext])
 			{
-				tcp_session->SetContext(kUserContext, contexts_[kUserContext]);
+				tcp_session->SetContext(kShareResourceContext, contexts_[kShareResourceContext]);
 			}
 			tcp_sessions_.emplace(std::make_pair(client, std::move(tcp_session)));
 			auto iter = tcp_sessions_.find(client);

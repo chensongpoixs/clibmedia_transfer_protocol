@@ -40,7 +40,7 @@ namespace  libmedia_transfer_protocol {
 			kNormalContext = 0,
 			kRtmpContext,
 			kHttpContext,
-			kUserContext,
+			kShareResourceContext,
 			kFlvContext,
 			kRtcContext,
 			kGb28181Context,

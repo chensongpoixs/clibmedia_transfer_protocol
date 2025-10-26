@@ -69,7 +69,7 @@ namespace libmedia_transfer_protocol
 
 #pragma pack(push, 1)
 
-		class FLVHeader {
+		struct FLVHeader {
 		public:
 			static constexpr uint8_t kFlvVersion = 1;
 			static constexpr uint8_t kFlvHeaderLength = 9;
@@ -106,17 +106,17 @@ namespace libmedia_transfer_protocol
 					  // Preserve, set to 0
 					  uint8_t : 5;
 #endif
-								// The length of this header in bytes,固定为9  [AUTO-TRANSLATED:126988fc]
-								// The length of this header in bytes, fixed to 9
-								uint32_t length;
-								// 固定为0  [AUTO-TRANSLATED:d266c0a7]
-								// Fixed to 0
-								uint32_t previous_tag_size0;
+			// The length of this header in bytes,固定为9  [AUTO-TRANSLATED:126988fc]
+			// The length of this header in bytes, fixed to 9
+			uint32_t length;
+			// 固定为0  [AUTO-TRANSLATED:d266c0a7]
+			// Fixed to 0
+			uint32_t previous_tag_size0;
 		};
 
 
-		class FlvTagHeader {
-		public:
+		struct FlvTagHeader {
+		 
 			uint8_t type = 0;
 			uint8_t data_size[3] = { 0 };
 			uint8_t timestamp[3] = { 0 };

@@ -273,7 +273,7 @@ namespace libmedia_transfer_protocol {
 											stream_len_
 										));
 									encode_image.SetTimestamp(video_pts_);
-									SignalRecvVideoFrame(encode_image);
+									SignalRecvVideoFrame(std::move(encode_image));
 									//callback_->OnVideoFrame(encode_image);
 									stream_len_ = 0;
 								}
@@ -296,7 +296,7 @@ namespace libmedia_transfer_protocol {
 									pts <<= 8;// sizeof(char);
 									//pts <<= 8;// sizeof(char);
 									//LIBMPEG_LOG_T_F(LS_INFO) << "pts :" << pts;
-									video_pts_ = pts / 90000;
+									video_pts_ = pts / 90;
 								}
 								if ((PSEPack->PackInfo1[1] & 0xe0) == 0x20) {
 									//dts =
@@ -317,7 +317,7 @@ namespace libmedia_transfer_protocol {
 									pts += ps[13];
 									pts <<= 8;// sizeof(char);
 									//LIBMPEG_LOG_T_F(LS_INFO) << "===========>pts :" << pts;
-									video_pts_ = pts / 90000;
+									video_pts_ = pts / 90;
 								}
 								else if ((PSEPack->PackInfo1[1] & 0xc0) == 0x80) {
 									/* mpeg 2 PES */
@@ -346,7 +346,7 @@ namespace libmedia_transfer_protocol {
 									pts += ps[13];
 									pts <<= 8;// sizeof(char);
 									//LIBMPEG_LOG_T_F(LS_INFO) << "===========>pts :" << pts;
-									video_pts_ = pts / 90000;
+									video_pts_ = pts / 90;
 								}
 								
 								// 一帧数据大于 mtu的大小  rtp hreader 12  , rtp payload 1400  就会多个包传输 
@@ -408,7 +408,7 @@ namespace libmedia_transfer_protocol {
 
 
 
-								SignalRecvAudioFrame(rtc::CopyOnWriteBuffer(payload, playload_size));
+								SignalRecvAudioFrame(std::move((rtc::CopyOnWriteBuffer(payload, playload_size))));
 								//if (callback_)
 								//{
 								//	rtc::Buffer frame(payload, playload_size);

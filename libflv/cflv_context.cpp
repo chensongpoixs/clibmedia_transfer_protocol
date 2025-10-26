@@ -350,7 +350,7 @@ namespace libmedia_transfer_protocol
 					//*ptr++ = 0;
 					//*ptr++ = 0;
 					//*ptr++ = 0;
-					set_be24(ptr, start_timestamp_); 
+					set_be24(ptr, timestamp - start_timestamp_);
 					ptr += 3;
 					// avcc
 					// sps
@@ -419,6 +419,8 @@ namespace libmedia_transfer_protocol
 					// *ptr++ = 0;
 					set_be24(ptr, timestamp-  start_timestamp_);
 					ptr += 3;
+
+
 					// idr
 					set_be32(ptr, nalus[nal_index].payload_size);
 					ptr += 4;
