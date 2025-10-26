@@ -88,7 +88,7 @@ namespace libmedia_transfer_protocol
 
 			FILE * out_flv_file_ptr_;
 
-
+			uint32_t        start_timestamp_;
 			
 		};
 

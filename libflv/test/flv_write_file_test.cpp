@@ -76,6 +76,7 @@ namespace libmedia_transfer_protocol
 			, flv_context_(new  libmedia_transfer_protocol::libflv::FlvContext(nullptr, out_file_name))
 			 
 			, out_flv_file_ptr_(nullptr)
+			, start_timestamp_(0)
 		{
 			x264_encoder_ = std::make_unique<libmedia_codec::X264Encoder>();
 			x264_encoder_->SignalVideoEncodedImage.connect(this, &FlvWriterFileTest::OnVideoEncode);
@@ -110,6 +111,7 @@ namespace libmedia_transfer_protocol
 			{
 				write_flv_header_ = true;
 				flv_context_->SendFlvHeader(true, true);
+				start_timestamp_ = encoded_image->Timestamp();
 				WriteFlvHeader();
 				WriteMetaData();
 			}
@@ -197,7 +199,7 @@ namespace libmedia_transfer_protocol
 					//new_data[0] = 2;
 					//new_data[1] = 1;
 					WriteFlvTag(9, buffer,
-						ptr - buffer, encoded_image->Timestamp());
+						ptr - buffer, encoded_image->Timestamp() - start_timestamp_);
 					if (buffer)
 					{
 						delete[] buffer;
@@ -249,7 +251,7 @@ namespace libmedia_transfer_protocol
 					//new_data[0] = 2;
 					//new_data[1] = 1;
 					WriteFlvTag(9, buffer,
-						ptr - buffer, encoded_image->Timestamp());
+						ptr - buffer, encoded_image->Timestamp()- start_timestamp_);
 					if (buffer)
 					{
 						delete[] buffer;
