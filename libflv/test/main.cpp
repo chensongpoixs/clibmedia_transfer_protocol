@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 
 	simplest_flv_write(test_file_name);
 	
-	  //libmedia_transfer_protocol::libflv_test::simplest_flv_parser(test_file_name);
+	  libmedia_transfer_protocol::libflv_test::simplest_flv_parser(test_file_name);
 	  //test.flv_.flv
 	  // ffmpeg -i .\test.h264   -vcodec copy test.flv
 	//  libmedia_transfer_protocol::libflv_test::simplest_flv_parser("test.flv");
