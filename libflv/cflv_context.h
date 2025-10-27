@@ -123,7 +123,7 @@ namespace libmedia_transfer_protocol
 			uint8_t timestamp_ex = 0;
 			uint8_t streamid[3] = { 0 }; /* Always 0. */
 		};
-		struct RtmpVideoHeaderEnhanced {
+		struct FlvVideoHeaderEnhanced {
 #if defined( WEBRTC_ARCH_LITTLE_ENDIAN   )
 			uint8_t enhanced : 1;
 			uint8_t frame_type : 3;
@@ -137,7 +137,7 @@ namespace libmedia_transfer_protocol
 #endif
 		};
 
-		struct RtmpVideoHeaderClassic {
+		struct FlvVideoHeaderClassic {
 #if defined( WEBRTC_ARCH_LITTLE_ENDIAN   )
 			uint8_t frame_type : 4;
 			uint8_t codec_id : 4;
